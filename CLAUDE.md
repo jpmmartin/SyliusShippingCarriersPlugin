@@ -1,0 +1,365 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+# How we work here
+
+These rules govern *how* to work in this repo. They take precedence over the reflex to answer fast.
+
+**What belongs in this file:** durable rules and non-obvious facts that survive the next commit.
+**What does not:** snapshots of mutable state — whether a commit exists, whether a directory has
+been created yet, what today's branch is. Anything a shell command answers in one second does not
+belong here, because a stale note reads as verified truth and is worse than no note. State each
+fact once, in the section it topically belongs to; never in two places.
+
+## Rule 1 — Read the real source before saying anything
+
+Before offering an opinion, an option, a recommendation, or a decision that will materialize in
+**Symfony, Sylius, Doctrine, the UPS or FedEx APIs, or any library in
+`composer.json`/`package.json`** — consult the real source **for the versions this package actually
+resolves**, *before* writing the options down.
+
+This is not conditional on someone naming a library. It applies even when no library is mentioned:
+in a shipping carrier plugin practically every decision lands on one of them.
+
+### Which source, in which order
+
+Read in this order and stop at the first one that settles the question:
+
+1. **`vendor/` source and config** — the *exact* pinned code that runs here. It is local, free to
+   read, and outranks every other source, so it goes first. Grep the bundle's
+   `Resources/config/*` and `src/`.
+2. **`vendor/bin/console debug:*` / `config:dump-reference`** — what the container actually
+   resolves, when the question is about wiring rather than code.
+3. **`context7`** — for guides, migration notes, and *intended* usage that source alone does not
+   reveal. It comes after the code, never before it: context7 indexes the upstream repo, while
+   `vendor/` is what executes. When the two disagree, `vendor/` wins.
+4. **Official docs, version pinned in the URL** — <https://docs.sylius.com>,
+   <https://symfony.com/doc/7.4/>, <https://www.doctrine-project.org/>,
+   <https://developer.ups.com/>, <https://developer.fedex.com/>.
+
+After consulting:
+- **If what the source returns changes the options** → reformulate the question/answer and state
+  explicitly *what changed and why*.
+- **If it does not change them** → say that too ("checked `vendor/sylius/sylius` at the resolved
+  version, the options stand"). Name the version you actually read from `composer.lock` — derive
+  it, never copy it from this file.
+
+Silence about having checked is not acceptable. The reader must be able to tell the difference
+between a verified answer and an unverified one.
+
+### Versions to query against
+
+Never query "latest", and never trust a version written down in this file. Only two things here are
+stable enough to record: the declared constraints, `php ^8.2` and `sylius/sylius ^2.2`.
+
+Everything else is derived, never quoted. Print the resolved versions:
+
+```bash
+php -r '$j=json_decode(file_get_contents("composer.lock"),true);
+foreach (array_merge($j["packages"], $j["packages-dev"]) as $p)
+    printf("%-45s %s\n", $p["name"], $p["version"]);' | sort
+```
+
+Two reasons a hardcoded table would be actively harmful here:
+
+- **`composer.lock` is gitignored** (correct for a library), so a fresh clone has none. Without a
+  lock, `composer install` behaves like `composer update` and resolves *different* versions than
+  whoever wrote the table got. Drift is not a risk, it is the guaranteed outcome.
+- Per the policy at the top of this file, a stale version note reads as verified truth. One command
+  answers it in under a second, so it does not belong here.
+
+That prints every resolved package, which is a few hundred lines. Pipe it through `grep` for the
+one you need:
+
+```bash
+… | grep -E 'sylius/sylius|symfony/framework-bundle|doctrine/orm'
+```
+
+If `composer.lock` is absent, run `composer install` first — then derive. Do not guess.
+
+### How `context7` reaches this session
+
+context7 is an MCP server. It may arrive as a marketplace **plugin** (tools appear as
+`mcp__plugin_context7_context7__*`) or as a project-scoped server in a `.mcp.json` (tools appear as
+`mcp__context7__*`). This repository declares neither — it relies on whatever the developer has
+configured.
+
+**If context7 tools are not visible in the current session, say so and rely on steps 1, 2 and 4
+above.** Since `vendor/` already outranks it, losing context7 degrades the answer but never blocks
+it. Never present an unverified answer as a checked one.
+
+> **Unverified:** how precisely context7 can be pinned to a version is not established here. It
+> resolves by library ID, and version-specific coverage depends on what is indexed upstream, so
+> "query v2.2.8" may silently return docs for another version. Until someone confirms the
+> behaviour, treat any context7 result that contradicts `vendor/` as wrong, and do not cite a
+> context7 answer as version-verified.
+
+## Rule 2 — Assume nothing
+
+If something is not defined, **ask before supposing**. If the corpus (docs, `vendor/` source,
+config, this file) does not settle a point, **mark it as unsettled** — do not force a plausible
+answer into the gap. "The docs don't specify this; here are the two readings" is a valid, preferred
+answer.
+
+## Rule 3 — Spec-Driven Development (SDD)
+
+The spec is the source of truth. Code serves the spec, not the other way around.
+
+### When SDD applies
+- New features, new endpoints, integrations, schema changes, or any change touching 3+ files.
+- Does NOT apply to: typos, one-line bug fixes, dependency bumps, formatting. Do those directly.
+- When in doubt, ask: "Does this need a spec?"
+
+### Workflow (strict order, with approval gates)
+1. **Specify** — Create `specs/<NNN>-<slug>/spec.md` covering WHAT and WHY: problem statement,
+   user stories, testable acceptance criteria, out of scope. Zero implementation detail.
+   - STOP. Do not proceed until the spec is explicitly approved.
+2. **Plan** — Create `plan.md` in the same folder covering HOW: architecture, affected
+   files/modules, data model changes, API contracts, edge cases, testing strategy.
+   Open technical decisions are raised as questions, one per message, before writing the plan.
+   - STOP. Wait for approval.
+3. **Tasks** — Create `tasks.md`: a numbered checklist of small, independently verifiable tasks,
+   ordered by dependency.
+   - STOP. Wait for approval. This gate is not optional: step 4 is the first one that writes
+     code, so it is the last point at which a wrong decomposition is still cheap to fix.
+4. **Implement** — Execute one task at a time. After each task: run tests, check the box in
+   `tasks.md`, and reference the task number in the commit message (format: Rule 4).
+5. **Verify** — Before declaring anything done, walk through every acceptance criterion in
+   `spec.md` and confirm each one passes.
+
+### Rules
+- Never write implementation code during Specify or Plan.
+- If implementation reveals the spec is wrong or incomplete: stop, propose a spec amendment, get
+  approval, then continue. Never diverge silently.
+- If a change is requested mid-implementation: update the spec first, then the code.
+- Ambiguous requirements = ask before speccing. Do not invent.
+
+### Specs are deliberately not published
+
+> **`specs/` is gitignored.** The SDD artifacts exist only in the author's working copy; they are
+> not part of the distributed package and no clone can see them.
+>
+> Two consequences, stated so nobody is surprised:
+> - The `Refs: specs/…` footer in Rule 4 is a **local navigation aid only**. It resolves on the
+>   author's machine and nowhere else.
+> - The specs are not backed up by the repository. Losing the working copy loses them.
+>
+> Do not "fix" this by committing `specs/`. It is a decision, not an oversight.
+
+### Spec quality bar
+- Acceptance criteria must be verifiable ("returns 404 when X", not "handles errors properly").
+- One spec = one feature. Split anything bigger.
+
+### Interaction between SDD and Rule 1
+Rule 1 fires hardest during **Plan**: every architectural option written into `plan.md` must be
+backed by pinned-version docs or `vendor/` source, and the plan must record what was checked. A
+`plan.md` containing an unverified claim about how Sylius, UPS or FedEx behaves is a defective plan.
+
+## Rule 4 — Conventional Commits
+
+Every commit message follows [Conventional Commits v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/):
+
+```
+<type>[optional scope][!]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+**Types.** Only `feat` and `fix` are mandated by the spec. The rest is the conventional
+(Angular-derived) set we also use here — stick to this list, do not invent new ones:
+
+| Type | Use for |
+|---|---|
+| `feat` | New behaviour visible to a shop or admin user, or a new public API affordance |
+| `fix` | Bug fix |
+| `docs` | Documentation only, including this file and the README |
+| `refactor` | Restructuring with no behaviour change |
+| `perf` | Performance work |
+| `test` | PHPUnit or Behat only |
+| `build` | Composer/npm dependencies, webpack, Docker |
+| `ci` | CI workflow configuration |
+| `chore` | Repo scaffolding and tooling that fits nothing above |
+| `style` | Formatting only — never mixed with other types |
+| `revert` | Reverting a previous commit |
+
+Note `docs`, not `doc`.
+
+### SemVer is binding here
+
+> This is a **published package**. Consumers install it with a caret constraint, so the commit type
+> is a promise about the next release number:
+>
+> | Commit | Release |
+> |---|---|
+> | `fix` | PATCH |
+> | `feat` | MINOR |
+> | `!` or a `BREAKING CHANGE:` footer | MAJOR |
+>
+> A breaking change needs `!` after the type/scope **and** a `BREAKING CHANGE:` footer explaining the
+> migration. In this package that means: a change to a public interface, service id or DI tag another
+> plugin could rely on; an entity or schema change requiring a non-backward-compatible migration; or
+> a change to the shipping method / carrier configuration keys already stored in existing
+> installations.
+>
+> **The table above assumes a `1.0.0` or later release line.** Under SemVer 2.0.0 §4, `0.y.z` makes
+> no compatibility promise at all: there, a breaking change goes in MINOR and `MAJOR` stays at zero,
+> so `feat` → MINOR / `!` → MAJOR does not hold. `composer.json` sets
+> `extra.branch-alias.dev-master` to `2.0-dev`, so the intended line is `2.x` and the table applies
+> from the first tag. If a `0.x` pre-release ever ships ahead of that, say so explicitly in the
+> release notes and do not pretend the mapping is binding for it.
+>
+> From `1.0.0` onward this obligation never relaxes.
+
+## Development Commands
+
+> **There is no `Makefile` in this repository.** Any `make <target>` instruction you find in a
+> guide, a README or an older revision of this file does not work here. Use the commands below,
+> or add a `Makefile` first.
+
+### Composer scripts (the only ones defined)
+
+```bash
+composer run database-reset    # drop + create + migrate + load fixtures
+composer run frontend-clear    # yarn install && yarn build in the test app, then assets:install
+composer run test-app-init     # database-reset + frontend-clear
+```
+
+### Traditional development
+
+```bash
+# Frontend setup
+(cd vendor/sylius/test-application && yarn install && yarn build)
+vendor/bin/console assets:install
+
+# Database setup
+vendor/bin/console doctrine:database:create
+vendor/bin/console doctrine:migrations:migrate -n
+vendor/bin/console sylius:fixtures:load -n
+
+# Start server
+symfony server:start -d
+```
+
+Note the console lives at `vendor/bin/console` (provided by `sylius/test-application`), not
+`bin/console`. The only file in `bin/` is `show-success.php`.
+
+### Docker
+
+`compose.yml` and `compose.override.dist.yml` exist, but there is no wrapper. Drive Compose
+directly:
+
+```bash
+cp compose.override.dist.yml compose.override.yml   # gitignored; edit APP_SECRET before use
+docker compose up -d
+docker compose exec php sh
+docker compose down
+```
+
+`compose.yml` alone is the bare CI stack (php, mysql, nginx, mailhog) — no volumes, ports or app
+environment. The override file is what makes it usable locally: it mounts the working copy, adds
+the `nodejs` service, publishes nginx on `:80` and mailhog on `:8025`, and points nginx at
+`vendor/sylius/test-application`.
+
+### Testing and code quality
+
+Every tool is configured at the repo root. Paths and levels live in those files, so the commands
+take no flags:
+
+```bash
+vendor/bin/phpunit                  # phpunit.xml.dist  → tests/{Unit,Integration,Functional}
+vendor/bin/behat --strict           # behat.yml.dist    → suites from tests/Behat/Resources/suites.yml
+vendor/bin/phpstan analyse          # phpstan.neon      → level max over src/ and tests/
+vendor/bin/ecs check                # ecs.php           → add --fix to apply
+vendor/bin/rector process --dry-run # rector.php        → drop --dry-run to apply
+```
+
+Non-obvious wiring, none of which is discoverable from the commands themselves:
+
+- **`tests/bootstrap.php`** is PHPUnit's bootstrap. It loads the Composer autoloader, forces
+  `APP_ENV=test`, then delegates to `vendor/sylius/test-application/config/bootstrap.php`, which
+  boots Dotenv from the test application *and* from this plugin's `tests/TestApplication/.env`.
+  Setting `APP_ENV` before that delegation is what makes `.env.test` win.
+- **`KERNEL_CLASS` is `Sylius\TestApplication\Kernel`**, set in `phpunit.xml.dist` and again under
+  `FriendsOfBehat\SymfonyExtension` in `behat.yml.dist`. The kernel is the test application's, not
+  one of ours.
+- **Behat suites are not defined in `behat.yml.dist`.** It imports
+  `tests/Behat/Resources/suites.yml`; contexts and pages are wired as services in
+  `tests/Behat/Resources/services.xml`, which the kernel picks up through
+  `tests/TestApplication/config/services_test.php`.
+- **`etc/build/`** must exist — `FriendsOfBehat\MinkDebugExtension` writes screenshots and logs
+  there. It is kept by `etc/build/.gitignore`.
+- **`friends-of-behat/page-object-extension` is a class library, not a Behat extension.** It ships
+  no `ServiceContainer`, so it must not be listed under `extensions:`. Its `SymfonyPage` is simply
+  extended by the page objects.
+
+Behat JS scenarios additionally need headless Chrome on port 9222 and a running server:
+
+```bash
+APP_ENV=test symfony server:start --port=8080 --daemon
+vendor/bin/behat --strict --tags="@javascript"
+```
+
+### Known gaps in the inherited scaffolding
+
+Not bugs in the configuration above — real gaps, recorded so nobody rediscovers them:
+
+- `features/running_a_sylius_feature.feature` is tagged `@managing_channels`, but `suites.yml`
+  defines only a `greeting_customer` suite filtering `@greeting_customer`. **That feature belongs
+  to no suite and never runs.**
+- `vendor/bin/phpstan analyse` reports 4 errors at level max, all in inherited skeleton code
+  (missing iterable value types in three files, one `string|null` passed to `str_starts_with`).
+  They are unfixed on purpose: fixing them is a `fix:`/`refactor:` commit, not part of adding
+  configuration.
+- `rector/rector` 1.2.10 has no Symfony set past `SYMFONY_71` while the stack resolves Symfony
+  7.4, and `sylius/sylius-rector` 2.0 ships **no** Sylius 2.x upgrade set — only `plus/` and
+  `price-history/`. Do not add a `SyliusSetList` entry for 2.x; it does not exist.
+- `phpstan/phpstan` is pinned to `^1.12` and prints an upgrade notice on every run. Moving to `^2.2`
+  is a `build:` change with its own error-surface, not a bump to do in passing.
+
+## Architecture
+
+`jpmmartin/sylius-shipping-carriers-plugin` — UPS and FedEx shipping for Sylius: real-time rates,
+labels, tracking and customs. It began as the Sylius plugin skeleton, so skeleton scaffolding is
+still present alongside the plugin's own code.
+
+### Core structure
+- **Main plugin class**: `src/JpmMartinSyliusShippingCarriersPlugin.php` — entry point using
+  `SyliusPluginTrait`
+- **DI extension**: `src/DependencyInjection/JpmMartinSyliusShippingCarriersExtension.php`, with
+  `src/DependencyInjection/Configuration.php`
+- **Namespaces**: `JpmMartin\SyliusShippingCarriersPlugin\` → `src/`;
+  `Tests\JpmMartin\SyliusShippingCarriersPlugin\` → `tests/` and `tests/TestApplication/src/`
+- **Services**: `config/services.xml` (plus an empty `config/services/`)
+- **Config**: `config/config.yaml`, `config/routes/{admin,shop}.yaml`,
+  `config/twig_hooks/shop.yaml` — note there is currently **no** `config/twig_hooks/admin.yaml`
+- **Migrations**: `src/Migrations/`
+- **Templates**: `templates/`
+
+### Key facts
+- **Test application**: `sylius/test-application` hosts the plugin in isolation; it also supplies
+  `vendor/bin/console` and the public dir (`extra.public-dir`)
+- **Asset management**: Webpack Encore, driven through the test application's `yarn build`
+- **Symfony version pin**: `extra.symfony.require` is `^7.4`
+- **Test scaffolding**: `tests/{Unit,Integration,Functional}` exist but hold only `.gitignore`
+  placeholders; `tests/Behat/{Context,Page,Resources}` and the skeleton's three `features/*.feature`
+  files are inherited demo material, not plugin coverage
+- **Tooling**: PHPStan, ECS, Rector, PHPUnit and Behat are installed and configured at the repo
+  root (`phpstan.neon`, `ecs.php`, `rector.php`, `phpunit.xml.dist`, `behat.yml.dist`)
+
+### Database Configuration
+Database credentials should be configured in:
+- `tests/TestApplication/.env` (for development)
+- `tests/TestApplication/.env.test` (for testing)
+
+## AI Development Guides
+
+This project includes specialized AI guides to assist with common plugin development tasks:
+
+- **CLEANUP_GUIDE.md** - Guidelines for cleaning up and organizing plugin code
+- **RENAME_GUIDE.md** - Step-by-step instructions for renaming plugins and components
+- **COMPATIBILITY_GUIDE.md** - Best practices for maintaining compatibility across different Sylius versions
+
+These guides provide detailed instructions and automated workflows to help maintain code quality and ensure proper plugin structure.

@@ -1,0 +1,13 @@
+# Delete these routes and define your own shop routes here
+
+jpm_martin_sylius_shipping_carriers_static_welcome:
+    path: /static-welcome/{name}
+    defaults:
+        _controller: JpmMartin\SyliusShippingCarriersPlugin\Controller\GreetingController::staticallyGreetAction
+        name: ~
+
+jpm_martin_sylius_shipping_carriers_dynamic_welcome:
+    path: /dynamic-welcome/{name}
+    defaults:
+        _controller: JpmMartin\SyliusShippingCarriersPlugin\Controller\GreetingController::dynamicallyGreetAction
+        name: ~

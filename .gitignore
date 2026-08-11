@@ -1,0 +1,43 @@
+/vendor/
+/var/
+/node_modules/
+/drivers/
+/composer.lock
+
+/etc/build/*
+!/etc/build/.gitignore
+
+# Local overrides of the committed behat.yml.dist / phpunit.xml.dist.
+/behat.yml
+/phpunit.xml
+/compose.override.yml
+
+# PHPUnit 10 caches to a directory (cacheDirectory in phpunit.xml.dist);
+# the .phpunit.result.cache entries are leftovers from the PHPUnit 9 layout.
+/.phpunit.cache/
+/.phpunit.result.cache
+.phpunit.result.cache
+
+# Symfony CLI https://symfony.com/doc/current/setup/symfony_server.html#different-php-settings-per-project
+/.php-version
+/php.ini
+
+# Alternate data streams that Windows attaches to downloaded files; they surface
+# as real files under WSL and would otherwise be committed.
+*:Zone.Identifier
+
+/tests/TestApplication/.env.local
+/tests/TestApplication/.env.*.local
+
+# Spec-Driven Development artifacts, kept out of the published package by choice.
+# CLAUDE.md Rule 3 ("Specs are deliberately not published") states this decision and its
+# consequences: the Rule 4 commit footer `Refs: specs/...` is a local navigation aid that
+# resolves only in the author's working copy, and the specs are not backed up by this
+# repository. This is intentional — do not "fix" it by committing /specs/.
+/specs/
+
+# Claude Code working files, kept out of the published package by choice — same reasoning
+# as specs/ above. The skills are authoring tools for this repository, not part of what a
+# consumer installs. settings.local.json is per-developer by convention in any case.
+/.claude/skills/
+/.claude/settings.local.json

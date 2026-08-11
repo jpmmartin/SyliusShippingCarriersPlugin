@@ -1,0 +1,5 @@
+jpm_martin_sylius_shipping_carriers_admin:
+    resource: "@JpmMartinSyliusShippingCarriersPlugin/config/routes/admin.yaml"
+
+jpm_martin_sylius_shipping_carriers_shop:
+    resource: "@JpmMartinSyliusShippingCarriersPlugin/config/routes/shop.yaml"

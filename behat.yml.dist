@@ -1,0 +1,45 @@
+# Suite definitions live in tests/Behat/Resources/suites.yml.
+imports:
+    - tests/Behat/Resources/suites.yml
+
+default:
+    formatters:
+        pretty:
+            verbose: true
+            paths: false
+            snippets: false
+
+    extensions:
+        DMore\ChromeExtension\Behat\ServiceContainer\ChromeExtension: ~
+
+        FriendsOfBehat\MinkDebugExtension:
+            directory: etc/build
+            clean_start: false
+            screenshot: true
+
+        Behat\MinkExtension:
+            # Must match BEHAT_BASE_URL in tests/TestApplication/.env.
+            base_url: "http://127.0.0.1:8080/"
+            default_session: symfony
+            javascript_session: chromedriver
+            sessions:
+                symfony:
+                    symfony: ~
+                chromedriver:
+                    chrome:
+                        api_url: http://127.0.0.1:9222
+                        validate_certificate: false
+            show_auto: false
+
+        FriendsOfBehat\SymfonyExtension:
+            bootstrap: vendor/sylius/test-application/config/bootstrap.php
+            kernel:
+                class: Sylius\TestApplication\Kernel
+
+        FriendsOfBehat\VariadicExtension: ~
+
+        SyliusLabs\SuiteTagsExtension: ~
+
+    gherkin:
+        filters:
+            tags: "~@todo"
