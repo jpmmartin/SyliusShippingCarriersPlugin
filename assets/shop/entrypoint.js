@@ -1,1 +1,1 @@
-import './js/greetings';
+// Put your shop entrypoint code here.

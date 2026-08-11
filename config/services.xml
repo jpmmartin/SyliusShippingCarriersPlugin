@@ -10,7 +10,6 @@
     </imports>
 
     <services>
-        <service id="JpmMartin\SyliusShippingCarriersPlugin\Controller\GreetingController" autowire="true" autoconfigure="true" public="true" />
         <!-- Put your services here -->
     </services>
 </container>
