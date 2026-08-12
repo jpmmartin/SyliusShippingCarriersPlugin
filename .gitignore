@@ -22,6 +22,11 @@
 /.php-version
 /php.ini
 
+# Per-developer IDE settings. They belong to a machine, not to a published package.
+/.idea/
+/.vscode/
+/*.iml
+
 # Alternate data streams that Windows attaches to downloaded files; they surface
 # as real files under WSL and would otherwise be committed.
 *:Zone.Identifier
