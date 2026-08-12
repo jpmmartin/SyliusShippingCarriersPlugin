@@ -38,6 +38,7 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
         return '@JpmMartinSyliusShippingCarriersPlugin/src/Migrations';
     }
 
+    /** @return list<string> */
     protected function getNamespacesOfMigrationsExecutedBefore(): array
     {
         return [
