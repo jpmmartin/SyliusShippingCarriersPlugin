@@ -46,3 +46,20 @@
 # consumer installs. settings.local.json is per-developer by convention in any case.
 /.claude/skills/
 /.claude/settings.local.json
+
+###> graphify ###
+# Upstream team-setup guidance: graphify-out/ is committed so everyone starts from the same map.
+# Only cost.json is local-only; cache/ is offered as optional and skipped here to keep the repo
+# small. manifest.json is portable (relative keys, re-anchored on load) so it stays tracked and
+# saves a full rebuild on first checkout.
+/graphify-out/cost.json
+/graphify-out/cache/
+
+# Not covered upstream, excluded on evidence rather than by the guide:
+# - .graphify_root and .graphify_python hold absolute paths from the machine that built the graph
+# - dated directories are full daily snapshots of the entire output, ~692K each
+/graphify-out/.graphify_root
+/graphify-out/.graphify_python
+/graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
+.claude/settings.json.graphify-bak
+###< graphify ###
