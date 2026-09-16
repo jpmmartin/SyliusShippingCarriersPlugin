@@ -18,6 +18,22 @@
             <tag name="sylius.invokable_grid" />
         </service>
 
+        <service id="jpmmartin_carrier.form.type.credentials" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\CarrierCredentialsType">
+            <argument>%jpmmartin_carrier.model.credentials.class%</argument>
+            <argument type="collection">
+                <argument>sylius</argument>
+            </argument>
+            <tag name="form.type" />
+        </service>
+
+        <service id="jpmmartin_carrier.form.type.credentials_data" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\CarrierCredentialsDataType">
+            <tag name="form.type" />
+        </service>
+
+        <service id="jpmmartin_carrier.grid.admin_credentials" class="JpmMartin\SyliusShippingCarriersPlugin\Grid\CarrierCredentialsGrid">
+            <tag name="sylius.invokable_grid" />
+        </service>
+
         <service id="jpmmartin_carrier.listener.admin_menu" class="JpmMartin\SyliusShippingCarriersPlugin\Menu\AdminMenuListener">
             <tag name="kernel.event_listener" event="sylius.menu.admin.main" />
         </service>

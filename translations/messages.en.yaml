@@ -2,6 +2,7 @@ jpmmartin_carrier:
     ui:
         shipping_origin: Shipping origin
         shipping_origins: Shipping origins
+        credentials: Carrier credentials
     form:
         shipping_origin:
             weight_unit: Weight unit
@@ -12,3 +13,17 @@ jpmmartin_carrier:
                 kg: Kilograms (kg)
                 in: Inches (in)
                 cm: Centimetres (cm)
+        credentials:
+            carrier: Carrier
+            carriers:
+                ups: UPS
+                fedex: FedEx
+            environment: Environment
+            choose_environment: Choose an environment
+            environments:
+                sandbox: Sandbox (testing)
+                production: Production
+            client_id: Client ID
+            client_secret: Client secret
+            client_secret_help: Leave empty to keep the current secret.
+            account_number: Account number

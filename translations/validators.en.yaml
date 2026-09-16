@@ -2,3 +2,10 @@ jpmmartin_carrier:
     shipping_origin:
         channel:
             unique: This channel already has a shipping origin.
+    credentials:
+        carrier:
+            unique: This carrier already has credentials.
+        environment:
+            not_blank: Choose whether these credentials go against the sandbox or production.
+        account_number:
+            required_for_fedex: FedEx needs an account number to quote rates.

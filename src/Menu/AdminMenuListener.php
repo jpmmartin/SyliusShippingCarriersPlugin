@@ -26,5 +26,17 @@ final class AdminMenuListener
             ->setLabel('jpmmartin_carrier.ui.shipping_origins')
             ->setLabelAttribute('icon', 'tabler:truck')
         ;
+
+        $configuration
+            ->addChild('jpmmartin_carrier_credentials', [
+                'route' => 'jpmmartin_carrier_admin_credentials_index',
+                'extras' => ['routes' => [
+                    ['route' => 'jpmmartin_carrier_admin_credentials_create'],
+                    ['route' => 'jpmmartin_carrier_admin_credentials_update'],
+                ]],
+            ])
+            ->setLabel('jpmmartin_carrier.ui.credentials')
+            ->setLabelAttribute('icon', 'tabler:lock')
+        ;
     }
 }

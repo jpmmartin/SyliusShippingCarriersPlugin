@@ -28,6 +28,10 @@ interface CarrierCredentialsInterface extends ResourceInterface, EncryptionAware
     /** @return array<string, string> */
     public function getCredentials(): array;
 
-    /** @param array<string, string> $credentials */
+    /**
+     * Empty values are dropped: a form submits an optional field left empty as null.
+     *
+     * @param array<string, string|null> $credentials
+     */
     public function setCredentials(array $credentials): void;
 }

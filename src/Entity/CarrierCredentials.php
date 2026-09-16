@@ -66,8 +66,15 @@ class CarrierCredentials implements CarrierCredentialsInterface
         return $this->credentials;
     }
 
+    /**
+     * Values left empty are not kept: an absent key means "not provided", so every stored value is a
+     * non-empty string the encrypter can handle.
+     */
     public function setCredentials(array $credentials): void
     {
-        $this->credentials = $credentials;
+        $this->credentials = array_filter(
+            $credentials,
+            static fn (?string $value): bool => null !== $value && '' !== $value,
+        );
     }
 }
