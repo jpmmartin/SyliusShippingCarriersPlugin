@@ -12,6 +12,12 @@
         </service>
         <service id="JpmMartin\SyliusShippingCarriersPlugin\Encryption\EncrypterInterface" alias="jpmmartin_carrier.encrypter" />
 
+        <service id="jpmmartin_carrier.console.command.generate_key" class="JpmMartin\SyliusShippingCarriersPlugin\Console\Command\GenerateEncryptionKeyCommand">
+            <argument type="service" id="filesystem" />
+            <argument>%env(resolve:JPMMARTIN_CARRIER_ENCRYPTION_KEY_PATH)%</argument>
+            <tag name="console.command" />
+        </service>
+
         <service id="jpmmartin_carrier.encrypter.credentials" class="JpmMartin\SyliusShippingCarriersPlugin\Encryption\CarrierCredentialsEncrypter">
             <argument type="service" id="jpmmartin_carrier.encrypter" />
         </service>
