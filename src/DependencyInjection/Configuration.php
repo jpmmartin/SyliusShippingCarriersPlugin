@@ -8,6 +8,10 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBox;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackage;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackageInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackaging;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackagingInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierPackageBoxRepository;
@@ -85,6 +89,36 @@ final class Configuration implements ConfigurationInterface
                                         ->scalarNode('interface')->defaultValue(CarrierPackageBoxInterface::class)->cannotBeEmpty()->end()
                                         ->scalarNode('controller')->defaultValue(ResourceController::class)->cannotBeEmpty()->end()
                                         ->scalarNode('repository')->defaultValue(CarrierPackageBoxRepository::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('shipment_packaging')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->variableNode('options')->end()
+                                ->arrayNode('classes')
+                                    ->addDefaultsIfNotSet()
+                                    ->children()
+                                        ->scalarNode('model')->defaultValue(CarrierShipmentPackaging::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('interface')->defaultValue(CarrierShipmentPackagingInterface::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('controller')->defaultValue(ResourceController::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('shipment_package')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->variableNode('options')->end()
+                                ->arrayNode('classes')
+                                    ->addDefaultsIfNotSet()
+                                    ->children()
+                                        ->scalarNode('model')->defaultValue(CarrierShipmentPackage::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('interface')->defaultValue(CarrierShipmentPackageInterface::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('controller')->defaultValue(ResourceController::class)->cannotBeEmpty()->end()
                                         ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
                                     ->end()
                                 ->end()
