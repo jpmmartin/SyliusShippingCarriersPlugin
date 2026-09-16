@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container
+        xmlns="http://symfony.com/schema/dic/services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+        <service id="jpmmartin_carrier.resolver.store_units" class="JpmMartin\SyliusShippingCarriersPlugin\Unit\StoreUnitsResolver">
+            <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
+        </service>
+        <service id="JpmMartin\SyliusShippingCarriersPlugin\Unit\StoreUnitsResolverInterface" alias="jpmmartin_carrier.resolver.store_units" />
+
+        <service id="jpmmartin_carrier.validator.same_units_as_other_origins" class="JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints\SameUnitsAsOtherOriginsValidator">
+            <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
+            <tag name="validator.constraint_validator" alias="jpmmartin_carrier_same_units_as_other_origins" />
+        </service>
+
+        <service id="jpmmartin_carrier.validator.within_carrier_size_limits" class="JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints\WithinCarrierSizeLimitsValidator">
+            <argument type="service" id="jpmmartin_carrier.resolver.store_units" />
+            <tag name="validator.constraint_validator" alias="jpmmartin_carrier_within_carrier_size_limits" />
+        </service>
+    </services>
+</container>

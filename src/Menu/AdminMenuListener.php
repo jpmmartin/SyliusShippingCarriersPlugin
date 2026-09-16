@@ -28,6 +28,18 @@ final class AdminMenuListener
         ;
 
         $configuration
+            ->addChild('jpmmartin_carrier_package_boxes', [
+                'route' => 'jpmmartin_carrier_admin_package_box_index',
+                'extras' => ['routes' => [
+                    ['route' => 'jpmmartin_carrier_admin_package_box_create'],
+                    ['route' => 'jpmmartin_carrier_admin_package_box_update'],
+                ]],
+            ])
+            ->setLabel('jpmmartin_carrier.ui.package_boxes')
+            ->setLabelAttribute('icon', 'tabler:cube')
+        ;
+
+        $configuration
             ->addChild('jpmmartin_carrier_credentials', [
                 'route' => 'jpmmartin_carrier_admin_credentials_index',
                 'extras' => ['routes' => [

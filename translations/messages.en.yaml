@@ -3,16 +3,35 @@ jpmmartin_carrier:
         shipping_origin: Shipping origin
         shipping_origins: Shipping origins
         credentials: Carrier credentials
+        package_box: Package box
+        package_boxes: Package boxes
+        box_grid:
+            outer_length: Outer length
+            outer_width: Outer width
+            outer_height: Outer height
+            max_weight: Maximum weight
     form:
         shipping_origin:
             weight_unit: Weight unit
             dimension_unit: Dimension unit
             max_package_weight: Maximum package weight
+            boxes: Boxes
+            boxes_help: Leave empty to use every box in the catalog.
             unit:
                 lb: Pounds (lb)
                 kg: Kilograms (kg)
                 in: Inches (in)
                 cm: Centimetres (cm)
+        package_box:
+            name: Name
+            inner_length: Inner length (%unit%)
+            inner_width: Inner width (%unit%)
+            inner_height: Inner height (%unit%)
+            outer_length: Outer length (%unit%)
+            outer_width: Outer width (%unit%)
+            outer_height: Outer height (%unit%)
+            empty_weight: Empty weight (%unit%)
+            max_weight: Maximum weight (%unit%)
         credentials:
             carrier: Carrier
             carriers:

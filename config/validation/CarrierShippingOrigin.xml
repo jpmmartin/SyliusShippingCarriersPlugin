@@ -13,6 +13,11 @@
             <option name="groups">sylius</option>
         </constraint>
 
+        <!-- Variant measures are shared by every channel, so every origin declares the same units (D-16). -->
+        <constraint name="JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints\SameUnitsAsOtherOrigins">
+            <option name="groups">sylius</option>
+        </constraint>
+
         <property name="channel">
             <constraint name="NotBlank">
                 <option name="groups">sylius</option>

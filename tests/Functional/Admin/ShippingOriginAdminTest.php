@@ -5,18 +5,16 @@ declare(strict_types=1);
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Functional\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
-use Sylius\Component\Addressing\Model\Country;
-use Sylius\Component\Core\Model\AdminUser;
-use Sylius\Component\Core\Model\Channel;
 use Sylius\Component\Core\Model\ChannelInterface;
-use Sylius\Component\Currency\Model\Currency;
-use Sylius\Component\Locale\Model\Locale;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class ShippingOriginAdminTest extends WebTestCase
 {
+    use AdminFixturesTrait;
+
     private const FORM = 'jpmmartin_carrier_shipping_origin';
 
     private KernelBrowser $client;
@@ -36,7 +34,7 @@ final class ShippingOriginAdminTest extends WebTestCase
         $this->entityManager = $entityManager;
         $this->entityManager->beginTransaction();
 
-        $this->client->loginUser($this->createAdmin(), 'admin');
+        $this->client->loginUser($this->createAdmin('origin-admin'), 'admin');
     }
 
     protected function tearDown(): void
@@ -56,10 +54,7 @@ final class ShippingOriginAdminTest extends WebTestCase
         $channel = $this->createChannel('web-admin-origin');
         $this->createCountry('ES');
 
-        $crawler = $this->client->request('GET', '/admin/shipping-origins/new');
-        self::assertResponseIsSuccessful();
-
-        $this->client->submit($crawler->filter(sprintf('form[name="%s"]', self::FORM))->form([
+        $this->submitCreateForm([
             self::FORM . '[channel]' => 'web-admin-origin',
             self::FORM . '[street]' => 'Gran Via 1',
             self::FORM . '[city]' => 'Madrid',
@@ -68,7 +63,7 @@ final class ShippingOriginAdminTest extends WebTestCase
             self::FORM . '[weightUnit]' => 'kg',
             self::FORM . '[dimensionUnit]' => 'cm',
             self::FORM . '[maxPackageWeight]' => '68',
-        ]));
+        ]);
         self::assertResponseRedirects();
 
         $origin = $this->findOriginOf($channel);
@@ -100,30 +95,80 @@ final class ShippingOriginAdminTest extends WebTestCase
 
     public function testASecondOriginForTheSameChannelIsAFormErrorNotAServerError(): void
     {
-        $channel = $this->createChannel('web-admin-duplicate');
+        $this->createOrigin($this->createChannel('web-admin-duplicate'));
         $this->createCountry('ES');
 
-        $existing = new CarrierShippingOrigin();
-        $existing->setChannel($channel);
-        $existing->setStreet('Gran Via 1');
-        $existing->setCity('Madrid');
-        $existing->setPostcode('28013');
-        $existing->setCountryCode('ES');
-        $this->entityManager->persist($existing);
-        $this->entityManager->flush();
-
-        $crawler = $this->client->request('GET', '/admin/shipping-origins/new');
-
-        $this->client->submit($crawler->filter(sprintf('form[name="%s"]', self::FORM))->form([
+        $this->submitCreateForm([
             self::FORM . '[channel]' => 'web-admin-duplicate',
             self::FORM . '[street]' => 'Diagonal 1',
             self::FORM . '[city]' => 'Barcelona',
             self::FORM . '[postcode]' => '08019',
             self::FORM . '[countryCode]' => 'ES',
-        ]));
+        ]);
 
         self::assertResponseStatusCodeSame(422);
         self::assertSelectorTextContains('body', 'This channel already has a shipping origin.');
+    }
+
+    /**
+     * D-16: variant measures are shared by every channel, so every origin declares the same units.
+     */
+    public function testAnOriginWithUnitsOtherOriginsDoNotUseIsRejected(): void
+    {
+        $this->createOrigin($this->createChannel('web-units-first'), 'lb', 'in');
+        $this->createChannel('web-units-second');
+        $this->createCountry('ES');
+
+        $this->submitCreateForm([
+            self::FORM . '[channel]' => 'web-units-second',
+            self::FORM . '[street]' => 'Diagonal 1',
+            self::FORM . '[city]' => 'Barcelona',
+            self::FORM . '[postcode]' => '08019',
+            self::FORM . '[countryCode]' => 'ES',
+            self::FORM . '[weightUnit]' => 'kg',
+            self::FORM . '[dimensionUnit]' => 'cm',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Every shipping origin must use the same units. The others use lb.');
+        self::assertSelectorTextContains('body', 'Every shipping origin must use the same units. The others use in.');
+    }
+
+    /**
+     * CA-35: an origin can be restricted to part of the catalog from its form.
+     */
+    public function testTheAdministratorRestrictsAnOriginToSomeBoxes(): void
+    {
+        $channel = $this->createChannel('web-admin-boxes');
+        $this->createCountry('ES');
+        $this->createBox('Small');
+        $large = $this->createBox('Large');
+
+        $this->submitCreateForm([
+            self::FORM . '[channel]' => 'web-admin-boxes',
+            self::FORM . '[street]' => 'Gran Via 1',
+            self::FORM . '[city]' => 'Madrid',
+            self::FORM . '[postcode]' => '28013',
+            self::FORM . '[countryCode]' => 'ES',
+            self::FORM . '[boxes]' => [(string) $large->getId()],
+        ]);
+        self::assertResponseRedirects();
+
+        $boxes = $this->findOriginOf($channel)->getBoxes();
+        self::assertCount(1, $boxes);
+
+        $box = $boxes->first();
+        self::assertInstanceOf(CarrierPackageBoxInterface::class, $box);
+        self::assertSame('Large', $box->getName());
+    }
+
+    /** @param array<string, string|list<string>> $values */
+    private function submitCreateForm(array $values): void
+    {
+        $crawler = $this->client->request('GET', '/admin/shipping-origins/new');
+        self::assertResponseIsSuccessful();
+
+        $this->client->submit($crawler->filter(sprintf('form[name="%s"]', self::FORM))->form($values));
     }
 
     private function findOriginOf(ChannelInterface $channel): CarrierShippingOrigin
@@ -134,59 +179,5 @@ final class ShippingOriginAdminTest extends WebTestCase
         self::assertInstanceOf(CarrierShippingOrigin::class, $origin);
 
         return $origin;
-    }
-
-    private function createAdmin(): AdminUser
-    {
-        $admin = new AdminUser();
-        $admin->setEmail('origin-admin@example.com');
-        $admin->setUsername('origin-admin');
-        $admin->setPlainPassword('sylius');
-        $admin->setEnabled(true);
-        $admin->setLocaleCode('en_US');
-
-        $this->entityManager->persist($admin);
-        $this->entityManager->flush();
-
-        return $admin;
-    }
-
-    private function createCountry(string $code): void
-    {
-        $country = new Country();
-        $country->setCode($code);
-        $country->setEnabled(true);
-
-        $this->entityManager->persist($country);
-        $this->entityManager->flush();
-    }
-
-    /**
-     * A Sylius channel cannot exist without a default locale and a base currency: both columns are
-     * NOT NULL in sylius_channel.
-     */
-    private function createChannel(string $code): ChannelInterface
-    {
-        $locale = new Locale();
-        $locale->setCode('en_US');
-
-        $currency = new Currency();
-        $currency->setCode('EUR');
-
-        $channel = new Channel();
-        $channel->setCode($code);
-        $channel->setName($code);
-        $channel->setDefaultLocale($locale);
-        $channel->addLocale($locale);
-        $channel->setBaseCurrency($currency);
-        $channel->addCurrency($currency);
-        $channel->setTaxCalculationStrategy('order_items_based');
-
-        $this->entityManager->persist($locale);
-        $this->entityManager->persist($currency);
-        $this->entityManager->persist($channel);
-        $this->entityManager->flush();
-
-        return $channel;
     }
 }

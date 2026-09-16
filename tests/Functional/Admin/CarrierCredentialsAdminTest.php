@@ -7,12 +7,13 @@ namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Functional\Admin;
 use Doctrine\ORM\EntityManagerInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use ParagonIE\Halite\KeyFactory;
-use Sylius\Component\Core\Model\AdminUser;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class CarrierCredentialsAdminTest extends WebTestCase
 {
+    use AdminFixturesTrait;
+
     private const FORM = 'jpmmartin_carrier_credentials';
 
     private const KEY_PATH_VARIABLE = 'JPMMARTIN_CARRIER_ENCRYPTION_KEY_PATH';
@@ -41,7 +42,7 @@ final class CarrierCredentialsAdminTest extends WebTestCase
         $this->entityManager = $entityManager;
         $this->entityManager->beginTransaction();
 
-        $this->client->loginUser($this->createAdmin(), 'admin');
+        $this->client->loginUser($this->createAdmin('credentials-admin'), 'admin');
     }
 
     protected function tearDown(): void
@@ -159,20 +160,5 @@ final class CarrierCredentialsAdminTest extends WebTestCase
         self::assertInstanceOf(CarrierCredentials::class, $credentials);
 
         return $credentials;
-    }
-
-    private function createAdmin(): AdminUser
-    {
-        $admin = new AdminUser();
-        $admin->setEmail('credentials-admin@example.com');
-        $admin->setUsername('credentials-admin');
-        $admin->setPlainPassword('sylius');
-        $admin->setEnabled(true);
-        $admin->setLocaleCode('en_US');
-
-        $this->entityManager->persist($admin);
-        $this->entityManager->flush();
-
-        return $admin;
     }
 }

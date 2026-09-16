@@ -11,7 +11,21 @@
             <argument type="collection">
                 <argument>sylius</argument>
             </argument>
+            <argument>%jpmmartin_carrier.model.package_box.class%</argument>
             <tag name="form.type" />
+        </service>
+
+        <service id="jpmmartin_carrier.form.type.package_box" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\CarrierPackageBoxType">
+            <argument>%jpmmartin_carrier.model.package_box.class%</argument>
+            <argument type="collection">
+                <argument>sylius</argument>
+            </argument>
+            <argument type="service" id="jpmmartin_carrier.resolver.store_units" />
+            <tag name="form.type" />
+        </service>
+
+        <service id="jpmmartin_carrier.grid.admin_package_box" class="JpmMartin\SyliusShippingCarriersPlugin\Grid\PackageBoxGrid">
+            <tag name="sylius.invokable_grid" />
         </service>
 
         <service id="jpmmartin_carrier.grid.admin_shipping_origin" class="JpmMartin\SyliusShippingCarriersPlugin\Grid\ShippingOriginGrid">

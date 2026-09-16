@@ -8,6 +8,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface
 use Sylius\Bundle\AddressingBundle\Form\Type\CountryCodeChoiceType;
 use Sylius\Bundle\ChannelBundle\Form\Type\ChannelChoiceType;
 use Sylius\Bundle\ResourceBundle\Form\Type\AbstractResourceType;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -15,6 +16,18 @@ use Symfony\Component\Form\FormBuilderInterface;
 
 final class CarrierShippingOriginType extends AbstractResourceType
 {
+    /**
+     * @param string[] $validationGroups
+     * @param class-string $boxClass
+     */
+    public function __construct(
+        string $dataClass,
+        array $validationGroups,
+        private readonly string $boxClass,
+    ) {
+        parent::__construct($dataClass, $validationGroups);
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -58,6 +71,16 @@ final class CarrierShippingOriginType extends AbstractResourceType
             ->add('maxPackageWeight', NumberType::class, [
                 'label' => 'jpmmartin_carrier.form.shipping_origin.max_package_weight',
                 'empty_data' => '0',
+            ])
+            // Optional restriction to part of the catalog; none selected means every box (CA-35).
+            ->add('boxes', EntityType::class, [
+                'class' => $this->boxClass,
+                'label' => 'jpmmartin_carrier.form.shipping_origin.boxes',
+                'help' => 'jpmmartin_carrier.form.shipping_origin.boxes_help',
+                'choice_label' => 'name',
+                'multiple' => true,
+                'required' => false,
+                'by_reference' => false,
             ])
         ;
     }

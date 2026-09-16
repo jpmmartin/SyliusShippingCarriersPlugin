@@ -17,6 +17,19 @@ jpmmartin_carrier_admin_shipping_origin:
         permission: true
     type: sylius.resource
 
+jpmmartin_carrier_admin_package_box:
+    resource: |
+        alias: jpmmartin_carrier.package_box
+        section: admin
+        templates: "@SyliusAdmin\\shared\\crud"
+        except: ['show']
+        redirect: update
+        grid: jpmmartin_carrier_admin_package_box
+        form:
+            type: JpmMartin\SyliusShippingCarriersPlugin\Form\Type\CarrierPackageBoxType
+        permission: true
+    type: sylius.resource
+
 jpmmartin_carrier_admin_credentials:
     resource: |
         alias: jpmmartin_carrier.credentials

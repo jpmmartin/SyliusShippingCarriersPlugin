@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<constraint-mapping
+        xmlns="http://symfony.com/schema/dic/constraint-mapping"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/constraint-mapping http://symfony.com/schema/dic/services/constraint-mapping-1.0.xsd"
+>
+    <class name="JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBox">
+        <constraint name="JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints\WithinCarrierSizeLimits">
+            <option name="groups">sylius</option>
+        </constraint>
+
+        <property name="name">
+            <constraint name="NotBlank">
+                <option name="groups">sylius</option>
+            </constraint>
+        </property>
+
+        <property name="innerLength">
+            <constraint name="NotBlank"><option name="groups">sylius</option></constraint>
+            <constraint name="Positive"><option name="groups">sylius</option></constraint>
+        </property>
+        <property name="innerWidth">
+            <constraint name="NotBlank"><option name="groups">sylius</option></constraint>
+            <constraint name="Positive"><option name="groups">sylius</option></constraint>
+        </property>
+        <property name="innerHeight">
+            <constraint name="NotBlank"><option name="groups">sylius</option></constraint>
+            <constraint name="Positive"><option name="groups">sylius</option></constraint>
+        </property>
+        <property name="outerLength">
+            <constraint name="NotBlank"><option name="groups">sylius</option></constraint>
+            <constraint name="Positive"><option name="groups">sylius</option></constraint>
+        </property>
+        <property name="outerWidth">
+            <constraint name="NotBlank"><option name="groups">sylius</option></constraint>
+            <constraint name="Positive"><option name="groups">sylius</option></constraint>
+        </property>
+        <property name="outerHeight">
+            <constraint name="NotBlank"><option name="groups">sylius</option></constraint>
+            <constraint name="Positive"><option name="groups">sylius</option></constraint>
+        </property>
+
+        <!-- A box may weigh nothing worth counting, but its tare is never negative (CA-37). -->
+        <property name="emptyWeight">
+            <constraint name="NotBlank"><option name="groups">sylius</option></constraint>
+            <constraint name="PositiveOrZero"><option name="groups">sylius</option></constraint>
+        </property>
+        <property name="maxWeight">
+            <constraint name="NotBlank"><option name="groups">sylius</option></constraint>
+            <constraint name="Positive"><option name="groups">sylius</option></constraint>
+        </property>
+    </class>
+</constraint-mapping>

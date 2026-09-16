@@ -2,6 +2,14 @@ jpmmartin_carrier:
     shipping_origin:
         channel:
             unique: This channel already has a shipping origin.
+        weight_unit:
+            same_as_other_origins: Every shipping origin must use the same units. The others use {{ unit }}.
+        dimension_unit:
+            same_as_other_origins: Every shipping origin must use the same units. The others use {{ unit }}.
+    package_box:
+        outer_length:
+            too_long: Carriers do not accept a box this long. The longest outer side can be at most {{ limit }} {{ unit }}.
+            length_plus_girth_too_large: Carriers do not accept a box this large. The longest outer side plus the girth around the other two can be at most {{ limit }} {{ unit }}.
     credentials:
         carrier:
             unique: This carrier already has credentials.
