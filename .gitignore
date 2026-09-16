@@ -34,20 +34,15 @@
 /tests/TestApplication/.env.local
 /tests/TestApplication/.env.*.local
 
-# Spec-Driven Development artifacts, kept out of the published package by choice.
-# CLAUDE.md Rule 3 ("Specs are deliberately not published") states this decision and its
-# consequences: the Rule 4 commit footer `Refs: specs/...` is a local navigation aid that
-# resolves only in the author's working copy, and the specs are not backed up by this
-# repository. This is intentional — do not "fix" it by committing /specs/.
-/specs/
-
-# OpenSpec working directory (config.yaml, changes/, specs/), kept out of the published package
-# by choice — same reasoning, and the same consequence, as specs/ above: nothing in it is part
-# of what a consumer installs, and nothing in it is backed up by this repository.
+# Spec-Driven Development artifacts (OpenSpec: config.yaml, changes/, specs/, research/), kept out
+# of the published package by choice. CLAUDE.md Rule 3 ("OpenSpec artifacts are deliberately not
+# published") states this decision and its consequences: the Rule 4 commit footer `Refs:` is a
+# local navigation aid that resolves only in the author's working copy, and the artifacts are not
+# backed up by this repository. This is intentional — do not "fix" it by committing /openspec/.
 /openspec/
 
 # Claude Code working files, kept out of the published package by choice — same reasoning
-# as specs/ above. The skills are authoring tools for this repository, not part of what a
+# as openspec/ above. The skills are authoring tools for this repository, not part of what a
 # consumer installs. settings.local.json is per-developer by convention in any case.
 /.claude/skills/
 /.claude/settings.local.json
