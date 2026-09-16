@@ -11,5 +11,17 @@
             <argument>%env(resolve:JPMMARTIN_CARRIER_ENCRYPTION_KEY_PATH)%</argument>
         </service>
         <service id="JpmMartin\SyliusShippingCarriersPlugin\Encryption\EncrypterInterface" alias="jpmmartin_carrier.encrypter" />
+
+        <service id="jpmmartin_carrier.encrypter.credentials" class="JpmMartin\SyliusShippingCarriersPlugin\Encryption\CarrierCredentialsEncrypter">
+            <argument type="service" id="jpmmartin_carrier.encrypter" />
+        </service>
+
+        <service id="jpmmartin_carrier.listener.credentials_encryption" class="JpmMartin\SyliusShippingCarriersPlugin\EventListener\EntityEncryptionListener">
+            <argument type="service" id="jpmmartin_carrier.encrypter.credentials" />
+            <argument>%jpmmartin_carrier.model.credentials.class%</argument>
+            <tag name="doctrine.event_listener" event="onFlush" />
+            <tag name="doctrine.event_listener" event="postFlush" />
+            <tag name="doctrine.event_listener" event="postLoad" />
+        </service>
     </services>
 </container>

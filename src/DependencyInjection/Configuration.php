@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\DependencyInjection;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use Sylius\Bundle\ResourceBundle\Controller\ResourceController;
@@ -48,6 +50,21 @@ final class Configuration implements ConfigurationInterface
                                     ->children()
                                         ->scalarNode('model')->defaultValue(CarrierShippingOrigin::class)->cannotBeEmpty()->end()
                                         ->scalarNode('interface')->defaultValue(CarrierShippingOriginInterface::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('controller')->defaultValue(ResourceController::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('credentials')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->variableNode('options')->end()
+                                ->arrayNode('classes')
+                                    ->addDefaultsIfNotSet()
+                                    ->children()
+                                        ->scalarNode('model')->defaultValue(CarrierCredentials::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('interface')->defaultValue(CarrierCredentialsInterface::class)->cannotBeEmpty()->end()
                                         ->scalarNode('controller')->defaultValue(ResourceController::class)->cannotBeEmpty()->end()
                                         ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
                                     ->end()
