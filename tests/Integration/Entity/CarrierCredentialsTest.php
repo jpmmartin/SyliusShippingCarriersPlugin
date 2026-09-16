@@ -120,9 +120,29 @@ final class CarrierCredentialsTest extends KernelTestCase
     {
         $credentials = new CarrierCredentials();
         $credentials->setCarrier(CarrierCredentialsInterface::CARRIER_FEDEX);
+        $credentials->setPickupType(CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED);
         $credentials->setCredentials(['api_key' => 'key']);
 
         self::assertNull($credentials->getEnvironment());
+
+        $this->entityManager->persist($credentials);
+
+        $this->expectException(NotNullConstraintViolationException::class);
+
+        $this->entityManager->flush();
+    }
+
+    /**
+     * CA-46: how packages reach the carrier changes the rates, so the database refuses credentials without it.
+     */
+    public function testThePickupTypeHasNoDefault(): void
+    {
+        $credentials = new CarrierCredentials();
+        $credentials->setCarrier(CarrierCredentialsInterface::CARRIER_UPS);
+        $credentials->setEnvironment(CarrierCredentialsInterface::ENVIRONMENT_SANDBOX);
+        $credentials->setCredentials(['api_key' => 'key']);
+
+        self::assertNull($credentials->getPickupType());
 
         $this->entityManager->persist($credentials);
 
@@ -148,6 +168,7 @@ final class CarrierCredentialsTest extends KernelTestCase
         $credentials = new CarrierCredentials();
         $credentials->setCarrier($carrier);
         $credentials->setEnvironment(CarrierCredentialsInterface::ENVIRONMENT_SANDBOX);
+        $credentials->setPickupType(CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED);
         $credentials->setCredentials(['client_id' => 'client-id-value', 'client_secret' => 's3cr3t-value']);
 
         return $credentials;

@@ -42,6 +42,12 @@ jpmmartin_carrier:
             environments:
                 sandbox: Sandbox (testing)
                 production: Production
+            pickup_type: How packages reach the carrier
+            choose_pickup_type: Choose how packages reach the carrier
+            pickup_types:
+                scheduled: Scheduled pickup
+                drop_off: Dropped off at a carrier location
+                on_demand: Pickup requested when needed
             client_id: Client ID
             client_secret: Client secret
             client_secret_help: Leave empty to keep the current secret.

@@ -27,6 +27,10 @@ class CarrierCredentials implements CarrierCredentialsInterface
     #[ORM\Column(type: 'string', length: 16)]
     protected ?string $environment = null;
 
+    /** No default either: it changes the price, so the administrator always chooses it (CA-46). */
+    #[ORM\Column(name: 'pickup_type', type: 'string', length: 16)]
+    protected ?string $pickupType = null;
+
     /**
      * Plain in memory, encrypted value by value in the database: EntityEncryptionListener encrypts
      * them on flush and decrypts them on load.
@@ -59,6 +63,16 @@ class CarrierCredentials implements CarrierCredentialsInterface
     public function setEnvironment(?string $environment): void
     {
         $this->environment = $environment;
+    }
+
+    public function getPickupType(): ?string
+    {
+        return $this->pickupType;
+    }
+
+    public function setPickupType(?string $pickupType): void
+    {
+        $this->pickupType = $pickupType;
     }
 
     public function getCredentials(): array

@@ -37,6 +37,7 @@ use ShipStream\Ups\Api\Model\PackagePackageWeight;
 use ShipStream\Ups\Api\Model\PackagePackagingType;
 use ShipStream\Ups\Api\Model\PackageWeightUnitOfMeasurement;
 use ShipStream\Ups\Api\Model\RateRequest as UpsRateRequest;
+use ShipStream\Ups\Api\Model\RateRequestPickupType;
 use ShipStream\Ups\Api\Model\RateRequestRequest;
 use ShipStream\Ups\Api\Model\RateRequestShipment;
 use ShipStream\Ups\Api\Model\RATERequestWrapper;
@@ -66,6 +67,17 @@ final class UpsCarrier implements CarrierInterface
     /** «02 - Package»: packaging of the shipper's own, not a UPS box. */
     private const PACKAGING_TYPE_PACKAGE = '02';
 
+    /**
+     * UPS pickup type codes: 01 Daily Pickup, 03 Customer Counter, 06 One Time Pickup (D-26).
+     *
+     * @var array<string, string>
+     */
+    private const PICKUP_TYPE_CODES = [
+        CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED => '01',
+        CarrierCredentialsInterface::PICKUP_TYPE_DROP_OFF => '03',
+        CarrierCredentialsInterface::PICKUP_TYPE_ON_DEMAND => '06',
+    ];
+
     public function __construct(
         private readonly CredentialsProvider $credentialsProvider,
         private readonly UpsClientFactory $clientFactory,
@@ -77,11 +89,13 @@ final class UpsCarrier implements CarrierInterface
         try {
             $credentials = $this->credentialsProvider->get(CarrierCredentialsInterface::CARRIER_UPS);
             $accountNumber = $credentials->getCredentials()[CarrierCredentialsInterface::ACCOUNT_NUMBER] ?? null;
+            $pickupTypeCode = self::PICKUP_TYPE_CODES[(string) $credentials->getPickupType()]
+                ?? throw new CarrierCredentialsException(sprintf('"%s" is not a pickup type UPS knows.', (string) $credentials->getPickupType()));
 
             $response = $this->clientFactory->create($credentials)->rate(
                 self::RATING_VERSION,
                 self::REQUEST_OPTION_SHOP,
-                $this->buildRequest($request, $accountNumber),
+                $this->buildRequest($request, $accountNumber, $pickupTypeCode),
             );
             if (!$response instanceof RATEResponseWrapper) {
                 throw new UnexpectedCarrierResponseException('UPS answered the rate request without a rate response.');
@@ -99,7 +113,7 @@ final class UpsCarrier implements CarrierInterface
         throw new CarrierUnavailableException('Tracking with UPS is not implemented yet.');
     }
 
-    private function buildRequest(RateRequest $request, ?string $accountNumber): RATERequestWrapper
+    private function buildRequest(RateRequest $request, ?string $accountNumber, string $pickupTypeCode): RATERequestWrapper
     {
         $shipper = (new RateShipmentShipper())->setAddress($this->address(new ShipperAddress(), $request->origin));
         $shipment = (new RateRequestShipment())
@@ -118,6 +132,8 @@ final class UpsCarrier implements CarrierInterface
         return (new RATERequestWrapper())->setRateRequest(
             (new UpsRateRequest())
                 ->setRequest((new RateRequestRequest())->setRequestOption(self::REQUEST_OPTION_SHOP))
+                // How packages reach UPS changes the rate chart it prices with (D-26).
+                ->setPickupType((new RateRequestPickupType())->setCode($pickupTypeCode))
                 ->setShipment($shipment),
         );
     }

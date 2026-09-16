@@ -127,6 +127,7 @@ final class UpsAccessTokenTest extends TestCase
         $credentials = new CarrierCredentials();
         $credentials->setCarrier(CarrierCredentialsInterface::CARRIER_UPS);
         $credentials->setEnvironment(CarrierCredentialsInterface::ENVIRONMENT_SANDBOX);
+        $credentials->setPickupType(CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED);
         $credentials->setCredentials([
             CarrierCredentialsInterface::CLIENT_ID => self::CLIENT_ID,
             CarrierCredentialsInterface::CLIENT_SECRET => 'ups-client-secret',

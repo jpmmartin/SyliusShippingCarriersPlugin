@@ -65,6 +65,7 @@ final class CarrierCredentialsAdminTest extends WebTestCase
         $this->submitCreateForm([
             self::FORM . '[carrier]' => 'ups',
             self::FORM . '[environment]' => 'sandbox',
+            self::FORM . '[pickupType]' => 'drop_off',
             self::FORM . '[credentials][client_id]' => 'client-id-1',
             self::FORM . '[credentials][client_secret]' => 'secret-1',
         ]);
@@ -72,6 +73,7 @@ final class CarrierCredentialsAdminTest extends WebTestCase
 
         $credentials = $this->findUpsCredentials();
         self::assertSame('sandbox', $credentials->getEnvironment());
+        self::assertSame('drop_off', $credentials->getPickupType());
         self::assertSame('secret-1', $credentials->getCredentials()['client_secret']);
         $id = $credentials->getId();
 
@@ -118,12 +120,30 @@ final class CarrierCredentialsAdminTest extends WebTestCase
         $this->submitCreateForm([
             self::FORM . '[carrier]' => 'ups',
             self::FORM . '[environment]' => '',
+            self::FORM . '[pickupType]' => 'drop_off',
             self::FORM . '[credentials][client_id]' => 'client-id-1',
             self::FORM . '[credentials][client_secret]' => 'secret-1',
         ]);
 
         self::assertResponseStatusCodeSame(422);
         self::assertSelectorTextContains('body', 'Choose whether these credentials go against the sandbox or production.');
+    }
+
+    /**
+     * CA-46: how packages reach the carrier changes the rates, so there is no default either.
+     */
+    public function testCredentialsWithoutAPickupTypeAreRejected(): void
+    {
+        $this->submitCreateForm([
+            self::FORM . '[carrier]' => 'ups',
+            self::FORM . '[environment]' => 'sandbox',
+            self::FORM . '[pickupType]' => '',
+            self::FORM . '[credentials][client_id]' => 'client-id-1',
+            self::FORM . '[credentials][client_secret]' => 'secret-1',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Choose how packages reach the carrier, since it changes the rates.');
     }
 
     /**
@@ -134,6 +154,7 @@ final class CarrierCredentialsAdminTest extends WebTestCase
         $this->submitCreateForm([
             self::FORM . '[carrier]' => 'fedex',
             self::FORM . '[environment]' => 'sandbox',
+            self::FORM . '[pickupType]' => 'drop_off',
             self::FORM . '[credentials][client_id]' => 'client-id-1',
             self::FORM . '[credentials][client_secret]' => 'secret-1',
             self::FORM . '[credentials][account_number]' => '',

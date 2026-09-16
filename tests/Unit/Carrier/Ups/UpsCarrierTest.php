@@ -18,6 +18,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
 use ParagonIE\Halite\KeyFactory;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
@@ -44,6 +45,8 @@ final class UpsCarrierTest extends TestCase
     ];
 
     private string $environment = CarrierCredentialsInterface::ENVIRONMENT_SANDBOX;
+
+    private ?string $pickupType = null;
 
     private string $keyPath;
 
@@ -146,6 +149,29 @@ final class UpsCarrierTest extends TestCase
         ], $this->sentShipment()['Package'][0]);
     }
 
+    /**
+     * CA-46 and D-26: the rates are asked for with how packages reach UPS.
+     */
+    #[DataProvider('pickupTypes')]
+    public function testThePickupTypeIsSentWithItsUpsCode(string $pickupType, string $code): void
+    {
+        $this->pickupType = $pickupType;
+
+        $this->carrier($this->json('rate-shop.json'))->rate($this->request());
+
+        self::assertSame(['Code' => $code], $this->sentRateRequest()['PickupType'] ?? null);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function pickupTypes(): iterable
+    {
+        yield 'scheduled pickup, 01 Daily Pickup' => [CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED, '01'];
+        yield 'dropped off, 03 Customer Counter' => [CarrierCredentialsInterface::PICKUP_TYPE_DROP_OFF, '03'];
+        yield 'pickup on demand, 06 One Time Pickup' => [CarrierCredentialsInterface::PICKUP_TYPE_ON_DEMAND, '06'];
+    }
+
     public function testTheSandboxAndProductionHostsFollowTheStoredEnvironment(): void
     {
         $this->carrier($this->json('rate-shop.json'))->rate($this->request());
@@ -185,6 +211,7 @@ final class UpsCarrierTest extends TestCase
         $credentials = new CarrierCredentials();
         $credentials->setCarrier(CarrierCredentialsInterface::CARRIER_UPS);
         $credentials->setEnvironment($this->environment);
+        $credentials->setPickupType($this->pickupType ?? CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED);
         $credentials->setCredentials($this->credentials);
 
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($rateResponse): MockResponse {
@@ -246,10 +273,27 @@ final class UpsCarrierTest extends TestCase
      */
     private function sentShipment(): array
     {
-        /** @var array{RateRequest: array{Shipment: array{Shipper: array<string, mixed>, ShipFrom: array{Address: array<string, mixed>}, ShipTo: array{Address: array<string, mixed>}, Package: list<array<string, mixed>>, ShipmentRatingOptions?: array<string, mixed>}}} $body */
+        return $this->sentRateRequest()['Shipment'];
+    }
+
+    /**
+     * @return array{
+     *     PickupType?: array<string, mixed>,
+     *     Shipment: array{
+     *         Shipper: array<string, mixed>,
+     *         ShipFrom: array{Address: array<string, mixed>},
+     *         ShipTo: array{Address: array<string, mixed>},
+     *         Package: list<array<string, mixed>>,
+     *         ShipmentRatingOptions?: array<string, mixed>,
+     *     },
+     * }
+     */
+    private function sentRateRequest(): array
+    {
+        /** @var array{RateRequest: array{PickupType?: array<string, mixed>, Shipment: array{Shipper: array<string, mixed>, ShipFrom: array{Address: array<string, mixed>}, ShipTo: array{Address: array<string, mixed>}, Package: list<array<string, mixed>>, ShipmentRatingOptions?: array<string, mixed>}}} $body */
         $body = json_decode($this->rateRequests()[0]['body'], true, flags: \JSON_THROW_ON_ERROR);
 
-        return $body['RateRequest']['Shipment'];
+        return $body['RateRequest'];
     }
 
     private function token(): MockResponse

@@ -22,7 +22,8 @@ final readonly class CredentialsProvider
     }
 
     /**
-     * @throws CarrierCredentialsException When none are stored for the carrier, or they lack the client id or secret
+     * @throws CarrierCredentialsException When none are stored for the carrier, or they lack the client id, the secret or
+     *                                     the pickup type
      */
     public function get(string $carrier): CarrierCredentialsInterface
     {
@@ -34,6 +35,10 @@ final readonly class CredentialsProvider
         $values = $credentials->getCredentials();
         if (!isset($values[CarrierCredentialsInterface::CLIENT_ID], $values[CarrierCredentialsInterface::CLIENT_SECRET])) {
             throw new CarrierCredentialsException(sprintf('The credentials of the carrier "%s" lack the client id or the client secret.', $carrier));
+        }
+
+        if (null === $credentials->getPickupType()) {
+            throw new CarrierCredentialsException(sprintf('The credentials of the carrier "%s" lack how packages reach it.', $carrier));
         }
 
         return $credentials;

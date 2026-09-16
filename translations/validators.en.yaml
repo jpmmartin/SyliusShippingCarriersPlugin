@@ -15,5 +15,7 @@ jpmmartin_carrier:
             unique: This carrier already has credentials.
         environment:
             not_blank: Choose whether these credentials go against the sandbox or production.
+        pickup_type:
+            not_blank: Choose how packages reach the carrier, since it changes the rates.
         account_number:
             required_for_fedex: FedEx needs an account number to quote rates.

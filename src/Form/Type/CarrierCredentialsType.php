@@ -33,6 +33,16 @@ final class CarrierCredentialsType extends AbstractResourceType
                     'jpmmartin_carrier.form.credentials.environments.production' => CarrierCredentialsInterface::ENVIRONMENT_PRODUCTION,
                 ],
             ])
+            // Nothing preselected either: it changes the price (CA-46).
+            ->add('pickupType', ChoiceType::class, [
+                'label' => 'jpmmartin_carrier.form.credentials.pickup_type',
+                'placeholder' => 'jpmmartin_carrier.form.credentials.choose_pickup_type',
+                'choices' => [
+                    'jpmmartin_carrier.form.credentials.pickup_types.scheduled' => CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED,
+                    'jpmmartin_carrier.form.credentials.pickup_types.drop_off' => CarrierCredentialsInterface::PICKUP_TYPE_DROP_OFF,
+                    'jpmmartin_carrier.form.credentials.pickup_types.on_demand' => CarrierCredentialsInterface::PICKUP_TYPE_ON_DEMAND,
+                ],
+            ])
             ->add('credentials', CarrierCredentialsDataType::class, [
                 'label' => false,
             ])
