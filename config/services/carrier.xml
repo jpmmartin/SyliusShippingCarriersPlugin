@@ -15,13 +15,13 @@
             <argument type="service" id="http_client" />
         </service>
 
-        <!-- Shared by every process, so the UPS access token is requested once per lifetime (D-25). -->
-        <service id="jpmmartin_carrier.cache.ups_access_token" parent="cache.adapter.filesystem">
+        <!-- Shared by every process, so a carrier's access token is requested once per lifetime (D-25). -->
+        <service id="jpmmartin_carrier.cache.access_token" parent="cache.adapter.filesystem">
             <tag name="cache.pool" />
         </service>
 
         <service id="jpmmartin_carrier.carrier.ups.access_token_cache" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsAccessTokenCache">
-            <argument type="service" id="jpmmartin_carrier.cache.ups_access_token" />
+            <argument type="service" id="jpmmartin_carrier.cache.access_token" />
             <argument type="service" id="jpmmartin_carrier.encrypter" />
         </service>
 
@@ -34,6 +34,17 @@
         <service id="jpmmartin_carrier.carrier.ups" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsCarrier">
             <argument type="service" id="jpmmartin_carrier.carrier.credentials_provider" />
             <argument type="service" id="jpmmartin_carrier.carrier.ups.client_factory" />
+        </service>
+
+        <service id="jpmmartin_carrier.carrier.fedex.connector_factory" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexConnectorFactory">
+            <argument type="service" id="jpmmartin_carrier.cache.access_token" />
+            <argument type="service" id="jpmmartin_carrier.encrypter" />
+            <argument type="service" id="lock.factory" />
+        </service>
+
+        <service id="jpmmartin_carrier.carrier.fedex" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexCarrier">
+            <argument type="service" id="jpmmartin_carrier.carrier.credentials_provider" />
+            <argument type="service" id="jpmmartin_carrier.carrier.fedex.connector_factory" />
         </service>
     </services>
 </container>

@@ -1,0 +1,9 @@
+{
+    "transactionId": "624deea6-b709-470c-8c39-4b5511281492",
+    "errors": [
+        {
+            "code": "RECIPIENT.POSTALCODE.INVALID",
+            "message": "Recipient postal code or routing code is required"
+        }
+    ]
+}

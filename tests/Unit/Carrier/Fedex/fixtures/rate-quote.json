@@ -1,0 +1,47 @@
+{
+    "transactionId": "624deea6-b709-470c-8c39-4b5511281492",
+    "output": {
+        "rateReplyDetails": [
+            {
+                "serviceType": "FEDEX_GROUND",
+                "serviceName": "FedEx Ground",
+                "packagingType": "YOUR_PACKAGING",
+                "ratedShipmentDetails": [
+                    {
+                        "rateType": "ACCOUNT",
+                        "ratedWeightMethod": "DIM",
+                        "totalNetCharge": 18.42,
+                        "shipmentRateDetail": {
+                            "currency": "USD"
+                        }
+                    },
+                    {
+                        "rateType": "LIST",
+                        "ratedWeightMethod": "DIM",
+                        "totalNetCharge": 24.1,
+                        "shipmentRateDetail": {
+                            "currency": "USD"
+                        }
+                    }
+                ]
+            },
+            {
+                "serviceType": "PRIORITY_OVERNIGHT",
+                "serviceName": "FedEx Priority Overnight",
+                "packagingType": "YOUR_PACKAGING",
+                "ratedShipmentDetails": [
+                    {
+                        "rateType": "LIST",
+                        "ratedWeightMethod": "ACTUAL",
+                        "totalNetCharge": 96.35,
+                        "shipmentRateDetail": {
+                            "currency": "USD"
+                        }
+                    }
+                ]
+            }
+        ],
+        "quoteDate": "2026-09-16",
+        "isEncoded": false
+    }
+}
