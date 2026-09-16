@@ -8,6 +8,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Address;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierCredentialsException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexConnectorFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
@@ -23,6 +24,7 @@ use PHPUnit\Framework\TestCase;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;
 use Saloon\Http\PendingRequest;
+use Saloon\RateLimitPlugin\Stores\MemoryStore;
 use ShipStream\FedEx\Api\AuthorizationV1\Requests\ApiAuthorization;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Requests\RateAndTransitTimes;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
@@ -66,6 +68,8 @@ final class FedexCarrierTest extends TestCase
 
     protected function setUp(): void
     {
+        // The SDK keeps its rate limits in a static store, shared by every test of the process.
+        MemoryStore::clear();
         $this->pool = new ArrayAdapter();
         $this->lockFactory = new LockFactory(new InMemoryStore());
         $this->keyPath = sys_get_temp_dir() . '/jpmmartin_carrier_fedex_' . bin2hex(random_bytes(8)) . '.key';
@@ -207,6 +211,23 @@ final class FedexCarrierTest extends TestCase
         $this->process()->rate($this->request());
 
         self::assertSame([[4.5, 4.5], [4.5, 4.5]], $this->timeouts);
+    }
+
+    /**
+     * Past FedEx's limit on token requests, 14 within 5 seconds, the SDK throws instead of asking again.
+     */
+    public function testTheSdkHoldingBackTooManyTokenRequestsIsAnUnavailableCarrier(): void
+    {
+        try {
+            for ($process = 1; $process <= 15; ++$process) {
+                // Each process with a cache of its own, so each one asks FedEx for a token.
+                $this->pool = new ArrayAdapter();
+                $this->process()->rate($this->request());
+            }
+            self::fail('FedEx was asked for 15 tokens within 5 seconds.');
+        } catch (CarrierUnavailableException $exception) {
+            self::assertStringContainsString('Request Rate Limit Reached', $exception->getMessage());
+        }
     }
 
     public function testWithoutAnAccountNumberFedexIsNotCalled(): void

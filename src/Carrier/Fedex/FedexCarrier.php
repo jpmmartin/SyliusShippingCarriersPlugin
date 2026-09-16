@@ -27,6 +27,7 @@ use Saloon\Exceptions\Request\Statuses\ForbiddenException;
 use Saloon\Exceptions\Request\Statuses\RequestTimeOutException;
 use Saloon\Exceptions\Request\Statuses\TooManyRequestsException;
 use Saloon\Exceptions\Request\Statuses\UnauthorizedException;
+use Saloon\RateLimitPlugin\Exceptions\RateLimitReachedException;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Dto\AccountNumber;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Dto\Address as FedexAddress;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Dto\Dimensions;
@@ -195,6 +196,8 @@ final class FedexCarrier implements CarrierInterface
             $exception instanceof CarrierException => $exception,
             $exception instanceof UnauthorizedException,
             $exception instanceof ForbiddenException => new CarrierCredentialsException(sprintf('FedEx rejected the credentials: %s', $this->errors($exception)), 0, $exception),
+            // The SDK itself holds back token requests past FedEx's published limits, before sending them.
+            $exception instanceof RateLimitReachedException => new CarrierUnavailableException(sprintf('FedEx refused the request: %s', $exception->getMessage()), 0, $exception),
             $exception instanceof TooManyRequestsException,
             $exception instanceof RequestTimeOutException,
             $exception instanceof ServerException => new CarrierUnavailableException(sprintf('FedEx answered with HTTP %d: %s', $exception->getStatus(), $this->errors($exception)), 0, $exception),
