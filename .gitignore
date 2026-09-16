@@ -41,6 +41,11 @@
 # repository. This is intentional — do not "fix" it by committing /specs/.
 /specs/
 
+# OpenSpec working directory (config.yaml, changes/, specs/), kept out of the published package
+# by choice — same reasoning, and the same consequence, as specs/ above: nothing in it is part
+# of what a consumer installs, and nothing in it is backed up by this repository.
+/openspec/
+
 # Claude Code working files, kept out of the published package by choice — same reasoning
 # as specs/ above. The skills are authoring tools for this repository, not part of what a
 # consumer installs. settings.local.json is per-developer by convention in any case.
