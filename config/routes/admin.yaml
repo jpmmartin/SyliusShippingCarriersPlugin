@@ -1,1 +1,18 @@
-# Define your own admin routes here
+# Classic `sylius.resource` routes, the way Sylius 2.2 declares its own admin CRUD
+# (AdminBundle/Resources/config/routing/tax_category.yml). Not #[AsResource]: it would register the
+# resource a second time, and its delete operations skip the CSRF check ResourceController does.
+#
+# Import this file under the admin prefix, e.g. `prefix: '/%sylius_admin.path_name%'`.
+
+jpmmartin_carrier_admin_shipping_origin:
+    resource: |
+        alias: jpmmartin_carrier.shipping_origin
+        section: admin
+        templates: "@SyliusAdmin\\shared\\crud"
+        except: ['show']
+        redirect: update
+        grid: jpmmartin_carrier_admin_shipping_origin
+        form:
+            type: JpmMartin\SyliusShippingCarriersPlugin\Form\Type\CarrierShippingOriginType
+        permission: true
+    type: sylius.resource

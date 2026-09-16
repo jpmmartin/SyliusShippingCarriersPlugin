@@ -1,0 +1,4 @@
+jpmmartin_carrier:
+    shipping_origin:
+        channel:
+            unique: This channel already has a shipping origin.

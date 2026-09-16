@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container
+        xmlns="http://symfony.com/schema/dic/services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+        <service id="jpmmartin_carrier.form.type.shipping_origin" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\CarrierShippingOriginType">
+            <argument>%jpmmartin_carrier.model.shipping_origin.class%</argument>
+            <argument type="collection">
+                <argument>sylius</argument>
+            </argument>
+            <tag name="form.type" />
+        </service>
+
+        <service id="jpmmartin_carrier.grid.admin_shipping_origin" class="JpmMartin\SyliusShippingCarriersPlugin\Grid\ShippingOriginGrid">
+            <tag name="sylius.invokable_grid" />
+        </service>
+
+        <service id="jpmmartin_carrier.listener.admin_menu" class="JpmMartin\SyliusShippingCarriersPlugin\Menu\AdminMenuListener">
+            <tag name="kernel.event_listener" event="sylius.menu.admin.main" />
+        </service>
+    </services>
+</container>

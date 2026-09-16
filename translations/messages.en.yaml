@@ -1,0 +1,14 @@
+jpmmartin_carrier:
+    ui:
+        shipping_origin: Shipping origin
+        shipping_origins: Shipping origins
+    form:
+        shipping_origin:
+            weight_unit: Weight unit
+            dimension_unit: Dimension unit
+            max_package_weight: Maximum package weight
+            unit:
+                lb: Pounds (lb)
+                kg: Kilograms (kg)
+                in: Inches (in)
+                cm: Centimetres (cm)
