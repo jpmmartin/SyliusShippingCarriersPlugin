@@ -78,7 +78,7 @@ final class FedexCarrier implements CarrierInterface
                 accountNumber: new AccountNumber($accountNumber),
                 requestedShipment: new RequestedShipment(
                     shipper: new RateParty($this->address($request->origin)),
-                    recipient: new RateParty($this->address($request->destination)),
+                    recipient: new RateParty($this->address($request->destination, $request->destination->residential)),
                     pickupType: $pickupType,
                     requestedPackageLineItems: array_map($this->package(...), $request->packages),
                     rateRequestType: [self::RATE_TYPE_ACCOUNT],
@@ -105,14 +105,17 @@ final class FedexCarrier implements CarrierInterface
 
     /**
      * FedEx rates without the street.
+     *
+     * @param bool|null $residential Only for the recipient, whether it is a home or a business (D-28)
      */
-    private function address(Address $address): FedexAddress
+    private function address(Address $address, ?bool $residential = null): FedexAddress
     {
         return new FedexAddress(
             city: $address->city,
             stateOrProvinceCode: $address->provinceCode,
             postalCode: $address->postcode,
             countryCode: $address->countryCode,
+            residential: $residential,
         );
     }
 

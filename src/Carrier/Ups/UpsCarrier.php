@@ -155,6 +155,11 @@ final class UpsCarrier implements CarrierInterface
             $upsAddress->setStateProvinceCode($address->provinceCode);
         }
 
+        // UPS reads the indicator by its presence alone, so it is only sent for a home (D-28).
+        if ($upsAddress instanceof ShipToAddress && $address->residential) {
+            $upsAddress->setResidentialAddressIndicator('Y');
+        }
+
         return $upsAddress;
     }
 

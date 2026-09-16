@@ -134,6 +134,20 @@ final class UpsCarrierTest extends TestCase
     }
 
     /**
+     * CA-48 and D-28: UPS reads the residential indicator by its presence, so only a home carries it.
+     */
+    public function testOnlyAResidentialDestinationCarriesTheResidentialIndicator(): void
+    {
+        $this->carrier($this->json('rate-shop.json'))->rate($this->request(destination: new Address('US', '98101', 'Seattle', '500 Pine St', 'WA', residential: true)));
+        self::assertArrayHasKey('ResidentialAddressIndicator', $this->sentShipment()['ShipTo']['Address']);
+        self::assertArrayNotHasKey('ResidentialAddressIndicator', $this->sentShipment()['ShipFrom']['Address']);
+
+        $this->requests = [];
+        $this->carrier($this->json('rate-shop.json'))->rate($this->request());
+        self::assertArrayNotHasKey('ResidentialAddressIndicator', $this->sentShipment()['ShipTo']['Address']);
+    }
+
+    /**
      * D-24: UPS takes whole measures, longest first, and the weight to a tenth, both rounded up.
      */
     public function testPackagesInCentimetresAndKilogramsAreSentRoundedUpLongestFirst(): void
@@ -245,11 +259,11 @@ final class UpsCarrierTest extends TestCase
         return $repository;
     }
 
-    private function request(?Package $package = null): RateRequest
+    private function request(?Package $package = null, ?Address $destination = null): RateRequest
     {
         return new RateRequest(
             new Address('US', '60601', 'Chicago', '1 Main St', 'IL'),
-            new Address('US', '98101', 'Seattle', '500 Pine St', 'WA'),
+            $destination ?? new Address('US', '98101', 'Seattle', '500 Pine St', 'WA'),
             [$package ?? new Package('Medium', 11.0, 13.2, 9.0, 'in', 5.55, 'lb', [])],
         );
     }

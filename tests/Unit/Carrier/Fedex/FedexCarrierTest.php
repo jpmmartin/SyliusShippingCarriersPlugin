@@ -114,7 +114,7 @@ final class FedexCarrierTest extends TestCase
             'accountNumber' => ['value' => '740561073'],
             'requestedShipment' => [
                 'shipper' => ['address' => ['city' => 'Chicago', 'stateOrProvinceCode' => 'IL', 'postalCode' => '60601', 'countryCode' => 'US']],
-                'recipient' => ['address' => ['city' => 'Seattle', 'stateOrProvinceCode' => 'WA', 'postalCode' => '98101', 'countryCode' => 'US']],
+                'recipient' => ['address' => ['city' => 'Seattle', 'stateOrProvinceCode' => 'WA', 'postalCode' => '98101', 'countryCode' => 'US', 'residential' => false]],
                 'pickupType' => 'USE_SCHEDULED_PICKUP',
                 'requestedPackageLineItems' => [
                     [
@@ -144,6 +144,20 @@ final class FedexCarrierTest extends TestCase
             ],
             $this->sentShipment()['requestedPackageLineItems'] ?? null,
         );
+    }
+
+    /**
+     * CA-48 and D-28: the recipient says whether it is a home; the shipper does not.
+     */
+    public function testTheRecipientSaysWhetherItIsAHome(): void
+    {
+        $this->process()->rate($this->request(destination: new Address('US', '98101', 'Seattle', '500 Pine St', 'WA', residential: true)));
+
+        /** @var array{recipient: array{address: array<string, mixed>}, shipper: array{address: array<string, mixed>}} $shipment */
+        $shipment = $this->sentShipment();
+
+        self::assertTrue($shipment['recipient']['address']['residential'] ?? null);
+        self::assertArrayNotHasKey('residential', $shipment['shipper']['address']);
     }
 
     /**
@@ -289,11 +303,11 @@ final class FedexCarrierTest extends TestCase
         ]);
     }
 
-    private function request(?Package $package = null): RateRequest
+    private function request(?Package $package = null, ?Address $destination = null): RateRequest
     {
         return new RateRequest(
             new Address('US', '60601', 'Chicago', '1 Main St', 'IL'),
-            new Address('US', '98101', 'Seattle', '500 Pine St', 'WA'),
+            $destination ?? new Address('US', '98101', 'Seattle', '500 Pine St', 'WA'),
             [$package ?? new Package('Medium', 11.0, 13.2, 9.0, 'in', 5.55, 'lb', [])],
         );
     }
