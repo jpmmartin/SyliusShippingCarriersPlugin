@@ -6,6 +6,16 @@ twig:
     paths:
         '%kernel.project_dir%/../../../tests/TestApplication/templates': ~
 
+# Kernel for EncrypterWithoutPaymentEncryptionTest: Sylius payment encryption off, so the test proves
+# the plugin's encrypter does not depend on it (D-6). The name does not start with "test" on purpose:
+# services_test.php would otherwise import the Behat services, whose bundle is only enabled for "test".
+when@no_payment_encryption:
+    framework:
+        test: true
+    sylius_payment:
+        encryption:
+            enabled: false
+
 # Remove if you do not need to extend entities
 doctrine:
     orm:
