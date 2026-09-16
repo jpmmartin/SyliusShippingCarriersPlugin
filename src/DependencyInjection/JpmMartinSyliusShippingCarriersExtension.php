@@ -20,6 +20,8 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
     {
         $config = $this->processConfiguration(new Configuration(), $configs);
 
+        $container->setParameter('jpmmartin_carrier.carrier_timeout', $config['carrier_timeout']);
+
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
 
         $loader->load('services.xml');

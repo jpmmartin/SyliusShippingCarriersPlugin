@@ -10,9 +10,11 @@
             <argument type="service" id="jpmmartin_carrier.repository.credentials" />
         </service>
 
-        <!-- PSR-18 over Symfony's client: it returns 4xx and 5xx responses instead of throwing, so the SDKs see them. -->
-        <service id="jpmmartin_carrier.carrier.http_client" class="Symfony\Component\HttpClient\Psr18Client">
+        <!-- PSR-18 over Symfony's client, with the carrier timeout (D-27). -->
+        <service id="jpmmartin_carrier.carrier.http_client" class="Psr\Http\Client\ClientInterface">
+            <factory class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierHttpClientFactory" method="create" />
             <argument type="service" id="http_client" />
+            <argument>%jpmmartin_carrier.carrier_timeout%</argument>
         </service>
 
         <!-- Shared by every process, so a carrier's access token is requested once per lifetime (D-25). -->
@@ -40,6 +42,7 @@
             <argument type="service" id="jpmmartin_carrier.cache.access_token" />
             <argument type="service" id="jpmmartin_carrier.encrypter" />
             <argument type="service" id="lock.factory" />
+            <argument>%jpmmartin_carrier.carrier_timeout%</argument>
         </service>
 
         <service id="jpmmartin_carrier.carrier.fedex" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexCarrier">

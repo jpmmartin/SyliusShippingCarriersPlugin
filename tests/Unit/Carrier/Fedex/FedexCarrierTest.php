@@ -53,6 +53,11 @@ final class FedexCarrierTest extends TestCase
 
     private string $pickupType = CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED;
 
+    private float $timeout = 10.0;
+
+    /** @var list<array{mixed, mixed}> The connect and request timeouts of every request FedEx received, the token request included */
+    private array $timeouts = [];
+
     private ArrayAdapter $pool;
 
     private LockFactory $lockFactory;
@@ -192,6 +197,18 @@ final class FedexCarrierTest extends TestCase
         self::assertNotEmpty($this->pool->getValues());
     }
 
+    /**
+     * CA-47 and D-27: no request to FedEx, the token request included, waits longer than the carrier timeout.
+     */
+    public function testEveryRequestCarriesTheCarrierTimeout(): void
+    {
+        $this->timeout = 4.5;
+
+        $this->process()->rate($this->request());
+
+        self::assertSame([[4.5, 4.5], [4.5, 4.5]], $this->timeouts);
+    }
+
     public function testWithoutAnAccountNumberFedexIsNotCalled(): void
     {
         unset($this->credentials[CarrierCredentialsInterface::ACCOUNT_NUMBER]);
@@ -227,7 +244,7 @@ final class FedexCarrierTest extends TestCase
 
         return new FedexCarrier(
             new CredentialsProvider($repository),
-            new FedexConnectorFactory($this->pool, new Encrypter($this->keyPath), $this->lockFactory),
+            new FedexConnectorFactory($this->pool, new Encrypter($this->keyPath), $this->lockFactory, $this->timeout),
         );
     }
 
@@ -235,12 +252,14 @@ final class FedexCarrierTest extends TestCase
     {
         MockClient::destroyGlobal();
         MockClient::global([
-            ApiAuthorization::class => function (): MockResponse {
+            ApiAuthorization::class => function (PendingRequest $pendingRequest): MockResponse {
                 ++$this->tokenRequests;
+                $this->timeouts[] = [$pendingRequest->config()->get('connect_timeout'), $pendingRequest->config()->get('timeout')];
 
                 return new MockResponse($this->fixture('token.json'), 200, ['Content-Type' => 'application/json']);
             },
             RateAndTransitTimes::class => function (PendingRequest $pendingRequest) use ($rateResponse): MockResponse {
+                $this->timeouts[] = [$pendingRequest->config()->get('connect_timeout'), $pendingRequest->config()->get('timeout')];
                 $body = $pendingRequest->body()?->all();
                 $this->rateRequests[] = ['url' => $pendingRequest->getUrl(), 'body' => \is_array($body) ? $body : []];
 
