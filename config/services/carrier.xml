@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container
+        xmlns="http://symfony.com/schema/dic/services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+        <service id="jpmmartin_carrier.carrier.credentials_provider" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider">
+            <argument type="service" id="jpmmartin_carrier.repository.credentials" />
+        </service>
+
+        <!-- PSR-18 over Symfony's client: it returns 4xx and 5xx responses instead of throwing, so the SDKs see them. -->
+        <service id="jpmmartin_carrier.carrier.http_client" class="Symfony\Component\HttpClient\Psr18Client">
+            <argument type="service" id="http_client" />
+        </service>
+
+        <service id="jpmmartin_carrier.carrier.ups.client_factory" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsClientFactory">
+            <argument type="service" id="jpmmartin_carrier.carrier.http_client" />
+        </service>
+
+        <service id="jpmmartin_carrier.carrier.ups" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsCarrier">
+            <argument type="service" id="jpmmartin_carrier.carrier.credentials_provider" />
+            <argument type="service" id="jpmmartin_carrier.carrier.ups.client_factory" />
+        </service>
+    </services>
+</container>

@@ -17,6 +17,14 @@ interface CarrierCredentialsInterface extends ResourceInterface, EncryptionAware
 
     public const ENVIRONMENT_PRODUCTION = 'production';
 
+    /** The keys of getCredentials() (D-13). */
+    public const CLIENT_ID = 'client_id';
+
+    public const CLIENT_SECRET = 'client_secret';
+
+    /** Required for FedEx; for UPS, it is what brings the negotiated rates (D-23). */
+    public const ACCOUNT_NUMBER = 'account_number';
+
     public function getCarrier(): ?string;
 
     public function setCarrier(?string $carrier): void;

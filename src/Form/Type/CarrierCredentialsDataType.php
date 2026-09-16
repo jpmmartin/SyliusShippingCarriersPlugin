@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Form\Type;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -14,11 +15,11 @@ use Symfony\Component\Form\FormBuilderInterface;
  */
 final class CarrierCredentialsDataType extends AbstractType
 {
-    public const CLIENT_ID = 'client_id';
+    public const CLIENT_ID = CarrierCredentialsInterface::CLIENT_ID;
 
-    public const CLIENT_SECRET = 'client_secret';
+    public const CLIENT_SECRET = CarrierCredentialsInterface::CLIENT_SECRET;
 
-    public const ACCOUNT_NUMBER = 'account_number';
+    public const ACCOUNT_NUMBER = CarrierCredentialsInterface::ACCOUNT_NUMBER;
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
