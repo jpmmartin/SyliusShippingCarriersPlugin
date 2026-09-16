@@ -10,17 +10,27 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\BoxSelector;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\DefaultPackagingStrategy;
+use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Exception\UnpackableShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\FallbackPackager;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierPackageBoxRepositoryInterface;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LogLevel;
 use Sylius\Component\Core\Model\ProductVariant;
 use Sylius\Component\Shipping\Model\ShipmentInterface;
 use Sylius\Component\Shipping\Model\ShipmentUnitInterface;
+use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
 
 final class DefaultPackagingStrategyTest extends TestCase
 {
+    private RecordingLogger $logger;
+
+    protected function setUp(): void
+    {
+        $this->logger = new RecordingLogger();
+    }
+
     public function testAShipmentThatFitsInOnePackage(): void
     {
         $first = $this->unit(5.0, 10.0, 10.0, 10.0);
@@ -102,6 +112,66 @@ final class DefaultPackagingStrategyTest extends TestCase
         self::assertSame([[$large], [$medium, $small]], [$packages[0]->units, $packages[1]->units]);
     }
 
+    public function testAVariantWithoutWeightMakesTheShipmentUnpackable(): void
+    {
+        $this->assertUnpackable(
+            'The variant "feather" has no weight declared.',
+            $this->strategy([$this->box('Big', [30.0, 30.0, 30.0], [31.0, 31.0, 31.0], 1.0)]),
+            $this->shipment($this->unit(null, 5.0, 5.0, 5.0, 'feather')),
+        );
+    }
+
+    public function testAWeightOf0CountsAsNoWeight(): void
+    {
+        $this->assertUnpackable(
+            'The variant "feather" has no weight declared.',
+            $this->strategy([$this->box('Big', [30.0, 30.0, 30.0], [31.0, 31.0, 31.0], 1.0)]),
+            $this->shipment($this->unit(0.0, 5.0, 5.0, 5.0, 'feather')),
+        );
+    }
+
+    public function testAVariantWithoutAMeasureMakesTheShipmentUnpackable(): void
+    {
+        $this->assertUnpackable(
+            'The variant "poster" has no depth declared.',
+            $this->strategy([$this->box('Big', [30.0, 30.0, 30.0], [31.0, 31.0, 31.0], 1.0)]),
+            $this->shipment($this->unit(1.0, 5.0, 5.0, 5.0), $this->unit(1.0, 20.0, 30.0, null, 'poster')),
+        );
+    }
+
+    public function testAMeasureOf0CountsAsNoMeasure(): void
+    {
+        $this->assertUnpackable(
+            'The variant "poster" has no width or height declared.',
+            $this->strategy([]),
+            $this->shipment($this->unit(1.0, 0.0, 0.0, 30.0, 'poster')),
+        );
+    }
+
+    /**
+     * CA-40: the shipment does not fall back to a package without a box.
+     */
+    public function testAUnitThatFitsNoBoxOnItsOwnMakesTheShipmentUnpackable(): void
+    {
+        $this->assertUnpackable(
+            'The variant "wardrobe" fits no box of the origin on its own, by volume or by weight.',
+            $this->strategy([$this->box('Big', [30.0, 30.0, 30.0], [31.0, 31.0, 31.0], 1.0)]),
+            $this->shipment($this->unit(1.0, 5.0, 5.0, 5.0), $this->unit(40.0, 60.0, 180.0, 50.0, 'wardrobe')),
+        );
+    }
+
+    /**
+     * CA-39 and D-21: without boxes, the maximum package weight still holds.
+     */
+    public function testWithoutBoxesAUnitHeavierThanTheMaximumMakesTheShipmentUnpackable(): void
+    {
+        $this->assertUnpackable(
+            'The variant "anvil" weighs 200 lb on its own, over the maximum package weight of 150 lb.',
+            $this->strategy([]),
+            $this->shipment($this->unit(1.0, 5.0, 5.0, 5.0), $this->unit(200.0, 10.0, 10.0, 20.0, 'anvil')),
+        );
+    }
+
     /**
      * @param list<CarrierPackageBox> $boxes
      */
@@ -111,20 +181,40 @@ final class DefaultPackagingStrategyTest extends TestCase
         $repository = $this->createStub(CarrierPackageBoxRepositoryInterface::class);
         $repository->method('findApplicableToOrigin')->willReturn($boxes);
 
-        return new DefaultPackagingStrategy($repository, new BoxSelector(), new FallbackPackager());
+        return new DefaultPackagingStrategy($repository, new BoxSelector(), new FallbackPackager(), $this->logger);
+    }
+
+    /**
+     * The reason is both the exception message and what is logged, at error level (D-22).
+     */
+    private function assertUnpackable(string $reason, DefaultPackagingStrategy $strategy, ShipmentInterface $shipment): void
+    {
+        try {
+            $strategy->pack($shipment, $this->origin());
+            self::fail('The shipment was packed.');
+        } catch (UnpackableShipmentException $exception) {
+            self::assertSame($reason, $exception->getMessage());
+        }
+
+        self::assertSame(
+            [[LogLevel::ERROR, 'The shipment cannot be packed, so it cannot be quoted: {reason}', ['reason' => $reason, 'shipment_id' => 7]]],
+            $this->logger->records,
+        );
     }
 
     private function shipment(ShipmentUnitInterface ...$units): ShipmentInterface
     {
         $shipment = $this->createStub(ShipmentInterface::class);
+        $shipment->method('getId')->willReturn(7);
         $shipment->method('getUnits')->willReturn(new ArrayCollection(array_values($units)));
 
         return $shipment;
     }
 
-    private function unit(float $weight, float $width, float $height, float $depth): ShipmentUnitInterface
+    private function unit(?float $weight, ?float $width, ?float $height, ?float $depth, string $code = 'variant'): ShipmentUnitInterface
     {
         $variant = new ProductVariant();
+        $variant->setCode($code);
         $variant->setWeight($weight);
         $variant->setWidth($width);
         $variant->setHeight($height);

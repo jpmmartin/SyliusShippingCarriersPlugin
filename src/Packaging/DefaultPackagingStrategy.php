@@ -8,6 +8,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Exception\UnpackableShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierPackageBoxRepositoryInterface;
+use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\ProductVariantInterface;
 use Sylius\Component\Shipping\Model\ShipmentInterface;
 use Sylius\Component\Shipping\Model\ShipmentUnitInterface;
@@ -18,6 +19,8 @@ use Webmozart\Assert\Assert;
  * a single package open, which it closes when the next unit would take it over the maximum weight or out
  * of every box (CA-14, D-20). Without boxes for the origin, the units are split by weight into fallback
  * packages (D-21).
+ *
+ * A shipment it cannot pack is logged with the reason before the exception leaves (CA-17, CA-39, CA-40).
  */
 final class DefaultPackagingStrategy implements PackagingStrategyInterface
 {
@@ -28,15 +31,26 @@ final class DefaultPackagingStrategy implements PackagingStrategyInterface
         private readonly CarrierPackageBoxRepositoryInterface $boxRepository,
         private readonly BoxSelector $boxSelector,
         private readonly FallbackPackager $fallbackPackager,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     public function pack(ShipmentInterface $shipment, CarrierShippingOriginInterface $origin): array
     {
-        $units = $this->measure($shipment);
-        $boxes = $this->boxRepository->findApplicableToOrigin($origin);
+        try {
+            $units = $this->measure($shipment);
+            $boxes = $this->boxRepository->findApplicableToOrigin($origin);
 
-        return [] === $boxes ? $this->packWithoutBoxes($units, $origin) : $this->packInBoxes($units, $boxes, $origin);
+            return [] === $boxes ? $this->packWithoutBoxes($units, $origin) : $this->packInBoxes($units, $boxes, $origin);
+        } catch (UnpackableShipmentException $exception) {
+            // At error level: below it, a production log may never write the entry (D-22).
+            $this->logger->error('The shipment cannot be packed, so it cannot be quoted: {reason}', [
+                'reason' => $exception->getMessage(),
+                'shipment_id' => $shipment->getId(),
+            ]);
+
+            throw $exception;
+        }
     }
 
     /**
@@ -71,7 +85,10 @@ final class DefaultPackagingStrategy implements PackagingStrategyInterface
 
             // Not even on its own: no fallback package hides it (CA-40).
             $box = $this->boxSelector->select($unit->volume(), $unit->weight, $origin->getMaxPackageWeight(), $boxes)
-                ?? throw new UnpackableShipmentException(sprintf('%s fits no box of the origin, not even on its own.', $this->describe($unit->unit)));
+                ?? throw new UnpackableShipmentException(sprintf(
+                    '%s fits no box of the origin on its own, by volume or by weight.',
+                    $this->describe($unit->unit),
+                ));
             $contents = [$unit];
             $volume = $unit->volume();
             $weight = $unit->weight;
@@ -98,7 +115,14 @@ final class DefaultPackagingStrategy implements PackagingStrategyInterface
 
         foreach ($units as $unit) {
             if ($unit->weight > $maxWeight) {
-                throw new UnpackableShipmentException(sprintf('%s weighs more than the maximum package weight on its own.', $this->describe($unit->unit)));
+                throw new UnpackableShipmentException(sprintf(
+                    '%s weighs %s %s on its own, over the maximum package weight of %s %s.',
+                    $this->describe($unit->unit),
+                    $unit->weight,
+                    $origin->getWeightUnit(),
+                    $maxWeight,
+                    $origin->getWeightUnit(),
+                ));
             }
 
             if ([] !== $contents && $weight + $unit->weight > $maxWeight) {
@@ -155,12 +179,23 @@ final class DefaultPackagingStrategy implements PackagingStrategyInterface
 
         foreach ($shipment->getUnits() as $unit) {
             $shippable = $unit->getShippable();
-            $weight = $shippable?->getShippingWeight();
-            $width = $shippable?->getShippingWidth();
-            $height = $shippable?->getShippingHeight();
-            $depth = $shippable?->getShippingDepth();
-            if (null === $weight || null === $width || null === $height || null === $depth) {
-                throw new UnpackableShipmentException(sprintf('%s has no weight or no measures declared.', $this->describe($unit)));
+            $weight = $this->declared($shippable?->getShippingWeight());
+            if (null === $weight) {
+                throw new UnpackableShipmentException(sprintf('%s has no weight declared.', $this->describe($unit)));
+            }
+
+            $measures = [
+                'width' => $this->declared($shippable?->getShippingWidth()),
+                'height' => $this->declared($shippable?->getShippingHeight()),
+                'depth' => $this->declared($shippable?->getShippingDepth()),
+            ];
+            ['width' => $width, 'height' => $height, 'depth' => $depth] = $measures;
+            if (null === $width || null === $height || null === $depth) {
+                throw new UnpackableShipmentException(sprintf(
+                    '%s has no %s declared.',
+                    $this->describe($unit),
+                    implode(' or ', array_keys(array_filter($measures, static fn (?float $measure): bool => null === $measure))),
+                ));
             }
 
             $units[] = new MeasuredUnit($unit, $weight, $width, $height, $depth);
@@ -175,6 +210,14 @@ final class DefaultPackagingStrategy implements PackagingStrategyInterface
             <=> [$one->volume(), $one->weight, $one->length, $one->width, $one->height]);
 
         return $units;
+    }
+
+    /**
+     * No unit weighs or measures 0, so a 0 is a value nobody declared (D-19).
+     */
+    private function declared(?float $value): ?float
+    {
+        return null !== $value && $value > 0.0 ? $value : null;
     }
 
     private function describe(ShipmentUnitInterface $unit): string
