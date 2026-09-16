@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\Carrier\Ups;
 
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Address;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierHttpClientFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierCredentialsException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
@@ -24,7 +25,6 @@ use PHPUnit\Framework\TestCase;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpClient\MockHttpClient;
-use Symfony\Component\HttpClient\Psr18Client;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\InMemoryStore;
@@ -227,7 +227,7 @@ final class UpsCarrierTest extends TestCase
     private function clientFactory(MockHttpClient $httpClient): UpsClientFactory
     {
         return new UpsClientFactory(
-            new Psr18Client($httpClient),
+            CarrierHttpClientFactory::create($httpClient, 10.0),
             new UpsAccessTokenCache(new ArrayAdapter(), new Encrypter($this->keyPath)),
             new LockFactory(new InMemoryStore()),
         );
