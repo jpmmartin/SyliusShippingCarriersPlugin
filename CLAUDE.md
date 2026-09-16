@@ -102,59 +102,77 @@ config, this file) does not settle a point, **mark it as unsettled** — do not 
 answer into the gap. "The docs don't specify this; here are the two readings" is a valid, preferred
 answer.
 
-## Rule 3 — Spec-Driven Development (SDD)
+## Rule 3 — Spec-Driven Development with OpenSpec
 
-The spec is the source of truth. Code serves the spec, not the other way around.
+The spec is the source of truth. Code serves the spec, not the other way around. Specs are managed
+with [OpenSpec](https://github.com/Fission-AI/OpenSpec) through its `/opsx:*` commands.
 
 ### When SDD applies
 - New features, new endpoints, integrations, schema changes, or any change touching 3+ files.
 - Does NOT apply to: typos, one-line bug fixes, dependency bumps, formatting. Do those directly.
 - When in doubt, ask: "Does this need a spec?"
 
-### Workflow (strict order, with approval gates)
-1. **Specify** — Create `specs/<NNN>-<slug>/spec.md` covering WHAT and WHY: problem statement,
-   user stories, testable acceptance criteria, out of scope. Zero implementation detail.
-   - STOP. Do not proceed until the spec is explicitly approved.
-2. **Plan** — Create `plan.md` in the same folder covering HOW: architecture, affected
-   files/modules, data model changes, API contracts, edge cases, testing strategy.
-   Open technical decisions are raised as questions, one per message, before writing the plan.
-   - STOP. Wait for approval.
-3. **Tasks** — Create `tasks.md`: a numbered checklist of small, independently verifiable tasks,
-   ordered by dependency.
-   - STOP. Wait for approval. This gate is not optional: step 4 is the first one that writes
-     code, so it is the last point at which a wrong decomposition is still cheap to fix.
-4. **Implement** — Execute one task at a time. After each task: run tests, check the box in
-   `tasks.md`, and reference the task number in the commit message (format: Rule 4).
-5. **Verify** — Before declaring anything done, walk through every acceptance criterion in
-   `spec.md` and confirm each one passes.
+### Workflow (strict order, one approval gate before code)
+1. **Explore** *(optional)* — `/opsx:explore` to think the problem through before anything is
+   written. Open technical decisions are raised here as questions, one per message.
+2. **Propose** — `/opsx:propose <NNN>-<slug>` creates `openspec/changes/<NNN>-<slug>/` and writes,
+   in one step: `proposal.md` (WHAT and WHY: problem, users, scope, out of scope),
+   `specs/<capability>/spec.md` (the behaviour the system must have, as requirements with
+   scenarios), `design.md` (HOW: architecture, data model, contracts, edge cases, testing strategy)
+   and `tasks.md` (a numbered checklist of small, independently verifiable tasks, ordered by
+   dependency). Then run `openspec validate <NNN>-<slug> --strict`: `/opsx:propose` does not
+   validate on its own.
+3. **Review** — STOP. Do not proceed until the four artifacts are explicitly approved. This is the
+   only gate before code, so spec, design and tasks are reviewed together while a wrong spec or a
+   wrong decomposition is still cheap to fix. Corrections go through `/opsx:update <NNN>-<slug>`.
+4. **Implement** — `/opsx:apply <NNN>-<slug>`. Execute one task at a time. After each task: run
+   tests, check the box in `tasks.md`, and reference the task in the commit message (format: Rule 4).
+5. **Verify** — Before declaring anything done, walk through every requirement and scenario of the
+   change (or `## Criterios de aceptación` in `proposal.md` when the change declares
+   `skip_specs: true`) and confirm each one passes. This step is manual: `/opsx:verify` is not part
+   of this workflow.
+6. **Archive** — `/opsx:archive <NNN>-<slug>` once every task is checked and step 5 passed. It merges
+   the change's specs into `openspec/specs/` and moves the change to
+   `openspec/changes/archive/YYYY-MM-DD-<NNN>-<slug>/`.
 
 ### Rules
-- Never write implementation code during Specify or Plan.
-- If implementation reveals the spec is wrong or incomplete: stop, propose a spec amendment, get
-  approval, then continue. Never diverge silently.
-- If a change is requested mid-implementation: update the spec first, then the code.
-- Ambiguous requirements = ask before speccing. Do not invent.
+- Never write implementation code during Explore, Propose or Review.
+- If implementation reveals the spec is wrong or incomplete: stop, propose the amendment with
+  `/opsx:update`, get approval, then continue. Never diverge silently.
+- If a change is requested mid-implementation: update the change's artifacts first, then the code.
+- Ambiguous requirements = ask before proposing. Do not invent.
+- A change with no behaviour of its own (documentation, tooling) declares `skip_specs: true` in its
+  `.openspec.yaml` right after the change is created and before any artifact is written.
+  `/opsx:propose` never decides that by itself.
+- Artifacts are written in Spanish. OpenSpec's structural headings (`## Purpose`,
+  `### Requirement:`, `#### Scenario:`, **WHEN**/**THEN**) and the SHALL/MUST keywords stay in
+  English: `openspec validate --strict` fails on a requirement without SHALL or MUST.
 
-### Specs are deliberately not published
+### OpenSpec artifacts are deliberately not published
 
-> **`specs/` is gitignored.** The SDD artifacts exist only in the author's working copy; they are
-> not part of the distributed package and no clone can see them.
+> **`openspec/` is gitignored.** Changes, specs and research exist only in the author's working
+> copy; they are not part of the distributed package and no clone can see them.
 >
 > Two consequences, stated so nobody is surprised:
-> - The `Refs: specs/…` footer in Rule 4 is a **local navigation aid only**. It resolves on the
->   author's machine and nowhere else.
-> - The specs are not backed up by the repository. Losing the working copy loses them.
+> - The `Refs:` footer in Rule 4 is a **local navigation aid only**. It resolves on the author's
+>   machine and nowhere else.
+> - The artifacts are not backed up by the repository. Losing the working copy loses them.
 >
-> Do not "fix" this by committing `specs/`. It is a decision, not an oversight.
+> Do not "fix" this by committing `openspec/`. It is a decision, not an oversight.
 
 ### Spec quality bar
-- Acceptance criteria must be verifiable ("returns 404 when X", not "handles errors properly").
-- One spec = one feature. Split anything bigger.
+- Requirements describe observable behaviour; implementation detail belongs in `design.md`.
+- Every requirement must be verifiable, and each scenario is a potential test ("returns 404 when X",
+  not "handles errors properly").
+- One change = one feature. Split anything bigger.
+- A requirement may carry `**ID**: <NNN>/CA-N` below its name. Inside a change's `tasks.md`,
+  «Cubre: CA-N» refers to that ID in the same change.
 
 ### Interaction between SDD and Rule 1
-Rule 1 fires hardest during **Plan**: every architectural option written into `plan.md` must be
-backed by pinned-version docs or `vendor/` source, and the plan must record what was checked. A
-`plan.md` containing an unverified claim about how Sylius, UPS or FedEx behaves is a defective plan.
+Rule 1 fires hardest when `design.md` is written or updated: every architectural option in it must
+be backed by pinned-version docs or `vendor/` source, and `design.md` must record what was checked.
+A `design.md` containing an unverified claim about how Sylius, UPS or FedEx behaves is a defective
+design.
 
 ## Rule 4 — Conventional Commits
 
@@ -212,6 +230,13 @@ Note `docs`, not `doc`.
 > release notes and do not pretend the mapping is binding for it.
 >
 > From `1.0.0` onward this obligation never relaxes.
+
+### Task references
+
+A commit that implements a task of a change ends with the footer `Refs: <change>#T-NN`, for example
+`Refs: 001-carrier-rates-and-tracking#T-05`. It names the change and the task, not a path: the path
+changes when the change is archived. Commits made before the move to OpenSpec use
+`Refs: specs/<change>/tasks.md#T-NN`; read them as the same change and task.
 
 ## Development Commands
 
