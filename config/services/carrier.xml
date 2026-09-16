@@ -15,8 +15,20 @@
             <argument type="service" id="http_client" />
         </service>
 
+        <!-- Shared by every process, so the UPS access token is requested once per lifetime (D-25). -->
+        <service id="jpmmartin_carrier.cache.ups_access_token" parent="cache.adapter.filesystem">
+            <tag name="cache.pool" />
+        </service>
+
+        <service id="jpmmartin_carrier.carrier.ups.access_token_cache" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsAccessTokenCache">
+            <argument type="service" id="jpmmartin_carrier.cache.ups_access_token" />
+            <argument type="service" id="jpmmartin_carrier.encrypter" />
+        </service>
+
         <service id="jpmmartin_carrier.carrier.ups.client_factory" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsClientFactory">
             <argument type="service" id="jpmmartin_carrier.carrier.http_client" />
+            <argument type="service" id="jpmmartin_carrier.carrier.ups.access_token_cache" />
+            <argument type="service" id="lock.factory" />
         </service>
 
         <service id="jpmmartin_carrier.carrier.ups" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsCarrier">

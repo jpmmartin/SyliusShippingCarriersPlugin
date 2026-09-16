@@ -9,18 +9,24 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierCredentialsException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsAccessTokenCache;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsClientFactory;
+use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Encrypter;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
+use ParagonIE\Halite\KeyFactory;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Psr18Client;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore;
 
 /**
  * Against the fixtures in `fixtures/`, written from the SDK's schemas and not checked against UPS yet.
@@ -38,6 +44,21 @@ final class UpsCarrierTest extends TestCase
     ];
 
     private string $environment = CarrierCredentialsInterface::ENVIRONMENT_SANDBOX;
+
+    private string $keyPath;
+
+    protected function setUp(): void
+    {
+        $this->keyPath = sys_get_temp_dir() . '/jpmmartin_carrier_ups_' . bin2hex(random_bytes(8)) . '.key';
+        KeyFactory::save(KeyFactory::generateEncryptionKey(), $this->keyPath);
+    }
+
+    protected function tearDown(): void
+    {
+        if (is_file($this->keyPath)) {
+            unlink($this->keyPath);
+        }
+    }
 
     public function testEveryServiceIsRatedInASingleCall(): void
     {
@@ -140,7 +161,7 @@ final class UpsCarrierTest extends TestCase
     {
         $carrier = new UpsCarrier(
             new CredentialsProvider($this->repository(null)),
-            new UpsClientFactory(new Psr18Client(new MockHttpClient(fn () => self::fail('UPS was called.')))),
+            $this->clientFactory(new MockHttpClient(fn () => self::fail('UPS was called.'))),
         );
 
         $this->expectException(CarrierCredentialsException::class);
@@ -173,9 +194,15 @@ final class UpsCarrierTest extends TestCase
             return str_contains($url, '/security/v1/oauth/token') ? $this->token() : $rateResponse;
         });
 
-        return new UpsCarrier(
-            new CredentialsProvider($this->repository($credentials)),
-            new UpsClientFactory(new Psr18Client($httpClient)),
+        return new UpsCarrier(new CredentialsProvider($this->repository($credentials)), $this->clientFactory($httpClient));
+    }
+
+    private function clientFactory(MockHttpClient $httpClient): UpsClientFactory
+    {
+        return new UpsClientFactory(
+            new Psr18Client($httpClient),
+            new UpsAccessTokenCache(new ArrayAdapter(), new Encrypter($this->keyPath)),
+            new LockFactory(new InMemoryStore()),
         );
     }
 
