@@ -6,8 +6,11 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\DependencyInjection;
 
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBox;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierPackageBoxRepository;
 use Sylius\Bundle\ResourceBundle\Controller\ResourceController;
 use Sylius\Bundle\ResourceBundle\SyliusResourceBundle;
 use Sylius\Resource\Factory\Factory;
@@ -66,6 +69,22 @@ final class Configuration implements ConfigurationInterface
                                         ->scalarNode('model')->defaultValue(CarrierCredentials::class)->cannotBeEmpty()->end()
                                         ->scalarNode('interface')->defaultValue(CarrierCredentialsInterface::class)->cannotBeEmpty()->end()
                                         ->scalarNode('controller')->defaultValue(ResourceController::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('package_box')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->variableNode('options')->end()
+                                ->arrayNode('classes')
+                                    ->addDefaultsIfNotSet()
+                                    ->children()
+                                        ->scalarNode('model')->defaultValue(CarrierPackageBox::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('interface')->defaultValue(CarrierPackageBoxInterface::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('controller')->defaultValue(ResourceController::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('repository')->defaultValue(CarrierPackageBoxRepository::class)->cannotBeEmpty()->end()
                                         ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
                                     ->end()
                                 ->end()

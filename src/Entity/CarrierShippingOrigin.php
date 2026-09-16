@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Sylius\Component\Core\Model\ChannelInterface;
 
@@ -61,6 +63,23 @@ class CarrierShippingOrigin implements CarrierShippingOriginInterface
 
     #[ORM\Column(name: 'max_package_weight', type: 'float')]
     protected float $maxPackageWeight = self::DEFAULT_MAX_PACKAGE_WEIGHT_LB;
+
+    /**
+     * Optional restriction to part of the catalog; empty means every box (CA-35). Removing a box or an
+     * origin removes the assignment, never the other side.
+     *
+     * @var Collection<int, CarrierPackageBoxInterface>
+     */
+    #[ORM\ManyToMany(targetEntity: CarrierPackageBoxInterface::class)]
+    #[ORM\JoinTable(name: 'jpmmartin_carrier_shipping_origin_box')]
+    #[ORM\JoinColumn(name: 'origin_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'box_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    protected Collection $boxes;
+
+    public function __construct()
+    {
+        $this->boxes = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -155,5 +174,27 @@ class CarrierShippingOrigin implements CarrierShippingOriginInterface
     public function setMaxPackageWeight(float $maxPackageWeight): void
     {
         $this->maxPackageWeight = $maxPackageWeight;
+    }
+
+    public function getBoxes(): Collection
+    {
+        return $this->boxes;
+    }
+
+    public function hasBox(CarrierPackageBoxInterface $box): bool
+    {
+        return $this->boxes->contains($box);
+    }
+
+    public function addBox(CarrierPackageBoxInterface $box): void
+    {
+        if (!$this->hasBox($box)) {
+            $this->boxes->add($box);
+        }
+    }
+
+    public function removeBox(CarrierPackageBoxInterface $box): void
+    {
+        $this->boxes->removeElement($box);
     }
 }

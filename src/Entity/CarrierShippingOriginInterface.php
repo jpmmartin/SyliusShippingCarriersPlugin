@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Entity;
 
+use Doctrine\Common\Collections\Collection;
 use Sylius\Component\Core\Model\ChannelInterface;
 use Sylius\Resource\Model\ResourceInterface;
 
@@ -62,4 +63,17 @@ interface CarrierShippingOriginInterface extends ResourceInterface
     public function getMaxPackageWeight(): float;
 
     public function setMaxPackageWeight(float $maxPackageWeight): void;
+
+    /**
+     * The boxes this origin is restricted to. Empty means the whole catalog (CA-35).
+     *
+     * @return Collection<int, CarrierPackageBoxInterface>
+     */
+    public function getBoxes(): Collection;
+
+    public function hasBox(CarrierPackageBoxInterface $box): bool;
+
+    public function addBox(CarrierPackageBoxInterface $box): void;
+
+    public function removeBox(CarrierPackageBoxInterface $box): void;
 }
