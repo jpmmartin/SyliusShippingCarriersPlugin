@@ -48,11 +48,20 @@ trait ShopCheckoutFixturesTrait
 {
     private const CHANNEL = 'WEB-CARRIER';
 
+    /** The shipping method a store already had before the plugin arrived. */
+    private const FLAT_RATE_METHOD = 'STANDARD-DELIVERY';
+
+    private const FLAT_RATE_AMOUNT = 799;
+
     private ChannelInterface $channel;
 
     private ShippingMethodInterface $upsGround;
 
-    private function createStore(): void
+    /**
+     * @param bool $withCarrierMethod False leaves the store as it was before the plugin arrived: its only shipping
+     *                                method is a flat rate of its own
+     */
+    private function createStore(bool $withCarrierMethod = true): void
     {
         $locale = new Locale();
         $locale->setCode('en_US');
@@ -83,17 +92,24 @@ trait ShopCheckoutFixturesTrait
         $zone->setScope(Scope::ALL);
         $zone->addMember($member);
 
-        $upsGround = new ShippingMethod();
-        $upsGround->setCode('UPS_GROUND');
-        $upsGround->setCurrentLocale('en_US');
-        $upsGround->setFallbackLocale('en_US');
-        $upsGround->setName('UPS Ground');
-        $upsGround->setZone($zone);
-        $upsGround->setCalculator('ups_rate');
-        $upsGround->setConfiguration(['service' => '03', 'failure_policy' => 'hide']);
-        $upsGround->addChannel($channel);
-        $upsGround->setEnabled(true);
-        $this->upsGround = $upsGround;
+        $shippingMethod = new ShippingMethod();
+        $shippingMethod->setCurrentLocale('en_US');
+        $shippingMethod->setFallbackLocale('en_US');
+        $shippingMethod->setZone($zone);
+        if ($withCarrierMethod) {
+            $shippingMethod->setCode('UPS_GROUND');
+            $shippingMethod->setName('UPS Ground');
+            $shippingMethod->setCalculator('ups_rate');
+            $shippingMethod->setConfiguration(['service' => '03', 'failure_policy' => 'hide']);
+        } else {
+            $shippingMethod->setCode(self::FLAT_RATE_METHOD);
+            $shippingMethod->setName('Standard delivery');
+            $shippingMethod->setCalculator('flat_rate');
+            $shippingMethod->setConfiguration([self::CHANNEL => ['amount' => self::FLAT_RATE_AMOUNT]]);
+        }
+        $shippingMethod->addChannel($channel);
+        $shippingMethod->setEnabled(true);
+        $this->upsGround = $shippingMethod;
 
         $paymentMethodFactory = self::getContainer()->get('sylius.factory.payment_method');
         self::assertInstanceOf(PaymentMethodFactoryInterface::class, $paymentMethodFactory);
@@ -130,7 +146,7 @@ trait ShopCheckoutFixturesTrait
         $product->addChannel($channel);
         $product->addVariant($variant);
 
-        foreach ([$locale, $currency, $country, $channel, $zone, $upsGround, $paymentMethod, $product] as $entity) {
+        foreach ([$locale, $currency, $country, $channel, $zone, $shippingMethod, $paymentMethod, $product] as $entity) {
             $this->entityManager->persist($entity);
         }
         $this->entityManager->flush();
@@ -197,12 +213,12 @@ trait ShopCheckoutFixturesTrait
     /**
      * Chooses the carrier's shipping method and the payment method, and confirms the order, the way a buyer does.
      */
-    private function completeTheCheckoutInTheShop(): void
+    private function completeTheCheckoutInTheShop(string $shippingMethodCode = 'UPS_GROUND'): void
     {
         $crawler = $this->client->request('GET', '/en_US/checkout/select-shipping');
         self::assertResponseIsSuccessful();
         $this->client->submit($crawler->filter('form[name="sylius_shop_checkout_select_shipping"]')->form([
-            'sylius_shop_checkout_select_shipping[shipments][0][method]' => 'UPS_GROUND',
+            'sylius_shop_checkout_select_shipping[shipments][0][method]' => $shippingMethodCode,
         ]));
         self::assertResponseRedirects();
 
