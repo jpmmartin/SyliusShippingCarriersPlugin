@@ -40,6 +40,21 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
         $this->prependRateCachePool($container);
         $this->prependCarrierServices($container);
         $this->prependShippingMethodValidationGroups($container);
+        $this->prependApiPlatformMapping($container);
+    }
+
+    /**
+     * The shop API operations the plugin adds, such as the destination type of an order.
+     */
+    private function prependApiPlatformMapping(ContainerBuilder $container): void
+    {
+        if (!$container->hasExtension('api_platform')) {
+            return;
+        }
+
+        $container->prependExtensionConfig('api_platform', [
+            'mapping' => ['paths' => [realpath(__DIR__ . '/../../config/api_platform')]],
+        ]);
     }
 
     /**

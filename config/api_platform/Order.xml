@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<resources
+    xmlns="https://api-platform.com/schema/metadata/resources-3.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://api-platform.com/schema/metadata/resources-3.0 https://api-platform.com/schema/metadata/resources-3.0.xsd"
+>
+    <!-- Sylius restricts every shop operation on an order to carts, so another order's token is not found. -->
+    <resource class="%sylius.model.order.class%">
+        <operations>
+            <operation
+                name="jpmmartin_carrier_shop_order_destination_type_put"
+                class="ApiPlatform\Metadata\Put"
+                uriTemplate="/shop/orders/{tokenValue}/destination-type"
+                messenger="input"
+                input="JpmMartin\SyliusShippingCarriersPlugin\Api\Command\SetOrderDestinationType"
+            >
+                <uriVariables>
+                    <uriVariable parameterName="tokenValue" fromClass="%sylius.model.order.class%"/>
+                </uriVariables>
+                <validationContext>
+                    <values>
+                        <value name="groups">
+                            <values>
+                                <value>sylius</value>
+                            </values>
+                        </value>
+                    </values>
+                </validationContext>
+                <normalizationContext>
+                    <values>
+                        <value name="groups">
+                            <values>
+                                <value>sylius:shop:cart:show</value>
+                            </values>
+                        </value>
+                    </values>
+                </normalizationContext>
+            </operation>
+        </operations>
+    </resource>
+</resources>

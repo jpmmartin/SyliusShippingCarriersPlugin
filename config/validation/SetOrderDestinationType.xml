@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<constraint-mapping
+        xmlns="http://symfony.com/schema/dic/constraint-mapping"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/constraint-mapping http://symfony.com/schema/dic/services/constraint-mapping-1.0.xsd"
+>
+    <class name="JpmMartin\SyliusShippingCarriersPlugin\Api\Command\SetOrderDestinationType">
+        <property name="type">
+            <constraint name="NotBlank">
+                <option name="message">jpmmartin_carrier.checkout.destination_type.not_blank</option>
+                <option name="groups">sylius</option>
+            </constraint>
+            <constraint name="Choice">
+                <option name="choices">
+                    <value>residential</value>
+                    <value>commercial</value>
+                </option>
+                <option name="groups">sylius</option>
+            </constraint>
+        </property>
+    </class>
+</constraint-mapping>
