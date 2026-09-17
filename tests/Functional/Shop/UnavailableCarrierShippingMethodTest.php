@@ -132,7 +132,7 @@ final class UnavailableCarrierShippingMethodTest extends WebTestCase
         $this->client->submit($crawler->filter('form[name="sylius_checkout_complete"]')->form());
 
         self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('UPS Ground', (string) $this->client->getResponse()->getContent());
+        $this->assertTheBuyerIsToldTheMethodIsUnavailable();
         $this->assertStillACart($order);
     }
 
@@ -149,7 +149,13 @@ final class UnavailableCarrierShippingMethodTest extends WebTestCase
         );
 
         self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('UPS Ground', (string) $this->client->getResponse()->getContent());
+        $response = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($response);
+        self::assertIsArray($response['violations'] ?? null);
+        self::assertSame(
+            ['The shipping method UPS Ground is not available right now. Please choose another shipping method.'],
+            array_column($response['violations'], 'message'),
+        );
         $this->assertStillACart($order);
     }
 
@@ -184,6 +190,18 @@ final class UnavailableCarrierShippingMethodTest extends WebTestCase
         $adjustment = $shipment->getAdjustments(AdjustmentInterface::SHIPPING_ADJUSTMENT)->first();
         self::assertInstanceOf(AdjustmentInterface::class, $adjustment);
         self::assertSame('flat', $adjustment->getDetails()['carrierRateSource'] ?? null);
+    }
+
+    /**
+     * Said once in the page, and not blamed on the products of the order as Sylius's own message for an ineligible
+     * method does.
+     */
+    private function assertTheBuyerIsToldTheMethodIsUnavailable(): void
+    {
+        $content = html_entity_decode((string) $this->client->getResponse()->getContent());
+
+        self::assertSame(1, substr_count($content, 'The shipping method UPS Ground is not available right now. Please choose another shipping method.'));
+        self::assertStringNotContainsString('does not fit requirements', $content);
     }
 
     private function assertStillACart(OrderInterface $order): void

@@ -15,6 +15,8 @@ jpmmartin_carrier:
             invalid: Choose whether this shipping method is hidden or offered at a flat amount when the carrier does not answer.
         flat_amount:
             required: Enter the flat amount for the channel {{ channel }}.
+    order:
+        shipping_method_unavailable: The shipping method {{ shipping_method }} is not available right now. Please choose another shipping method.
     checkout:
         destination_type:
             not_blank: Tell us whether we are delivering to a home or a business.
