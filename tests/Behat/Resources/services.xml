@@ -50,6 +50,10 @@
         </service>
 
         <!-- Pages -->
+        <service id="jpmmartin_carrier.behat.page.admin.carrier_credentials.create" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Page\Admin\CarrierCredentials\CreatePage" parent="sylius.behat.page.admin.crud.create" public="false">
+            <argument type="string">jpmmartin_carrier_admin_credentials_create</argument>
+        </service>
+
         <service id="jpmmartin_carrier.behat.page.admin.shipping_origin.create" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Page\Admin\ShippingOrigin\CreatePage" parent="sylius.behat.page.admin.crud.create" public="false">
             <argument type="string">jpmmartin_carrier_admin_shipping_origin_create</argument>
         </service>
@@ -58,12 +62,24 @@
             <argument type="string">jpmmartin_carrier_admin_shipping_origin_index</argument>
         </service>
 
+        <!-- Api -->
+        <service id="jpmmartin_carrier.behat.context.api.admin.managing_carrier_shipping_methods" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Api\Admin\ManagingCarrierShippingMethodsContext">
+            <argument type="service" id="sylius.behat.api_platform_client.admin" />
+            <argument type="service" id="Sylius\Behat\Client\ResponseCheckerInterface" />
+            <argument type="service" id="sylius.repository.shipping_method" />
+        </service>
+
         <!-- Domain -->
         <service id="jpmmartin_carrier.behat.context.domain.shipping_charge" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Domain\ShippingChargeContext">
             <argument type="service" id="doctrine.orm.entity_manager" />
         </service>
 
         <!-- Ui -->
+        <service id="jpmmartin_carrier.behat.context.ui.admin.managing_carrier_credentials" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Admin\ManagingCarrierCredentialsContext">
+            <argument type="service" id="jpmmartin_carrier.behat.page.admin.carrier_credentials.create" />
+            <argument type="service" id="jpmmartin_carrier.repository.credentials" />
+        </service>
+
         <service id="jpmmartin_carrier.behat.context.ui.admin.managing_shipping_origins" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Admin\ManagingShippingOriginsContext">
             <argument type="service" id="jpmmartin_carrier.behat.page.admin.shipping_origin.create" />
             <argument type="service" id="jpmmartin_carrier.behat.page.admin.shipping_origin.index" />
