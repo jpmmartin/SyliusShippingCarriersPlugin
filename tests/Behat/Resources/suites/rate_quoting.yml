@@ -33,6 +33,11 @@ default:
                 - jpmmartin_carrier.behat.context.setup.carrier
                 - jpmmartin_carrier.behat.context.setup.shipping_origin
 
+                - jpmmartin_carrier.behat.context.domain.shipping_charge
+
+                - sylius.behat.context.ui.shop.checkout.complete
+                - sylius.behat.context.ui.shop.checkout.payment
                 - sylius.behat.context.ui.shop.checkout.shipping
+                - sylius.behat.context.ui.shop.checkout.thank_you
             filters:
                 tags: "@rate_quoting&&@ui"

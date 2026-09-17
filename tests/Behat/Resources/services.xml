@@ -49,6 +49,11 @@
             <argument type="service" id="jpmmartin_carrier.cache.rates" />
         </service>
 
+        <!-- Domain -->
+        <service id="jpmmartin_carrier.behat.context.domain.shipping_charge" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Domain\ShippingChargeContext">
+            <argument type="service" id="doctrine.orm.entity_manager" />
+        </service>
+
         <!-- Ui -->
         <service id="jpmmartin_carrier.behat.context.ui.shop.checkout" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Shop\CheckoutContext">
             <argument type="service" id="behat.mink.default_session" />

@@ -3,6 +3,11 @@ imports:
     - tests/Behat/Resources/suites.yml
 
 default:
+    calls:
+        # E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED, as Sylius does: a deprecation in a dependency is not a
+        # failure of the plugin, and Behat turns every notice it reports into one.
+        error_reporting: 8191
+
     formatters:
         pretty:
             verbose: true
