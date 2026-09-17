@@ -101,6 +101,15 @@ final class CheckoutContext implements Context
         Assert::same($this->fakeCarrierState->calls(strtolower($carrierName)), 'once' === $times ? 1 : 2);
     }
 
+    #[Then('I should be told that the shipping method is not available right now')]
+    public function iShouldBeToldThatTheShippingMethodIsNotAvailableRightNow(): void
+    {
+        Assert::contains(
+            html_entity_decode($this->session->getPage()->getContent()),
+            'is not available right now. Please choose another shipping method.',
+        );
+    }
+
     private function visit(string $route): void
     {
         $baseUrl = $this->minkParameters['base_url'];

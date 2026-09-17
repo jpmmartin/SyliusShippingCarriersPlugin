@@ -25,6 +25,7 @@
         <service id="jpmmartin_carrier.behat.context.hook.carrier" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Hook\CarrierContext">
             <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
             <argument type="service" id="jpmmartin_carrier.cache.rates" />
+            <argument>%sylius.behat.clock.date_file%</argument>
         </service>
 
         <service id="jpmmartin_carrier.behat.context.hook.database" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Hook\DatabaseContext">
@@ -52,6 +53,8 @@
             <argument type="service" id="sylius.repository.shipping_method" />
             <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
             <argument type="service" id="jpmmartin_carrier.cache.rates" />
+            <argument type="service" id="sylius.behat.clock" />
+            <argument>%sylius.behat.clock.date_file%</argument>
         </service>
 
         <!-- Pages -->

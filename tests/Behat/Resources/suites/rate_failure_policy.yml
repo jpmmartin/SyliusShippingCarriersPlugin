@@ -37,5 +37,7 @@ default:
                 - jpmmartin_carrier.behat.context.setup.shipping_origin
 
                 - jpmmartin_carrier.behat.context.ui.shop.checkout
+                - sylius.behat.context.ui.shop.checkout.complete
+                - sylius.behat.context.ui.shop.checkout.shipping
             filters:
                 tags: "@rate_failure_policy&&@ui"

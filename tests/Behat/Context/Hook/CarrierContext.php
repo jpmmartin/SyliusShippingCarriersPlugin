@@ -24,6 +24,7 @@ final class CarrierContext implements Context
     public function __construct(
         private readonly FakeCarrierState $fakeCarrierState,
         private readonly CacheItemPoolInterface $rateCache,
+        private readonly string $clockDateFile,
     ) {
     }
 
@@ -33,6 +34,8 @@ final class CarrierContext implements Context
         $this->fakeCarrierState->reset();
         // The rate cache lives on the filesystem and outlives the database purge between scenarios.
         $this->rateCache->clear();
+        // So does the time a scenario travelled to.
+        $this->forgetTheTimeTravelled();
 
         $this->keyPath = sys_get_temp_dir() . '/jpmmartin_carrier_behat_' . bin2hex(random_bytes(8)) . '.key';
         KeyFactory::save(KeyFactory::generateEncryptionKey(), $this->keyPath);
@@ -44,11 +47,19 @@ final class CarrierContext implements Context
     public function cleanUpCarriers(): void
     {
         $this->fakeCarrierState->reset();
+        $this->forgetTheTimeTravelled();
 
         unset($_SERVER[self::KEY_PATH_VARIABLE], $_ENV[self::KEY_PATH_VARIABLE]);
         if (null !== $this->keyPath && is_file($this->keyPath)) {
             unlink($this->keyPath);
         }
         $this->keyPath = null;
+    }
+
+    private function forgetTheTimeTravelled(): void
+    {
+        if (is_file($this->clockDateFile)) {
+            unlink($this->clockDateFile);
+        }
     }
 }

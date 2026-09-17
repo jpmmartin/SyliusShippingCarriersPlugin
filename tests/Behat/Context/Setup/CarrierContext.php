@@ -9,6 +9,7 @@ use Behat\Step\Given;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\FailurePolicy;
 use Psr\Cache\CacheItemPoolInterface;
+use Sylius\Behat\Service\Clock;
 use Sylius\Behat\Service\SharedStorageInterface;
 use Sylius\Bundle\CoreBundle\Fixture\Factory\ExampleFactoryInterface;
 use Sylius\Component\Addressing\Model\ZoneInterface;
@@ -35,6 +36,8 @@ final readonly class CarrierContext implements Context
         private RepositoryInterface $shippingMethodRepository,
         private FakeCarrierState $fakeCarrierState,
         private CacheItemPoolInterface $rateCache,
+        private Clock $clock,
+        private string $clockDateFile,
     ) {
     }
 
@@ -106,6 +109,16 @@ final readonly class CarrierContext implements Context
     public function theStoreNoLongerKeepsAnyRate(): void
     {
         $this->rateCache->clear();
+    }
+
+    /**
+     * The clock of the test application reads the time from a file when there is one, and the plugin reads that
+     * clock to tell a fresh rate from an expired one.
+     */
+    #[Given('/^(\d+) minutes go by$/')]
+    public function minutesGoBy(int $minutes): void
+    {
+        file_put_contents($this->clockDateFile, $this->clock->now()->modify(sprintf('+%d minutes', $minutes))->format('c'));
     }
 
     #[Given('nobody has asked the carriers yet')]
