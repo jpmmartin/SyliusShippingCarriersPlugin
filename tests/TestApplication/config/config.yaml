@@ -16,6 +16,16 @@ when@no_payment_encryption:
         encryption:
             enabled: false
 
+# Kernel for RateCachePoolTest: an application points the rate cache at another adapter from its own
+# configuration. Not named "test…" for the same reason as above.
+when@rate_cache_in_memory:
+    framework:
+        test: true
+        cache:
+            pools:
+                jpmmartin_carrier.cache.rates:
+                    adapter: cache.adapter.array
+
 # Remove if you do not need to extend entities
 doctrine:
     orm:

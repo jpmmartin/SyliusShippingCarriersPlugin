@@ -33,6 +33,24 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
     {
         $this->prependDoctrineMigrations($container);
         $this->prependDoctrineMapping($container);
+        $this->prependRateCachePool($container);
+    }
+
+    /**
+     * Rates are kept on the filesystem, which every installation has. Declared as a framework pool, an
+     * application points it at another adapter from its own configuration, which replaces this one.
+     */
+    private function prependRateCachePool(ContainerBuilder $container): void
+    {
+        $container->prependExtensionConfig('framework', [
+            'cache' => [
+                'pools' => [
+                    'jpmmartin_carrier.cache.rates' => [
+                        'adapter' => 'cache.adapter.filesystem',
+                    ],
+                ],
+            ],
+        ]);
     }
 
     /**
