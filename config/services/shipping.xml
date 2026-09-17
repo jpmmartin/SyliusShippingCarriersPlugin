@@ -10,8 +10,19 @@
             <argument>%jpmmartin_carrier.services%</argument>
         </service>
 
-        <service id="jpmmartin_carrier.shipping_calculator.ups_rate" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator">
+        <service id="jpmmartin_carrier.shipping.charge_resolver" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShippingChargeResolver">
             <argument type="service" id="jpmmartin_carrier.rate_provider" />
+        </service>
+
+        <!-- After Sylius's shipping charges processor, priority 30, which creates the shipping adjustment. -->
+        <service id="jpmmartin_carrier.order_processing.shipping_charge_source" class="JpmMartin\SyliusShippingCarriersPlugin\OrderProcessing\ShippingChargeSourceProcessor">
+            <argument type="service" id="sylius.registry.shipping_calculator" />
+            <argument type="service" id="jpmmartin_carrier.shipping.charge_resolver" />
+            <tag name="sylius.order_processor" priority="25" />
+        </service>
+
+        <service id="jpmmartin_carrier.shipping_calculator.ups_rate" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator">
+            <argument type="service" id="jpmmartin_carrier.shipping.charge_resolver" />
             <argument>ups</argument>
             <argument>ups_rate</argument>
             <tag
@@ -23,7 +34,7 @@
         </service>
 
         <service id="jpmmartin_carrier.shipping_calculator.fedex_rate" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator">
-            <argument type="service" id="jpmmartin_carrier.rate_provider" />
+            <argument type="service" id="jpmmartin_carrier.shipping.charge_resolver" />
             <argument>fedex</argument>
             <argument>fedex_rate</argument>
             <tag

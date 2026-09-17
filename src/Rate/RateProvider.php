@@ -19,8 +19,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * Rates come from the cache while they are fresh and from the carrier otherwise.
  *
  * Every answer of a carrier is kept with two ages. While younger than the lifetime it is quoted. After that it
- * is only the last known rate, charged when the carrier fails on a shipping method the buyer already chose, and
- * it is dropped after the retention.
+ * is only the last known rate, charged when the carrier fails, and it is dropped after the retention.
  */
 final class RateProvider implements RateProviderInterface, ResetInterface
 {

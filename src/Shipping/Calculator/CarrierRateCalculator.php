@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator;
 
-use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateProviderInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShippingChargeResolver;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Sylius\Component\Shipping\Calculator\CalculatorInterface;
 use Sylius\Component\Shipping\Calculator\UndefinedShippingMethodException;
 use Sylius\Component\Shipping\Model\ShipmentInterface as BaseShipmentInterface;
 
 /**
- * Charges the rate a carrier gives for the service a shipping method represents. One instance per carrier.
+ * Charges what a carrier's shipping method costs for a shipment: the carrier's rate or, when the carrier fails, the
+ * last known rate or the flat amount of the channel. One instance per carrier.
  *
  * The configuration of a shipping method, set in the admin's shipping methods, holds the service, what to do
  * when the carrier fails, and a flat amount by channel code.
@@ -29,14 +30,17 @@ final readonly class CarrierRateCalculator implements CalculatorInterface
      * @param string $type The calculator's name in Sylius, such as `ups_rate`
      */
     public function __construct(
-        private RateProviderInterface $rateProvider,
+        private ShippingChargeResolver $chargeResolver,
         private string $carrier,
         private string $type,
     ) {
     }
 
     /**
-     * @throws UndefinedShippingMethodException When there is no rate to charge
+     * Sylius catches the exception and leaves the shipment without a charge, so it only reaches a shipping method that
+     * is not eligible: one Sylius neither offers nor lets an order complete with.
+     *
+     * @throws UndefinedShippingMethodException When the shipping method is unavailable for the shipment
      */
     public function calculate(BaseShipmentInterface $subject, array $configuration): int
     {
@@ -44,17 +48,12 @@ final readonly class CarrierRateCalculator implements CalculatorInterface
             throw new \InvalidArgumentException(sprintf('Only a shipment of an order can be rated, not a %s.', get_debug_type($subject)));
         }
 
-        $service = $configuration[self::SERVICE] ?? null;
-        if (!is_string($service)) {
-            throw new UndefinedShippingMethodException(sprintf('The shipping method has no %s service.', $this->carrier));
+        $charge = $this->chargeResolver->resolve($subject, $this->carrier, $configuration);
+        if (null === $charge) {
+            throw new UndefinedShippingMethodException(sprintf('The %s shipping method is unavailable for this shipment.', $this->carrier));
         }
 
-        $rate = $this->rateProvider->rateFor($subject, $this->carrier, $service)->rate;
-        if (null === $rate) {
-            throw new UndefinedShippingMethodException(sprintf('There is no %s rate for the service "%s".', $this->carrier, $service));
-        }
-
-        return $rate->amount;
+        return $charge->amount;
     }
 
     public function getType(): string

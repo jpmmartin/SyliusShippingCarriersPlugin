@@ -46,7 +46,7 @@ final class Configuration implements ConfigurationInterface
                     ->min(1)
                 ->end()
                 ->integerNode('rate_retention')
-                    ->info('Seconds a stored rate is kept as the last known rate, charged when the carrier fails on a shipping method already chosen. Not less than rate_lifetime.')
+                    ->info('Seconds a stored rate is kept as the last known rate, charged when the carrier fails. Not less than rate_lifetime.')
                     ->defaultValue(86400)
                     ->min(1)
                 ->end()

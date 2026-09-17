@@ -8,30 +8,29 @@ use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateProviderInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator;
+use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShippingChargeResolver;
 use PHPUnit\Framework\TestCase;
 use Sylius\Component\Core\Model\Shipment;
+use Sylius\Component\Core\Model\ShippingMethod;
+use Sylius\Component\Registry\ServiceRegistry;
+use Sylius\Component\Shipping\Calculator\CalculatorInterface;
+use Sylius\Component\Shipping\Calculator\DelegatingCalculator;
 use Sylius\Component\Shipping\Calculator\UndefinedShippingMethodException;
 
 final class CarrierRateCalculatorTest extends TestCase
 {
-    public function testItChargesTheRateOfTheServiceOfTheShippingMethod(): void
+    public function testItChargesWhatTheChargeResolverDecides(): void
     {
-        $shipment = new Shipment();
-        $rateProvider = $this->createMock(RateProviderInterface::class);
-        $rateProvider->expects(self::once())
-            ->method('rateFor')
-            ->with($shipment, 'ups', '03')
-            ->willReturn(RateResult::quoted(new Rate('03', 1540, 'USD')))
+        $amount = $this->calculator(RateResult::carrierFailed(new Rate('03', 1490, 'USD')))
+            ->calculate(new Shipment(), ['service' => '03', 'failure_policy' => 'hide'])
         ;
 
-        $amount = (new CarrierRateCalculator($rateProvider, 'ups', 'ups_rate'))->calculate($shipment, ['service' => '03']);
-
-        self::assertSame(1540, $amount);
+        self::assertSame(1490, $amount);
     }
 
     public function testItIsNamedAfterItsCarrier(): void
     {
-        $calculator = new CarrierRateCalculator($this->createStub(RateProviderInterface::class), 'ups', 'ups_rate');
+        $calculator = $this->calculator(RateResult::unavailable());
 
         self::assertSame('ups_rate', $calculator->getType());
         self::assertSame('ups', $calculator->getCarrier());
@@ -40,23 +39,48 @@ final class CarrierRateCalculatorTest extends TestCase
     /**
      * Sylius leaves the shipment without a charge when a calculator throws this exception.
      */
-    public function testWithoutARateTheShippingMethodIsUndefined(): void
+    public function testAnUnavailableShippingMethodIsUndefined(): void
     {
-        $rateProvider = $this->createStub(RateProviderInterface::class);
-        $rateProvider->method('rateFor')->willReturn(RateResult::unavailable());
-
         $this->expectException(UndefinedShippingMethodException::class);
 
-        (new CarrierRateCalculator($rateProvider, 'ups', 'ups_rate'))->calculate(new Shipment(), ['service' => '03']);
+        $this->calculator(RateResult::carrierFailed(null))->calculate(new Shipment(), ['service' => '03', 'failure_policy' => 'hide']);
     }
 
-    public function testAShippingMethodWithoutAServiceIsUndefined(): void
+    /**
+     * Sylius refuses a shipment without a shipping method before any calculator is asked.
+     */
+    public function testAShipmentWithoutAShippingMethodNeverReachesTheCalculator(): void
     {
         $rateProvider = $this->createMock(RateProviderInterface::class);
         $rateProvider->expects(self::never())->method('rateFor');
 
+        $calculators = new ServiceRegistry(CalculatorInterface::class);
+        $calculators->register('ups_rate', new CarrierRateCalculator(new ShippingChargeResolver($rateProvider), 'ups', 'ups_rate'));
+
         $this->expectException(UndefinedShippingMethodException::class);
 
-        (new CarrierRateCalculator($rateProvider, 'ups', 'ups_rate'))->calculate(new Shipment(), []);
+        (new DelegatingCalculator($calculators))->calculate(new Shipment());
+    }
+
+    public function testAShipmentWithAShippingMethodIsDelegatedToIt(): void
+    {
+        $calculators = new ServiceRegistry(CalculatorInterface::class);
+        $calculators->register('ups_rate', $this->calculator(RateResult::quoted(new Rate('03', 1540, 'USD'))));
+
+        $method = new ShippingMethod();
+        $method->setCalculator('ups_rate');
+        $method->setConfiguration(['service' => '03']);
+        $shipment = new Shipment();
+        $shipment->setMethod($method);
+
+        self::assertSame(1540, (new DelegatingCalculator($calculators))->calculate($shipment));
+    }
+
+    private function calculator(RateResult $result): CarrierRateCalculator
+    {
+        $rateProvider = $this->createStub(RateProviderInterface::class);
+        $rateProvider->method('rateFor')->willReturn($result);
+
+        return new CarrierRateCalculator(new ShippingChargeResolver($rateProvider), 'ups', 'ups_rate');
     }
 }
