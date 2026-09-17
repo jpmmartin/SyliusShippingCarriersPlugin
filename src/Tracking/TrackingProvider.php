@@ -10,6 +10,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
@@ -28,6 +29,14 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
     private array $failedKeys = [];
 
     /**
+     * The carriers whose credentials could not be read in this request. They do not change while it lasts, so the
+     * store is told once and not once per shipment of the page.
+     *
+     * @var array<string, true>
+     */
+    private array $carriersLoggedWithoutCredentials = [];
+
+    /**
      * @param ContainerInterface $carriers The carrier adapters, by carrier code
      * @param int $lifetime Seconds a stored status is given before the carrier is asked again
      */
@@ -36,6 +45,7 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
         private readonly CredentialsProvider $credentialsProvider,
         private readonly ContainerInterface $carriers,
         private readonly CacheItemPoolInterface $cache,
+        private readonly LoggerInterface $logger,
         private readonly int $lifetime,
     ) {
     }
@@ -50,7 +60,9 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
 
         try {
             $credentials = $this->credentialsProvider->get($carrier);
-        } catch (CarrierException) {
+        } catch (CarrierException $exception) {
+            $this->logCredentialsFailure($carrier, $trackingNumber, $exception);
+
             return null;
         }
 
@@ -75,7 +87,15 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
 
         try {
             $tracking = $adapter->track($trackingNumber);
-        } catch (CarrierException) {
+        } catch (CarrierException $exception) {
+            // Inside the catch, so a failure remembered for the rest of the request is told once and not once per
+            // shipment of the page. The adapters do not log it: they only translate the exception.
+            $this->logger->error('The carrier {carrier} could not be asked where the shipment {tracking_number} is: {reason}', [
+                'carrier' => $carrier,
+                'tracking_number' => $trackingNumber,
+                'reason' => $exception->getMessage(),
+                'exception' => $exception,
+            ]);
             // Not stored: the buyer would be left without a status for minutes after the carrier recovered.
             $this->failedKeys[$key] = true;
 
@@ -92,5 +112,21 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
     public function reset(): void
     {
         $this->failedKeys = [];
+        $this->carriersLoggedWithoutCredentials = [];
+    }
+
+    private function logCredentialsFailure(string $carrier, string $trackingNumber, CarrierException $exception): void
+    {
+        if (isset($this->carriersLoggedWithoutCredentials[$carrier])) {
+            return;
+        }
+
+        $this->carriersLoggedWithoutCredentials[$carrier] = true;
+        $this->logger->error('The credentials of the carrier {carrier} could not be read, so nobody could be asked where the shipment {tracking_number} is: {reason}', [
+            'carrier' => $carrier,
+            'tracking_number' => $trackingNumber,
+            'reason' => $exception->getMessage(),
+            'exception' => $exception,
+        ]);
     }
 }

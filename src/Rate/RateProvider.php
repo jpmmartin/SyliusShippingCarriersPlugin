@@ -11,6 +11,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Symfony\Contracts\Service\ResetInterface;
@@ -32,6 +33,14 @@ final class RateProvider implements RateProviderInterface, ResetInterface
     private array $failedKeys = [];
 
     /**
+     * The carriers whose credentials could not be read in this request. They do not change while it lasts, so the
+     * store is told once and not once per service asked.
+     *
+     * @var array<string, true>
+     */
+    private array $carriersLoggedWithoutCredentials = [];
+
+    /**
      * @param ContainerInterface $carriers The carrier adapters, by carrier code
      * @param int $lifetime Seconds a stored rate is quoted for
      * @param int $retention Seconds a stored rate is kept as the last known rate
@@ -43,6 +52,7 @@ final class RateProvider implements RateProviderInterface, ResetInterface
         private readonly CacheItemPoolInterface $cache,
         private readonly RateCurrencyConverter $currencyConverter,
         private readonly ClockInterface $clock,
+        private readonly LoggerInterface $logger,
         private readonly int $lifetime,
         private readonly int $retention,
     ) {
@@ -63,7 +73,9 @@ final class RateProvider implements RateProviderInterface, ResetInterface
 
         try {
             $credentials = $this->credentialsProvider->get($carrier);
-        } catch (CarrierException) {
+        } catch (CarrierException $exception) {
+            $this->logCredentialsFailure($carrier, $serviceCode, $exception);
+
             return RateResult::carrierFailed(null);
         }
 
@@ -91,7 +103,15 @@ final class RateProvider implements RateProviderInterface, ResetInterface
 
         try {
             $rates = $carrierAdapter->rate($request);
-        } catch (CarrierException) {
+        } catch (CarrierException $exception) {
+            // Inside the catch, so a failure remembered for the rest of the request is told once and not once per
+            // service asked. The adapters do not log it: they only translate the exception.
+            $this->logger->error('The carrier {carrier} could not rate the service {service}: {reason}', [
+                'carrier' => $carrier,
+                'service' => $serviceCode,
+                'reason' => $exception->getMessage(),
+                'exception' => $exception,
+            ]);
             $this->failedKeys[$key] = true;
 
             return $this->carrierFailed($stored, $serviceCode, $currencyCode);
@@ -107,6 +127,22 @@ final class RateProvider implements RateProviderInterface, ResetInterface
     public function reset(): void
     {
         $this->failedKeys = [];
+        $this->carriersLoggedWithoutCredentials = [];
+    }
+
+    private function logCredentialsFailure(string $carrier, string $serviceCode, CarrierException $exception): void
+    {
+        if (isset($this->carriersLoggedWithoutCredentials[$carrier])) {
+            return;
+        }
+
+        $this->carriersLoggedWithoutCredentials[$carrier] = true;
+        $this->logger->error('The credentials of the carrier {carrier} could not be read, so the service {service} could not be rated: {reason}', [
+            'carrier' => $carrier,
+            'service' => $serviceCode,
+            'reason' => $exception->getMessage(),
+            'exception' => $exception,
+        ]);
     }
 
     private function quote(RateSet $rates, string $serviceCode, string $currencyCode): RateResult

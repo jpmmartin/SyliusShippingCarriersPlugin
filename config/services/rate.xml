@@ -28,6 +28,7 @@
             <argument type="service" id="jpmmartin_carrier.cache.rates" />
             <argument type="service" id="jpmmartin_carrier.rate.currency_converter" />
             <argument type="service" id="clock" />
+            <argument type="service" id="logger" />
             <argument>%jpmmartin_carrier.rate_lifetime%</argument>
             <argument>%jpmmartin_carrier.rate_retention%</argument>
             <!-- A failure of a carrier is remembered for one request only. -->

@@ -341,6 +341,60 @@ final class RateProviderTest extends TestCase
         self::assertCount(2, $this->ups->requests);
     }
 
+    /**
+     * A failure the store never sees on the page has to be findable in the log.
+     */
+    public function testACarrierFailureIsLoggedWithTheCarrierTheServiceAndTheCause(): void
+    {
+        $this->ups->answer = new CarrierUnavailableException('UPS did not answer in time.');
+
+        $this->provider()->rateFor($this->shipment(), 'ups', '03');
+
+        self::assertCount(1, $this->logger->records);
+        [$level, , $context] = $this->logger->records[0];
+        self::assertSame(LogLevel::ERROR, $level);
+        self::assertSame('ups', $context['carrier'] ?? null);
+        self::assertSame('03', $context['service'] ?? null);
+        self::assertSame('UPS did not answer in time.', $context['reason'] ?? null);
+    }
+
+    /**
+     * The shipping step asks once per service: without the memory of the failure, a carrier that is down would
+     * write one entry per service and visit.
+     */
+    public function testAFailureRememberedForTheRequestIsLoggedOnce(): void
+    {
+        $this->ups->answer = new CarrierUnavailableException('UPS did not answer in time.');
+        $provider = $this->provider();
+        $shipment = $this->shipment();
+
+        $provider->rateFor($shipment, 'ups', '03');
+        $provider->rateFor($shipment, 'ups', '02');
+
+        self::assertCount(1, $this->logger->records);
+    }
+
+    public function testCredentialsThatCannotBeReadAreLoggedOncePerRequest(): void
+    {
+        $this->credentials = null;
+        $provider = $this->provider();
+        $shipment = $this->shipment();
+
+        $provider->rateFor($shipment, 'ups', '03');
+        $provider->rateFor($shipment, 'ups', '02');
+
+        self::assertCount(1, $this->logger->records);
+        [$level, , $context] = $this->logger->records[0];
+        self::assertSame(LogLevel::ERROR, $level);
+        self::assertSame('ups', $context['carrier'] ?? null);
+        self::assertSame('03', $context['service'] ?? null);
+        self::assertNotEmpty($context['reason'] ?? null);
+
+        $provider->reset();
+        $provider->rateFor($shipment, 'ups', '03');
+        self::assertCount(2, $this->logger->records);
+    }
+
     public function testAnUnknownCarrierIsRefused(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -376,6 +430,7 @@ final class RateProviderTest extends TestCase
             $this->cache,
             new RateCurrencyConverter($exchangeRateRepository, new CurrencyConverter($exchangeRateRepository), $this->logger),
             $this->clock,
+            $this->logger,
             $lifetime,
             $retention,
         );

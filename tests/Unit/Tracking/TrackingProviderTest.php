@@ -18,6 +18,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingInfo;
 use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LogLevel;
 use Sylius\Component\Core\Model\Shipment;
 use Sylius\Component\Core\Model\ShippingMethod;
 use Sylius\Component\Registry\ServiceRegistry;
@@ -26,12 +27,15 @@ use Sylius\Component\Shipping\Calculator\FlatRateCalculator;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\DependencyInjection\ServiceLocator;
+use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
 
 final class TrackingProviderTest extends TestCase
 {
     private const LIFETIME = 300;
 
     private ArrayAdapter $cache;
+
+    private RecordingLogger $logger;
 
     private TrackingCarrier $ups;
 
@@ -40,6 +44,7 @@ final class TrackingProviderTest extends TestCase
     protected function setUp(): void
     {
         $this->cache = new ArrayAdapter();
+        $this->logger = new RecordingLogger();
         $this->ups = new TrackingCarrier(new TrackingInfo('1Z999AA10123456784', 'Delivered', [
             new TrackingEvent(new \DateTimeImmutable('2026-09-17 10:15:00'), 'Delivered', 'Seattle, WA, US'),
         ]));
@@ -133,6 +138,57 @@ final class TrackingProviderTest extends TestCase
         self::assertCount(2, $this->ups->enquiries);
     }
 
+    /**
+     * The buyer is only told the status is not available; the store has to be able to find out why.
+     */
+    public function testACarrierFailureIsLoggedWithTheCarrierTheShipmentAndTheCause(): void
+    {
+        $this->ups->answer = new CarrierUnavailableException('UPS did not answer in time.');
+
+        $this->provider()->track($this->shipment());
+
+        self::assertCount(1, $this->logger->records);
+        [$level, , $context] = $this->logger->records[0];
+        self::assertSame(LogLevel::ERROR, $level);
+        self::assertSame('ups', $context['carrier'] ?? null);
+        self::assertSame('1Z999AA10123456784', $context['tracking_number'] ?? null);
+        self::assertSame('UPS did not answer in time.', $context['reason'] ?? null);
+    }
+
+    /**
+     * A page with several shipments of a carrier that is down writes one entry, not one per shipment.
+     */
+    public function testAFailureRememberedForTheRequestIsLoggedOnce(): void
+    {
+        $this->ups->answer = new CarrierUnavailableException('UPS did not answer in time.');
+        $provider = $this->provider();
+
+        $provider->track($this->shipment());
+        $provider->track($this->shipment());
+
+        self::assertCount(1, $this->logger->records);
+    }
+
+    public function testCredentialsThatCannotBeReadAreLoggedOncePerRequest(): void
+    {
+        $this->credentials = null;
+        $provider = $this->provider();
+
+        $provider->track($this->shipment());
+        $provider->track($this->shipment());
+
+        self::assertCount(1, $this->logger->records);
+        [$level, , $context] = $this->logger->records[0];
+        self::assertSame(LogLevel::ERROR, $level);
+        self::assertSame('ups', $context['carrier'] ?? null);
+        self::assertSame('1Z999AA10123456784', $context['tracking_number'] ?? null);
+        self::assertNotEmpty($context['reason'] ?? null);
+
+        $provider->reset();
+        $provider->track($this->shipment());
+        self::assertCount(2, $this->logger->records);
+    }
+
     private function provider(): TrackingProvider
     {
         $calculators = new ServiceRegistry(CalculatorInterface::class);
@@ -149,6 +205,7 @@ final class TrackingProviderTest extends TestCase
             new CredentialsProvider($credentialsRepository),
             new ServiceLocator(['ups' => fn (): CarrierInterface => $this->ups]),
             $this->cache,
+            $this->logger,
             self::LIFETIME,
         );
     }
