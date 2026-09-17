@@ -169,7 +169,7 @@ final class FedexCarrier implements CarrierInterface
 
             $rates[] = new Rate(
                 $detail->serviceType,
-                MinorUnits::fromDecimal(number_format($amount, 6, '.', ''), $currencyCode),
+                MinorUnits::fromDecimal(number_format($amount, 6, '.', '')),
                 $currencyCode,
             );
         }

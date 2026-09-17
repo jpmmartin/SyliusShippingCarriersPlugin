@@ -221,7 +221,7 @@ final class UpsCarrier implements CarrierInterface
 
             $rates[] = new Rate(
                 $ratedShipment->getService()->getCode(),
-                MinorUnits::fromDecimal($charge->getMonetaryValue(), $charge->getCurrencyCode()),
+                MinorUnits::fromDecimal($charge->getMonetaryValue()),
                 $charge->getCurrencyCode(),
             );
         }
