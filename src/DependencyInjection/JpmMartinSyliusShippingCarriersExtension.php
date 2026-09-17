@@ -24,6 +24,7 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
         $container->setParameter('jpmmartin_carrier.carrier_timeout', $config['carrier_timeout']);
         $container->setParameter('jpmmartin_carrier.rate_lifetime', $config['rate_lifetime']);
         $container->setParameter('jpmmartin_carrier.rate_retention', $config['rate_retention']);
+        $container->setParameter('jpmmartin_carrier.tracking_lifetime', $config['tracking_lifetime']);
         $container->setParameter('jpmmartin_carrier.services', $config['services']);
 
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
@@ -87,8 +88,9 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
     }
 
     /**
-     * Rates are kept on the filesystem, which every installation has. Declared as a framework pool, an
-     * application points it at another adapter from its own configuration, which replaces this one.
+     * Rates and the status of shipments are kept on the filesystem, which every installation has. Declared as
+     * framework pools, an application points them at another adapter from its own configuration, which replaces
+     * these ones.
      */
     private function prependRateCachePool(ContainerBuilder $container): void
     {
@@ -96,6 +98,9 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
             'cache' => [
                 'pools' => [
                     'jpmmartin_carrier.cache.rates' => [
+                        'adapter' => 'cache.adapter.filesystem',
+                    ],
+                    'jpmmartin_carrier.cache.tracking' => [
                         'adapter' => 'cache.adapter.filesystem',
                     ],
                 ],

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container
+        xmlns="http://symfony.com/schema/dic/services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+        <service id="jpmmartin_carrier.tracking_provider" class="JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingProvider">
+            <argument type="service" id="sylius.registry.shipping_calculator" />
+            <argument type="service" id="jpmmartin_carrier.carrier.credentials_provider" />
+            <argument type="tagged_locator" tag="jpmmartin_carrier.carrier" index-by="carrier" />
+            <argument type="service" id="jpmmartin_carrier.cache.tracking" />
+            <argument>%jpmmartin_carrier.tracking_lifetime%</argument>
+            <!-- A failure of a carrier is remembered for one request only. -->
+            <tag name="kernel.reset" method="reset" />
+        </service>
+        <service id="JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingProviderInterface" alias="jpmmartin_carrier.tracking_provider" />
+    </services>
+</container>
