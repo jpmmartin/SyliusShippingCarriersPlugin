@@ -51,6 +51,26 @@ final class ConfigurationTest extends TestCase
     }
 
     /**
+     * Without configuration, the status of a shipment is kept for 5 minutes.
+     */
+    public function testTheStatusOfAShipmentIsKeptForFiveMinutesByDefault(): void
+    {
+        self::assertSame(300, $this->process([])['tracking_lifetime']);
+    }
+
+    public function testTheLifetimeOfTheStatusOfAShipmentCanBeConfigured(): void
+    {
+        self::assertSame(60, $this->process([['tracking_lifetime' => 60]])['tracking_lifetime']);
+    }
+
+    public function testATrackingLifetimeOfZeroIsRefused(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->process([['tracking_lifetime' => 0]]);
+    }
+
+    /**
      * A rate would be gone before it expired, and there would never be a last known rate.
      */
     public function testARetentionShorterThanTheLifetimeIsRefused(): void

@@ -26,6 +26,16 @@ when@rate_cache_in_memory:
                 jpmmartin_carrier.cache.rates:
                     adapter: cache.adapter.array
 
+# Kernel for PackagingStrategyReplacementTest: an application replaces the packaging strategy by pointing the
+# plugin's alias at a service of its own. Not named "test…" for the same reason as above.
+when@packaging_strategy_replaced:
+    framework:
+        test: true
+    services:
+        Tests\JpmMartin\SyliusShippingCarriersPlugin\Integration\Packaging\AnotherPackagingStrategy: ~
+        jpmmartin_carrier.packaging_strategy:
+            alias: Tests\JpmMartin\SyliusShippingCarriersPlugin\Integration\Packaging\AnotherPackagingStrategy
+
 # Kernel for CarrierRateCalculatorRegistrationTest: an application adds a service to a carrier's list and
 # renames one of the plugin's. Not named "test…" for the same reason as above.
 when@carrier_services_extended:
