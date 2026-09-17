@@ -24,6 +24,7 @@ default:
                 - sylius.behat.context.setup.cart
                 - sylius.behat.context.setup.channel
                 - sylius.behat.context.setup.checkout.address
+                - sylius.behat.context.ui.shop.checkout.addressing
                 - sylius.behat.context.setup.customer
                 - sylius.behat.context.setup.geographical
                 - sylius.behat.context.setup.payment
@@ -34,6 +35,7 @@ default:
                 - jpmmartin_carrier.behat.context.setup.shipping_origin
 
                 - jpmmartin_carrier.behat.context.domain.shipping_charge
+                - jpmmartin_carrier.behat.context.ui.shop.checkout
 
                 - sylius.behat.context.ui.shop.checkout.complete
                 - sylius.behat.context.ui.shop.checkout.payment

@@ -110,6 +110,7 @@
             <argument type="service" id="behat.mink.parameters" />
             <argument type="service" id="router" />
             <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
+            <argument type="service" id="sylius.behat.page.shop.checkout.address" />
         </service>
     </services>
 </container>

@@ -8,6 +8,8 @@ use Behat\Behat\Context\Context;
 use Behat\Mink\Session;
 use Behat\Step\Then;
 use Behat\Step\When;
+use Sylius\Behat\Page\Shop\Checkout\AddressPageInterface;
+use Sylius\Component\Core\Model\AddressInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Carrier\FakeCarrierState;
 use Webmozart\Assert\Assert;
@@ -25,6 +27,7 @@ final class CheckoutContext implements Context
         private readonly \ArrayAccess $minkParameters,
         private readonly UrlGeneratorInterface $router,
         private readonly FakeCarrierState $fakeCarrierState,
+        private readonly AddressPageInterface $addressPage,
     ) {
     }
 
@@ -63,6 +66,39 @@ final class CheckoutContext implements Context
     public function theCarrierShouldHaveBeenAskedForRates(string $carrierName): void
     {
         Assert::greaterThan($this->fakeCarrierState->calls(strtolower($carrierName)), 0, sprintf('%s was never asked for rates.', $carrierName));
+    }
+
+    /**
+     * The address step of the shop, saying whether the order goes to a home or to a business.
+     */
+    #[When('/^I address the cart to a (home|business) with ("[^"]+" based billing address)$/')]
+    public function iAddressTheCartTo(string $destination, AddressInterface $billingAddress): void
+    {
+        $this->addressPage->open();
+        $this->addressPage->specifyBillingAddress($billingAddress);
+
+        $destinationType = 'home' === $destination ? 'residential' : 'commercial';
+        $field = $this->session->getPage()->find('css', sprintf('input[name="sylius_shop_checkout_address[destinationType]"][value="%s"]', $destinationType));
+        Assert::notNull($field, 'The address step does not ask where the order is delivered.');
+        $field->selectOption($destinationType);
+
+        $this->addressPage->nextStep();
+    }
+
+    #[Then('/^(UPS|FedEx) should have been asked for a delivery to a (home|business)$/')]
+    public function theCarrierShouldHaveBeenAskedForADeliveryTo(string $carrierName, string $destination): void
+    {
+        Assert::same(
+            $this->fakeCarrierState->askedForAResidentialDestination(strtolower($carrierName)),
+            'home' === $destination,
+            sprintf('%s was not asked for a delivery to a %s.', $carrierName, $destination),
+        );
+    }
+
+    #[Then('/^(UPS|FedEx) should have been asked for rates (once|twice)$/')]
+    public function theCarrierShouldHaveBeenAskedForRatesTimes(string $carrierName, string $times): void
+    {
+        Assert::same($this->fakeCarrierState->calls(strtolower($carrierName)), 'once' === $times ? 1 : 2);
     }
 
     private function visit(string $route): void

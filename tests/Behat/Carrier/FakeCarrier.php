@@ -27,7 +27,7 @@ final readonly class FakeCarrier implements CarrierInterface
 
     public function rate(RateRequest $request): RateSet
     {
-        $this->state->recordCall($this->carrier);
+        $this->state->recordCall($this->carrier, $request->destination->residential);
 
         match ($this->state->failure($this->carrier)) {
             FakeCarrierState::FAILURE_TIMEOUT => throw new CarrierUnavailableException(sprintf('%s did not answer in time.', $this->carrier)),

@@ -108,6 +108,12 @@ final readonly class CarrierContext implements Context
         $this->rateCache->clear();
     }
 
+    #[Given('nobody has asked the carriers yet')]
+    public function nobodyHasAskedTheCarriersYet(): void
+    {
+        $this->fakeCarrierState->forgetCalls();
+    }
+
     /**
      * @param array<string, mixed> $configuration
      */

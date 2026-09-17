@@ -56,10 +56,30 @@ final class FakeCarrierState
         $this->write($state);
     }
 
-    public function recordCall(string $carrier): void
+    public function recordCall(string $carrier, bool $residentialDestination): void
     {
         $state = $this->read();
         $state[$carrier]['calls'] = ($state[$carrier]['calls'] ?? 0) + 1;
+        $state[$carrier]['residential_destination'] = $residentialDestination;
+
+        $this->write($state);
+    }
+
+    /**
+     * Whether the last rates asked of the carrier were for a home. Null when it was never asked.
+     */
+    public function askedForAResidentialDestination(string $carrier): ?bool
+    {
+        return $this->read()[$carrier]['residential_destination'] ?? null;
+    }
+
+    public function forgetCalls(): void
+    {
+        $state = $this->read();
+        foreach ($state as $carrier => $carrierState) {
+            unset($carrierState['calls'], $carrierState['residential_destination']);
+            $state[$carrier] = $carrierState;
+        }
 
         $this->write($state);
     }
@@ -93,7 +113,7 @@ final class FakeCarrierState
     }
 
     /**
-     * @return array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int}>
+     * @return array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool}>
      */
     private function read(): array
     {
@@ -101,14 +121,14 @@ final class FakeCarrierState
             return [];
         }
 
-        /** @var array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int}> $state */
+        /** @var array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool}> $state */
         $state = json_decode((string) file_get_contents($this->path), true, flags: \JSON_THROW_ON_ERROR);
 
         return $state;
     }
 
     /**
-     * @param array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int}> $state
+     * @param array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool}> $state
      */
     private function write(array $state): void
     {
