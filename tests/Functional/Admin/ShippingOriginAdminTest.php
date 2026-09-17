@@ -60,6 +60,7 @@ final class ShippingOriginAdminTest extends WebTestCase
             self::FORM . '[city]' => 'Madrid',
             self::FORM . '[postcode]' => '28013',
             self::FORM . '[countryCode]' => 'ES',
+            self::FORM . '[defaultDestinationType]' => 'residential',
             self::FORM . '[weightUnit]' => 'kg',
             self::FORM . '[dimensionUnit]' => 'cm',
             self::FORM . '[maxPackageWeight]' => '68',
@@ -70,6 +71,7 @@ final class ShippingOriginAdminTest extends WebTestCase
         self::assertSame('Madrid', $origin->getCity());
         self::assertSame('kg', $origin->getWeightUnit());
         self::assertSame(68.0, $origin->getMaxPackageWeight());
+        self::assertSame('residential', $origin->getDefaultDestinationType());
         $id = $origin->getId();
 
         $crawler = $this->client->request('GET', sprintf('/admin/shipping-origins/%d/edit', $id));
@@ -104,6 +106,7 @@ final class ShippingOriginAdminTest extends WebTestCase
             self::FORM . '[city]' => 'Barcelona',
             self::FORM . '[postcode]' => '08019',
             self::FORM . '[countryCode]' => 'ES',
+            self::FORM . '[defaultDestinationType]' => 'residential',
         ]);
 
         self::assertResponseStatusCodeSame(422);
@@ -125,6 +128,7 @@ final class ShippingOriginAdminTest extends WebTestCase
             self::FORM . '[city]' => 'Barcelona',
             self::FORM . '[postcode]' => '08019',
             self::FORM . '[countryCode]' => 'ES',
+            self::FORM . '[defaultDestinationType]' => 'residential',
             self::FORM . '[weightUnit]' => 'kg',
             self::FORM . '[dimensionUnit]' => 'cm',
         ]);
@@ -132,6 +136,27 @@ final class ShippingOriginAdminTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
         self::assertSelectorTextContains('body', 'Every shipping origin must use the same units. The others use lb.');
         self::assertSelectorTextContains('body', 'Every shipping origin must use the same units. The others use in.');
+    }
+
+    /**
+     * CA-48: the default destination type changes the price, so it has no default either.
+     */
+    public function testAnOriginWithoutADefaultDestinationTypeIsRejected(): void
+    {
+        $this->createChannel('web-admin-destination');
+        $this->createCountry('ES');
+
+        $this->submitCreateForm([
+            self::FORM . '[channel]' => 'web-admin-destination',
+            self::FORM . '[street]' => 'Gran Via 1',
+            self::FORM . '[city]' => 'Madrid',
+            self::FORM . '[postcode]' => '28013',
+            self::FORM . '[countryCode]' => 'ES',
+            self::FORM . '[defaultDestinationType]' => '',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Choose whether deliveries go to homes or businesses when the buyer has not said.');
     }
 
     /**
@@ -150,6 +175,7 @@ final class ShippingOriginAdminTest extends WebTestCase
             self::FORM . '[city]' => 'Madrid',
             self::FORM . '[postcode]' => '28013',
             self::FORM . '[countryCode]' => 'ES',
+            self::FORM . '[defaultDestinationType]' => 'residential',
             self::FORM . '[boxes]' => [(string) $large->getId()],
         ]);
         self::assertResponseRedirects();

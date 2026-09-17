@@ -91,6 +91,7 @@ trait AdminFixturesTrait
         $origin->setCountryCode('ES');
         $origin->setWeightUnit($weightUnit);
         $origin->setDimensionUnit($dimensionUnit);
+        $origin->setDefaultDestinationType('residential');
 
         $this->entityManager->persist($origin);
         $this->entityManager->flush();

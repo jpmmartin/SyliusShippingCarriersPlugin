@@ -17,11 +17,17 @@ jpmmartin_carrier:
             max_package_weight: Maximum package weight
             boxes: Boxes
             boxes_help: Leave empty to use every box in the catalog.
+            default_destination_type: Default destination type
+            default_destination_type_help: Used when the buyer has not said whether the delivery goes to a home or a business.
+            choose_default_destination_type: Choose a default destination type
             unit:
                 lb: Pounds (lb)
                 kg: Kilograms (kg)
                 in: Inches (in)
                 cm: Centimetres (cm)
+        destination_type:
+            residential: Home
+            commercial: Business
         package_box:
             name: Name
             inner_length: Inner length (%unit%)

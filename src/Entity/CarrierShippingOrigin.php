@@ -64,6 +64,10 @@ class CarrierShippingOrigin implements CarrierShippingOriginInterface
     #[ORM\Column(name: 'max_package_weight', type: 'float')]
     protected float $maxPackageWeight = self::DEFAULT_MAX_PACKAGE_WEIGHT_LB;
 
+    /** No default: it changes the price, so the administrator always chooses it (CA-48). */
+    #[ORM\Column(name: 'default_destination_type', type: 'string', length: 16)]
+    protected ?string $defaultDestinationType = null;
+
     /**
      * Optional restriction to part of the catalog; empty means every box (CA-35). Removing a box or an
      * origin removes the assignment, never the other side.
@@ -164,6 +168,16 @@ class CarrierShippingOrigin implements CarrierShippingOriginInterface
     public function setDimensionUnit(string $dimensionUnit): void
     {
         $this->dimensionUnit = $dimensionUnit;
+    }
+
+    public function getDefaultDestinationType(): ?string
+    {
+        return $this->defaultDestinationType;
+    }
+
+    public function setDefaultDestinationType(?string $defaultDestinationType): void
+    {
+        $this->defaultDestinationType = $defaultDestinationType;
     }
 
     public function getMaxPackageWeight(): float

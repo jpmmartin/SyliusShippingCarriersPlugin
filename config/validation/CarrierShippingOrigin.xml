@@ -52,6 +52,21 @@
                 <option name="groups">sylius</option>
             </constraint>
         </property>
+        <!-- Required and without a default: it changes the price (CA-48). -->
+        <property name="defaultDestinationType">
+            <constraint name="NotBlank">
+                <option name="message">jpmmartin_carrier.shipping_origin.default_destination_type.not_blank</option>
+                <option name="groups">sylius</option>
+            </constraint>
+            <constraint name="Choice">
+                <option name="choices">
+                    <value>residential</value>
+                    <value>commercial</value>
+                </option>
+                <option name="groups">sylius</option>
+            </constraint>
+        </property>
+
         <property name="dimensionUnit">
             <constraint name="Choice">
                 <option name="choices">

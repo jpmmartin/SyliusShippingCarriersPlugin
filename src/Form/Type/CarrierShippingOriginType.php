@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Form\Type;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use Sylius\Bundle\AddressingBundle\Form\Type\CountryCodeChoiceType;
 use Sylius\Bundle\ChannelBundle\Form\Type\ChannelChoiceType;
@@ -71,6 +72,16 @@ final class CarrierShippingOriginType extends AbstractResourceType
             ->add('maxPackageWeight', NumberType::class, [
                 'label' => 'jpmmartin_carrier.form.shipping_origin.max_package_weight',
                 'empty_data' => '0',
+            ])
+            // Nothing preselected: it changes the price when the buyer has not chosen a type (CA-48).
+            ->add('defaultDestinationType', ChoiceType::class, [
+                'label' => 'jpmmartin_carrier.form.shipping_origin.default_destination_type',
+                'help' => 'jpmmartin_carrier.form.shipping_origin.default_destination_type_help',
+                'placeholder' => 'jpmmartin_carrier.form.shipping_origin.choose_default_destination_type',
+                'choices' => [
+                    'jpmmartin_carrier.form.destination_type.residential' => DestinationType::RESIDENTIAL,
+                    'jpmmartin_carrier.form.destination_type.commercial' => DestinationType::COMMERCIAL,
+                ],
             ])
             // Optional restriction to part of the catalog; none selected means every box (CA-35).
             ->add('boxes', EntityType::class, [

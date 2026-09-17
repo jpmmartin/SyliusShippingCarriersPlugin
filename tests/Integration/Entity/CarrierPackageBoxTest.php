@@ -156,6 +156,7 @@ final class CarrierPackageBoxTest extends KernelTestCase
         $channel->setTaxCalculationStrategy('order_items_based');
 
         $origin = new CarrierShippingOrigin();
+        $origin->setDefaultDestinationType('residential');
         $origin->setChannel($channel);
         $origin->setStreet('Gran Via 1');
         $origin->setCity('Madrid');

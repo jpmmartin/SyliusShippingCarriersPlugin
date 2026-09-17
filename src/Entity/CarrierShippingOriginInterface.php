@@ -60,6 +60,14 @@ interface CarrierShippingOriginInterface extends ResourceInterface
 
     public function setDimensionUnit(string $dimensionUnit): void;
 
+    /**
+     * The destination type rates are asked for with when the buyer has not chosen one (CA-48), a
+     * DestinationType value.
+     */
+    public function getDefaultDestinationType(): ?string;
+
+    public function setDefaultDestinationType(?string $defaultDestinationType): void;
+
     public function getMaxPackageWeight(): float;
 
     public function setMaxPackageWeight(float $maxPackageWeight): void;

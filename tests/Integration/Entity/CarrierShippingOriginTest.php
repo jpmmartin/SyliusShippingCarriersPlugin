@@ -54,6 +54,8 @@ final class CarrierShippingOriginTest extends KernelTestCase
             CarrierShippingOriginInterface::DEFAULT_MAX_PACKAGE_WEIGHT_LB,
             $origin->getMaxPackageWeight(),
         );
+        // No default destination type: the administrator always chooses it (CA-48).
+        self::assertNull($origin->getDefaultDestinationType());
     }
 
     public function testItPersistsAnOrigin(): void
@@ -132,6 +134,7 @@ final class CarrierShippingOriginTest extends KernelTestCase
         $origin->setCity('Madrid');
         $origin->setPostcode('28013');
         $origin->setCountryCode('ES');
+        $origin->setDefaultDestinationType('residential');
 
         return $origin;
     }

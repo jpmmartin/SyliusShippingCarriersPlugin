@@ -2,6 +2,8 @@ jpmmartin_carrier:
     shipping_origin:
         channel:
             unique: This channel already has a shipping origin.
+        default_destination_type:
+            not_blank: Choose whether deliveries go to homes or businesses when the buyer has not said.
         weight_unit:
             same_as_other_origins: Every shipping origin must use the same units. The others use {{ unit }}.
         dimension_unit:
