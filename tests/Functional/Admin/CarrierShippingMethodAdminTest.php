@@ -55,12 +55,13 @@ final class CarrierShippingMethodAdminTest extends WebTestCase
         parent::tearDown();
     }
 
-    public function testUpsIsOfferedAmongTheCalculatorsOfAShippingMethod(): void
+    public function testBothCarriersAreOfferedAmongTheCalculatorsOfAShippingMethod(): void
     {
         $crawler = $this->client->request('GET', '/admin/shipping-methods/new');
 
         self::assertResponseIsSuccessful();
         self::assertSame('UPS rates', trim($crawler->filter(sprintf('select[name="%s[calculator]"] option[value="ups_rate"]', self::FORM))->text()));
+        self::assertSame('FedEx rates', trim($crawler->filter(sprintf('select[name="%s[calculator]"] option[value="fedex_rate"]', self::FORM))->text()));
     }
 
     /**
@@ -113,6 +114,48 @@ final class CarrierShippingMethodAdminTest extends WebTestCase
         self::assertSame('01', $this->findShippingMethod('UPS_NEXT_DAY')->getConfiguration()['service'] ?? null);
     }
 
+    public function testTwoShippingMethodsOfFedexRepresentDifferentServices(): void
+    {
+        $this->submitNewShippingMethod('FEDEX_GROUND', [
+            'service' => 'FEDEX_GROUND',
+            'failure_policy' => 'flat',
+            'flat_amount' => ['WEB_US' => '9.50', 'WEB_EU' => '8.50'],
+        ], 'fedex_rate');
+        self::assertResponseRedirects();
+        $this->submitNewShippingMethod('FEDEX_PRIORITY', ['service' => 'PRIORITY_OVERNIGHT', 'failure_policy' => 'hide'], 'fedex_rate');
+        self::assertResponseRedirects();
+
+        $ground = $this->findShippingMethod('FEDEX_GROUND');
+        self::assertSame('fedex_rate', $ground->getCalculator());
+        self::assertEquals(
+            ['service' => 'FEDEX_GROUND', 'failure_policy' => 'flat', 'flat_amount' => ['WEB_US' => 950, 'WEB_EU' => 850]],
+            $ground->getConfiguration(),
+        );
+        self::assertSame('PRIORITY_OVERNIGHT', $this->findShippingMethod('FEDEX_PRIORITY')->getConfiguration()['service'] ?? null);
+    }
+
+    /**
+     * Each carrier offers its own services: a UPS code means nothing to FedEx.
+     */
+    public function testAFedexShippingMethodRefusesAUpsService(): void
+    {
+        $this->submitNewShippingMethod('FEDEX_WRONG', ['service' => '03', 'failure_policy' => 'hide'], 'fedex_rate');
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertNull($this->entityManager->getRepository(ShippingMethod::class)->findOneBy(['code' => 'FEDEX_WRONG']));
+    }
+
+    /**
+     * FedEx shipping methods are checked with their own validation group.
+     */
+    public function testAFedexShippingMethodWithoutAServiceIsNotSaved(): void
+    {
+        $crawler = $this->submitNewShippingMethod('FEDEX_NONE', ['service' => '', 'failure_policy' => 'hide'], 'fedex_rate');
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Choose one of the services of this carrier.', $crawler->text());
+    }
+
     public function testAFlatAmountMissingForAChannelIsNotSaved(): void
     {
         $crawler = $this->submitNewShippingMethod('UPS_GROUND', [
@@ -152,7 +195,7 @@ final class CarrierShippingMethodAdminTest extends WebTestCase
      *
      * @param array<string, mixed> $configuration
      */
-    private function submitNewShippingMethod(string $code, array $configuration): Crawler
+    private function submitNewShippingMethod(string $code, array $configuration, string $calculator = 'ups_rate'): Crawler
     {
         $crawler = $this->client->request('GET', '/admin/shipping-methods/new');
         self::assertResponseIsSuccessful();
@@ -162,7 +205,7 @@ final class CarrierShippingMethodAdminTest extends WebTestCase
         $values[self::FORM] = array_replace($values[self::FORM], [
             'code' => $code,
             'zone' => 'US',
-            'calculator' => 'ups_rate',
+            'calculator' => $calculator,
             'channels' => ['WEB_US', 'WEB_EU'],
             'translations' => ['en_US' => ['name' => $code]],
             'configuration' => $configuration,

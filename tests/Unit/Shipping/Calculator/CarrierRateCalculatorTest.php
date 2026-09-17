@@ -31,7 +31,10 @@ final class CarrierRateCalculatorTest extends TestCase
 
     public function testItIsNamedAfterItsCarrier(): void
     {
-        self::assertSame('ups_rate', (new CarrierRateCalculator($this->createStub(RateProviderInterface::class), 'ups', 'ups_rate'))->getType());
+        $calculator = new CarrierRateCalculator($this->createStub(RateProviderInterface::class), 'ups', 'ups_rate');
+
+        self::assertSame('ups_rate', $calculator->getType());
+        self::assertSame('ups', $calculator->getCarrier());
     }
 
     /**

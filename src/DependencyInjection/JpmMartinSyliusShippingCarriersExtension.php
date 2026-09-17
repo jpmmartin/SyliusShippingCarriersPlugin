@@ -65,6 +65,7 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
             'shipping_method_calculator' => [
                 'validation_groups' => [
                     'ups_rate' => ['sylius', 'jpmmartin_carrier_ups_rate'],
+                    'fedex_rate' => ['sylius', 'jpmmartin_carrier_fedex_rate'],
                 ],
             ],
         ]);

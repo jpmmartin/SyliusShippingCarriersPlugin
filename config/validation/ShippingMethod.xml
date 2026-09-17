@@ -14,6 +14,12 @@
                     <value>jpmmartin_carrier_ups_rate</value>
                 </option>
             </constraint>
+            <constraint name="JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints\CarrierRateConfiguration">
+                <option name="carrier">fedex</option>
+                <option name="groups">
+                    <value>jpmmartin_carrier_fedex_rate</value>
+                </option>
+            </constraint>
         </property>
     </class>
 </constraint-mapping>

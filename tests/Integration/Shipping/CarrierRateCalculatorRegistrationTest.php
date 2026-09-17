@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Integration\Shipping;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Form\Type\Shipping\FedexRateConfigurationType;
 use JpmMartin\SyliusShippingCarriersPlugin\Form\Type\Shipping\UpsRateConfigurationType;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\CarrierServices;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Sylius\Bundle\ResourceBundle\Form\Registry\FormTypeRegistryInterface;
 use Sylius\Component\Registry\ServiceRegistryInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -20,30 +22,63 @@ use Symfony\Component\Form\FormView;
 final class CarrierRateCalculatorRegistrationTest extends KernelTestCase
 {
     /**
-     * Registered like Sylius's own calculators, so the admin offers it in a shipping method's calculator list.
+     * Registered like Sylius's own calculators, so the admin offers them in a shipping method's calculator list.
+     *
+     * @param class-string $formType
      */
-    public function testTheUpsCalculatorIsRegisteredWithItsConfigurationForm(): void
+    #[DataProvider('carriers')]
+    public function testTheCalculatorOfEachCarrierIsRegisteredWithItsConfigurationForm(string $calculator, string $carrier, string $formType): void
     {
         self::bootKernel();
 
         $calculators = self::getContainer()->get('sylius.registry.shipping_calculator');
         self::assertInstanceOf(ServiceRegistryInterface::class, $calculators);
-        self::assertInstanceOf(CarrierRateCalculator::class, $calculators->get('ups_rate'));
+        $registered = $calculators->get($calculator);
+        self::assertInstanceOf(CarrierRateCalculator::class, $registered);
+        self::assertSame($calculator, $registered->getType());
+        self::assertSame($carrier, $registered->getCarrier());
 
         $forms = self::getContainer()->get('sylius.form_registry.shipping_calculator');
         self::assertInstanceOf(FormTypeRegistryInterface::class, $forms);
-        self::assertSame(UpsRateConfigurationType::class, $forms->get('ups_rate', 'default'));
+        self::assertSame($formType, $forms->get($calculator, 'default'));
 
         $labels = self::getContainer()->getParameter('sylius.shipping_calculators');
         self::assertIsArray($labels);
-        self::assertSame('jpmmartin_carrier.form.shipping_calculator.ups_rate', $labels['ups_rate'] ?? null);
+        self::assertSame(sprintf('jpmmartin_carrier.form.shipping_calculator.%s', $calculator), $labels[$calculator] ?? null);
     }
 
-    public function testTheFormOffersTheServicesThePluginShipsWith(): void
+    /**
+     * @return iterable<string, array{string, string, class-string}>
+     */
+    public static function carriers(): iterable
+    {
+        yield 'UPS' => ['ups_rate', 'ups', UpsRateConfigurationType::class];
+        yield 'FedEx' => ['fedex_rate', 'fedex', FedexRateConfigurationType::class];
+    }
+
+    /**
+     * @param class-string $formType
+     * @param array<string, string> $services
+     */
+    #[DataProvider('servicesThePluginShipsWith')]
+    public function testTheFormOffersTheServicesThePluginShipsWith(string $formType, array $services): void
     {
         self::bootKernel();
 
-        self::assertSame(['01' => 'UPS Next Day Air', '03' => 'UPS Ground'], $this->serviceChoices());
+        self::assertSame($services, $this->serviceChoices($formType));
+    }
+
+    /**
+     * @return iterable<string, array{class-string, array<string, string>}>
+     */
+    public static function servicesThePluginShipsWith(): iterable
+    {
+        yield 'UPS' => [UpsRateConfigurationType::class, ['01' => 'UPS Next Day Air', '03' => 'UPS Ground']];
+        yield 'FedEx' => [FedexRateConfigurationType::class, [
+            'FEDEX_GROUND' => 'FedEx Ground',
+            'PRIORITY_OVERNIGHT' => 'FedEx Priority Overnight',
+            'STANDARD_OVERNIGHT' => 'FedEx Standard Overnight',
+        ]];
     }
 
     /**
@@ -53,7 +88,7 @@ final class CarrierRateCalculatorRegistrationTest extends KernelTestCase
     {
         self::bootKernel();
 
-        self::assertSame('hide', $this->newForm()['failure_policy']->vars['value']);
+        self::assertSame('hide', $this->newForm(UpsRateConfigurationType::class)['failure_policy']->vars['value']);
     }
 
     /**
@@ -74,12 +109,14 @@ final class CarrierRateCalculatorRegistrationTest extends KernelTestCase
     }
 
     /**
+     * @param class-string $formType
+     *
      * @return array<string, string> Choice labels by service code
      */
-    private function serviceChoices(): array
+    private function serviceChoices(string $formType): array
     {
         $choices = [];
-        foreach ($this->newForm()['service']->vars['choices'] as $choice) {
+        foreach ($this->newForm($formType)['service']->vars['choices'] as $choice) {
             self::assertInstanceOf(ChoiceView::class, $choice);
             self::assertIsString($choice->label);
             $choices[$choice->value] = $choice->label;
@@ -88,11 +125,14 @@ final class CarrierRateCalculatorRegistrationTest extends KernelTestCase
         return $choices;
     }
 
-    private function newForm(): FormView
+    /**
+     * @param class-string $formType
+     */
+    private function newForm(string $formType): FormView
     {
         $formFactory = self::getContainer()->get('form.factory');
         self::assertInstanceOf(FormFactoryInterface::class, $formFactory);
 
-        return $formFactory->create(UpsRateConfigurationType::class, null, ['csrf_protection' => false])->createView();
+        return $formFactory->create($formType, null, ['csrf_protection' => false])->createView();
     }
 }

@@ -13,6 +13,7 @@ jpmmartin_carrier:
     form:
         shipping_calculator:
             ups_rate: UPS rates
+            fedex_rate: FedEx rates
             service: Service
             choose_service: Choose a service
             failure_policy: When the carrier does not answer

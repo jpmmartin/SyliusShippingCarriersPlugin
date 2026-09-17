@@ -61,4 +61,12 @@ final readonly class CarrierRateCalculator implements CalculatorInterface
     {
         return $this->type;
     }
+
+    /**
+     * The carrier whose rates this calculator charges, such as `ups`.
+     */
+    public function getCarrier(): string
+    {
+        return $this->carrier;
+    }
 }

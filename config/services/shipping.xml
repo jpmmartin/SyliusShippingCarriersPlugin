@@ -22,12 +22,28 @@
             />
         </service>
 
+        <service id="jpmmartin_carrier.shipping_calculator.fedex_rate" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator">
+            <argument type="service" id="jpmmartin_carrier.rate_provider" />
+            <argument>fedex</argument>
+            <argument>fedex_rate</argument>
+            <tag
+                name="sylius.shipping_calculator"
+                calculator="fedex_rate"
+                form_type="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\Shipping\FedexRateConfigurationType"
+                label="jpmmartin_carrier.form.shipping_calculator.fedex_rate"
+            />
+        </service>
+
         <service id="jpmmartin_carrier.form.type.shipping.carrier_rate_configuration" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\Shipping\CarrierRateConfigurationType">
             <argument type="service" id="jpmmartin_carrier.shipping.carrier_services" />
             <tag name="form.type" />
         </service>
 
         <service id="jpmmartin_carrier.form.type.shipping.ups_rate_configuration" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\Shipping\UpsRateConfigurationType">
+            <tag name="form.type" />
+        </service>
+
+        <service id="jpmmartin_carrier.form.type.shipping.fedex_rate_configuration" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\Shipping\FedexRateConfigurationType">
             <tag name="form.type" />
         </service>
     </services>
