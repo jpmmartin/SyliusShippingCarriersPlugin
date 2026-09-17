@@ -194,6 +194,31 @@ trait ShopCheckoutFixturesTrait
         return $order;
     }
 
+    /**
+     * Chooses the carrier's shipping method and the payment method, and confirms the order, the way a buyer does.
+     */
+    private function completeTheCheckoutInTheShop(): void
+    {
+        $crawler = $this->client->request('GET', '/en_US/checkout/select-shipping');
+        self::assertResponseIsSuccessful();
+        $this->client->submit($crawler->filter('form[name="sylius_shop_checkout_select_shipping"]')->form([
+            'sylius_shop_checkout_select_shipping[shipments][0][method]' => 'UPS_GROUND',
+        ]));
+        self::assertResponseRedirects();
+
+        $crawler = $this->client->request('GET', '/en_US/checkout/select-payment');
+        self::assertResponseIsSuccessful();
+        $this->client->submit($crawler->filter('form[name="sylius_shop_checkout_select_payment"]')->form([
+            'sylius_shop_checkout_select_payment[payments][0][method]' => 'CASH-CARRIER',
+        ]));
+        self::assertResponseRedirects();
+
+        $crawler = $this->client->request('GET', '/en_US/checkout/complete');
+        self::assertResponseIsSuccessful();
+        $this->client->submit($crawler->filter('form[name="sylius_checkout_complete"]')->form());
+        self::assertResponseRedirects();
+    }
+
     private function address(): Address
     {
         $address = new Address();

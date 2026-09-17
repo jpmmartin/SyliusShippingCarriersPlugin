@@ -17,6 +17,18 @@
             <argument type="service" id="logger" />
         </service>
 
+        <!-- The packages of a confirmed order are stored in the save that confirms it. -->
+        <service id="jpmmartin_carrier.listener.store_shipment_packages" class="JpmMartin\SyliusShippingCarriersPlugin\EventListener\StoreShipmentPackagesListener">
+            <argument type="service" id="sylius.registry.shipping_calculator" />
+            <argument type="service" id="jpmmartin_carrier.packaging_strategy" />
+            <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
+            <argument type="service" id="jpmmartin_carrier.factory.shipment_packaging" />
+            <argument type="service" id="jpmmartin_carrier.factory.shipment_package" />
+            <argument type="service" id="jpmmartin_carrier.manager.shipment_packaging" />
+            <argument type="service" id="logger" />
+            <tag name="kernel.event_listener" event="workflow.sylius_order_checkout.completed.complete" priority="50" />
+        </service>
+
         <!-- Point this alias at another service to replace the packaging strategy. -->
         <service id="jpmmartin_carrier.packaging_strategy" alias="jpmmartin_carrier.packaging_strategy.default" />
         <service id="JpmMartin\SyliusShippingCarriersPlugin\Packaging\PackagingStrategyInterface" alias="jpmmartin_carrier.packaging_strategy" />
