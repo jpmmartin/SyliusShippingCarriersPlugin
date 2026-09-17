@@ -17,11 +17,13 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LogLevel;
 use Sylius\Component\Core\Model\Address;
 use Sylius\Component\Core\Model\Channel;
 use Sylius\Component\Core\Model\Order;
 use Sylius\Component\Core\Model\Shipment;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
+use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
 
 final class RateRequestFactoryTest extends TestCase
 {
@@ -31,8 +33,12 @@ final class RateRequestFactoryTest extends TestCase
 
     private PackagingStrategyInterface&MockObject $packagingStrategy;
 
+    private RecordingLogger $logger;
+
     protected function setUp(): void
     {
+        $this->logger = new RecordingLogger();
+
         $this->origin = new CarrierShippingOrigin();
         $this->origin->setStreet('1 Main St');
         $this->origin->setCity('Chicago');
@@ -122,11 +128,34 @@ final class RateRequestFactoryTest extends TestCase
         yield 'with an empty street' => ['street'];
     }
 
-    public function testAChannelWithoutAnOriginIsNotRated(): void
+    public function testAChannelWithoutAnOriginIsNotRatedAndIsLogged(): void
     {
         $this->origin = null;
 
         self::assertNull($this->factory()->create($this->shipment()));
+
+        self::assertCount(1, $this->logger->records);
+        [$level, $message, $context] = $this->logger->records[0];
+        self::assertSame(LogLevel::ERROR, $level);
+        self::assertStringContainsString('no shipping origin', $message);
+        self::assertSame(['channel' => 'WEB'], $context);
+    }
+
+    /**
+     * The shipping step asks once per shipping method; the missing origin is logged once per request.
+     */
+    public function testAChannelWithoutAnOriginIsLoggedOncePerRequest(): void
+    {
+        $this->origin = null;
+        $factory = $this->factory();
+
+        $factory->create($this->shipment());
+        $factory->create($this->shipment());
+        self::assertCount(1, $this->logger->records);
+
+        $factory->reset();
+        $factory->create($this->shipment());
+        self::assertCount(2, $this->logger->records);
     }
 
     public function testAnOriginWithoutAPostcodeIsNotRated(): void
@@ -152,7 +181,7 @@ final class RateRequestFactoryTest extends TestCase
         $destinationTypeResolver = $this->createStub(DestinationTypeResolverInterface::class);
         $destinationTypeResolver->method('resolve')->willReturnCallback(fn (): string => $this->destinationType);
 
-        return new RateRequestFactory($originRepository, $this->packagingStrategy, $destinationTypeResolver);
+        return new RateRequestFactory($originRepository, $this->packagingStrategy, $destinationTypeResolver, $this->logger);
     }
 
     private function shipment(): Shipment

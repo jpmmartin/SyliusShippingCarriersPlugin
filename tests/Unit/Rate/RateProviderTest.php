@@ -370,7 +370,7 @@ final class RateProviderTest extends TestCase
         $exchangeRateRepository->method('findOneWithCurrencyPair')->willReturnCallback(fn (): ?ExchangeRateInterface => $this->exchangeRate);
 
         return new RateProvider(
-            new RateRequestFactory($originRepository, $packagingStrategy, $destinationTypeResolver),
+            new RateRequestFactory($originRepository, $packagingStrategy, $destinationTypeResolver, $this->logger),
             new CredentialsProvider($credentialsRepository),
             new ServiceLocator(['ups' => fn (): RecordingCarrier => $this->ups]),
             $this->cache,

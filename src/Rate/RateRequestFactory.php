@@ -11,29 +11,40 @@ use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationTypeResolverIn
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Exception\UnpackableShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\PackagingStrategyInterface;
+use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Turns a shipment into what a carrier is asked to rate: from the origin of its channel to the shipping address
  * of its order, in the packages the packaging strategy builds.
  */
-final readonly class RateRequestFactory
+final class RateRequestFactory implements ResetInterface
 {
+    /**
+     * The channels already logged as having no origin in this request. The shipping step asks for every shipping
+     * method of the plugin, so the fact would otherwise be logged once per method.
+     *
+     * @var array<string, true>
+     */
+    private array $channelsLoggedWithoutOrigin = [];
+
     /**
      * @param RepositoryInterface<CarrierShippingOriginInterface> $originRepository
      */
     public function __construct(
-        private RepositoryInterface $originRepository,
-        private PackagingStrategyInterface $packagingStrategy,
-        private DestinationTypeResolverInterface $destinationTypeResolver,
+        private readonly RepositoryInterface $originRepository,
+        private readonly PackagingStrategyInterface $packagingStrategy,
+        private readonly DestinationTypeResolverInterface $destinationTypeResolver,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     /**
      * Null when the shipment cannot be rated: its order has no complete shipping address, its channel has no
-     * complete origin, or its units cannot be packed, which the packaging strategy logs.
+     * complete origin, which is logged, or its units cannot be packed, which the packaging strategy logs.
      */
     public function create(ShipmentInterface $shipment): ?RateRequest
     {
@@ -53,8 +64,14 @@ final readonly class RateRequestFactory
         }
 
         $channel = $order->getChannel();
-        $origin = null === $channel ? null : $this->originRepository->findOneBy(['channel' => $channel]);
+        if (null === $channel) {
+            return null;
+        }
+
+        $origin = $this->originRepository->findOneBy(['channel' => $channel]);
         if (!$origin instanceof CarrierShippingOriginInterface) {
+            $this->logChannelWithoutOrigin((string) $channel->getCode());
+
             return null;
         }
 
@@ -79,6 +96,23 @@ final readonly class RateRequestFactory
         );
 
         return new RateRequest($originAddress, $destination, $packages);
+    }
+
+    public function reset(): void
+    {
+        $this->channelsLoggedWithoutOrigin = [];
+    }
+
+    private function logChannelWithoutOrigin(string $channelCode): void
+    {
+        if (isset($this->channelsLoggedWithoutOrigin[$channelCode])) {
+            return;
+        }
+
+        $this->channelsLoggedWithoutOrigin[$channelCode] = true;
+        $this->logger->error('The channel {channel} has no shipping origin, so no carrier shipping method is offered in it.', [
+            'channel' => $channelCode,
+        ]);
     }
 
     private static function originAddress(CarrierShippingOriginInterface $origin): ?Address
