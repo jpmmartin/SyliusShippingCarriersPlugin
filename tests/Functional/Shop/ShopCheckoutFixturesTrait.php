@@ -105,6 +105,11 @@ trait ShopCheckoutFixturesTrait
         $variant->setCurrentLocale('en_US');
         $variant->setFallbackLocale('en_US');
         $variant->setTracked(false);
+        // Measured and weighed, so a real packaging strategy can pack it.
+        $variant->setWeight(2.0);
+        $variant->setWidth(10.0);
+        $variant->setHeight(8.0);
+        $variant->setDepth(6.0);
         $pricing = new ChannelPricing();
         $pricing->setChannelCode(self::CHANNEL);
         $pricing->setPrice(1000);
