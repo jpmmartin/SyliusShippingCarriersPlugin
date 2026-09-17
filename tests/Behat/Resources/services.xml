@@ -3,6 +3,49 @@
 <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
         <defaults public="true" />
-        <!-- Put your Behat contexts and page objects here -->
+
+        <!-- No test calls UPS or FedEx: in the test environment both are fakes a scenario tells how to answer. -->
+        <service id="jpmmartin_carrier.behat.fake_carrier_state" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Carrier\FakeCarrierState">
+            <argument>%kernel.cache_dir%/jpmmartin_carrier_fake_carriers.json</argument>
+        </service>
+
+        <service id="jpmmartin_carrier.carrier.ups" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Carrier\FakeCarrier">
+            <argument>ups</argument>
+            <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
+            <tag name="jpmmartin_carrier.carrier" carrier="ups" />
+        </service>
+
+        <service id="jpmmartin_carrier.carrier.fedex" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Carrier\FakeCarrier">
+            <argument>fedex</argument>
+            <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
+            <tag name="jpmmartin_carrier.carrier" carrier="fedex" />
+        </service>
+
+        <!-- Hooks -->
+        <service id="jpmmartin_carrier.behat.context.hook.carrier" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Hook\CarrierContext">
+            <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
+            <argument type="service" id="jpmmartin_carrier.cache.rates" />
+        </service>
+
+        <service id="jpmmartin_carrier.behat.context.hook.database" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Hook\DatabaseContext">
+            <argument type="service" id="doctrine.orm.entity_manager" />
+        </service>
+
+        <!-- Setup -->
+        <service id="jpmmartin_carrier.behat.context.setup.shipping_origin" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Setup\ShippingOriginContext">
+            <argument type="service" id="sylius.behat.shared_storage" />
+            <argument type="service" id="jpmmartin_carrier.factory.shipping_origin" />
+            <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
+            <argument type="service" id="sylius.converter.country_name" />
+        </service>
+
+        <service id="jpmmartin_carrier.behat.context.setup.carrier" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Setup\CarrierContext">
+            <argument type="service" id="sylius.behat.shared_storage" />
+            <argument type="service" id="jpmmartin_carrier.factory.credentials" />
+            <argument type="service" id="jpmmartin_carrier.repository.credentials" />
+            <argument type="service" id="sylius.fixture.example_factory.shipping_method" />
+            <argument type="service" id="sylius.repository.shipping_method" />
+            <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
+        </service>
     </services>
 </container>
