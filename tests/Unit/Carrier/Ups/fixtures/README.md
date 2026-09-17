@@ -10,3 +10,4 @@ schema, not that it reads what UPS actually sends.
   instead of a list.
 - `error.json`: the error body UPS sends with a 4xx status.
 - `token.json`: a granted OAuth access token.
+- `track.json`: a tracking response for a delivered package with two activities.

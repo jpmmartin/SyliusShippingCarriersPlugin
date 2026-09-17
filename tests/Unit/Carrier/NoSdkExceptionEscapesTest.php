@@ -23,6 +23,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Encrypter;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
+use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateSet;
+use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingInfo;
 use ParagonIE\Halite\KeyFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
@@ -34,6 +36,7 @@ use Saloon\Http\PendingRequest;
 use Saloon\RateLimitPlugin\Stores\MemoryStore;
 use ShipStream\FedEx\Api\AuthorizationV1\Requests\ApiAuthorization;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Requests\RateAndTransitTimes;
+use ShipStream\FedEx\Api\TrackV1\Requests\TrackByTrackingNumber;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -129,6 +132,15 @@ final class NoSdkExceptionEscapesTest extends TestCase
             ApiAuthorization::class => 'invalid credentials' === $failure
                 ? new SaloonMockResponse('{"errors":[{"code":"NOT.AUTHORIZED.ERROR","message":"The given client credentials were not valid."}]}', 401, self::JSON)
                 : new SaloonMockResponse('{"access_token":"fedex-access-token","token_type":"bearer","expires_in":3599,"scope":"CXS"}', 200, self::JSON),
+            TrackByTrackingNumber::class => match ($failure) {
+                'timeout' => (new SaloonMockResponse())->throw(static fn (PendingRequest $pendingRequest): FatalRequestException => new FatalRequestException(
+                    new ConnectException('cURL error 28: Operation timed out after 10000 milliseconds', $pendingRequest->createPsrRequest()),
+                    $pendingRequest,
+                )),
+                'server error' => new SaloonMockResponse('{"errors":[{"code":"INTERNAL.SERVER.ERROR","message":"We encountered an unexpected error."}]}', 500, self::JSON),
+                'unreadable JSON' => new SaloonMockResponse('{"output": {"completeTrackResults": [', 200, self::JSON),
+                default => static fn (): never => self::fail(sprintf('No tracking request was expected with %s.', $failure)),
+            },
             RateAndTransitTimes::class => match ($failure) {
                 // What Guzzle throws when a request times out.
                 'timeout' => (new SaloonMockResponse())->throw(static fn (PendingRequest $pendingRequest): FatalRequestException => new FatalRequestException(
@@ -165,15 +177,24 @@ final class NoSdkExceptionEscapesTest extends TestCase
      */
     private function assertFailsWith(string $expected, CarrierInterface $carrier): void
     {
+        $this->assertOperationFailsWith($expected, fn (): RateSet => $carrier->rate($this->request()), 'Rating');
+        $this->assertOperationFailsWith($expected, fn (): TrackingInfo => $carrier->track('1Z999AA10123456784'), 'Tracking');
+    }
+
+    /**
+     * @param class-string<CarrierException> $expected
+     */
+    private function assertOperationFailsWith(string $expected, \Closure $operation, string $what): void
+    {
         try {
-            $carrier->rate($this->request());
+            $operation();
         } catch (\Throwable $exception) {
-            self::assertInstanceOf($expected, $exception, sprintf('%s left the adapter: %s', $exception::class, $exception->getMessage()));
+            self::assertInstanceOf($expected, $exception, sprintf('%s left the adapter while %s: %s', $exception::class, strtolower($what), $exception->getMessage()));
 
             return;
         }
 
-        self::fail('The carrier failure was not reported.');
+        self::fail(sprintf('%s did not report the carrier failure.', $what));
     }
 
     private function credentialsProvider(string $carrier): CredentialsProvider

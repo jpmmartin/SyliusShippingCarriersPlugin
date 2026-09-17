@@ -19,6 +19,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateSet;
+use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingEvent;
 use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingInfo;
 use Saloon\Exceptions\Request\FatalRequestException;
 use Saloon\Exceptions\Request\RequestException;
@@ -39,6 +40,12 @@ use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Dto\RequestedPackageLineItem;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Dto\RequestedShipment;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Dto\Weight;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Responses\RatcResponseVo;
+use ShipStream\FedEx\Api\TrackV1\Dto\FullSchemaTrackingNumbers;
+use ShipStream\FedEx\Api\TrackV1\Dto\ScanEvent;
+use ShipStream\FedEx\Api\TrackV1\Dto\TrackingInfo as FedexTrackingInfo;
+use ShipStream\FedEx\Api\TrackV1\Dto\TrackingNumberInfo;
+use ShipStream\FedEx\Api\TrackV1\Dto\TrackResult;
+use ShipStream\FedEx\Api\TrackV1\Responses\TrkcResponseVoTrackingNumber;
 
 /**
  * FedEx through shipstream/fedex-rest-sdk. Every exception of the SDK, of Saloon or of the JSON decoding is
@@ -99,8 +106,76 @@ final class FedexCarrier implements CarrierInterface
 
     public function track(string $trackingNumber): TrackingInfo
     {
-        // The FedEx tracking adapter is a task of its own, after the rate providers.
-        throw new CarrierUnavailableException('Tracking with FedEx is not implemented yet.');
+        try {
+            $credentials = $this->credentialsProvider->get(CarrierCredentialsInterface::CARRIER_FEDEX);
+
+            $response = $this->connectorFactory->create($credentials)->trackV1()->trackByTrackingNumber(new FullSchemaTrackingNumbers(
+                includeDetailedScans: true,
+                trackingInfo: [new FedexTrackingInfo(new TrackingNumberInfo($trackingNumber))],
+            ));
+
+            $tracking = $response->dto();
+            if (!$tracking instanceof TrkcResponseVoTrackingNumber) {
+                throw new UnexpectedCarrierResponseException('FedEx answered the tracking enquiry without a tracking response.');
+            }
+
+            return $this->readTracking($trackingNumber, $tracking);
+        } catch (\Throwable $exception) {
+            throw $this->translate($exception);
+        }
+    }
+
+    /**
+     * FedEx answers with one result per tracking number, and the newest scan is the last of the list.
+     */
+    private function readTracking(string $trackingNumber, TrkcResponseVoTrackingNumber $tracking): TrackingInfo
+    {
+        $result = ($tracking->output?->completeTrackResults[0] ?? null)?->trackResults[0] ?? null;
+        if (!$result instanceof TrackResult) {
+            throw new UnexpectedCarrierResponseException(sprintf('FedEx knows no shipment for the tracking number "%s".', $trackingNumber));
+        }
+
+        $events = [];
+        foreach (array_reverse($result->scanEvents ?? []) as $scan) {
+            if (!$scan instanceof ScanEvent) {
+                continue;
+            }
+
+            $description = (string) ($scan->eventDescription ?? $scan->derivedStatus);
+            if ('' === $description) {
+                continue;
+            }
+
+            $events[] = new TrackingEvent($this->scannedAt($scan), $description, $this->place($scan));
+        }
+
+        $status = $result->latestStatusDetail?->statusByLocale ?? $result->latestStatusDetail?->description;
+
+        return new TrackingInfo($trackingNumber, '' === $status ? null : $status, $events);
+    }
+
+    private function scannedAt(ScanEvent $scan): ?\DateTimeImmutable
+    {
+        if (null === $scan->date) {
+            return null;
+        }
+
+        try {
+            return new \DateTimeImmutable($scan->date);
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
+    private function place(ScanEvent $scan): ?string
+    {
+        $place = array_filter([
+            $scan->scanLocation?->city,
+            $scan->scanLocation?->stateOrProvinceCode,
+            $scan->scanLocation?->countryCode,
+        ]);
+
+        return [] === $place ? null : implode(', ', $place);
     }
 
     /**

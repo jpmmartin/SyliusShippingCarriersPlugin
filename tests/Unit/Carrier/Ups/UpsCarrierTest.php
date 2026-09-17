@@ -9,6 +9,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierHttpClientFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierCredentialsException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierResponseException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsAccessTokenCache;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsCarrier;
@@ -218,6 +219,40 @@ final class UpsCarrierTest extends TestCase
         $this->expectException(CarrierRejectedRequestException::class);
         $this->expectExceptionMessage('111210: The requested service is unavailable between the selected locations.');
         $carrier->rate($this->request());
+    }
+
+    public function testTheStatusAndTheEventsOfAShipmentAreRead(): void
+    {
+        $tracking = $this->carrier($this->json('track.json'))->track('1Z999AA10123456784');
+
+        self::assertSame('1Z999AA10123456784', $tracking->trackingNumber);
+        self::assertSame('Delivered', $tracking->status);
+        self::assertCount(2, $tracking->events);
+        self::assertSame('Delivered', $tracking->events[0]->description);
+        self::assertSame('Seattle, WA, US', $tracking->events[0]->location);
+        self::assertSame('2026-09-17 10:15:00', $tracking->events[0]->occurredAt?->format('Y-m-d H:i:s'));
+        self::assertSame('Origin Scan', $tracking->events[1]->description);
+    }
+
+    /**
+     * UPS wants a different identifier on every enquiry and a name for what is asking.
+     */
+    public function testEachTrackingEnquiryCarriesItsOwnIdentifier(): void
+    {
+        $carrier = $this->carrier($this->json('track.json'));
+        $carrier->track('1Z999AA10123456784');
+        $carrier->track('1Z999AA10123456784');
+
+        $enquiries = array_values(array_filter($this->requests, static fn (array $request): bool => str_contains($request['url'], '/track/v1/details/')));
+        self::assertCount(2, $enquiries);
+        self::assertStringContainsString('/track/v1/details/1Z999AA10123456784', $enquiries[0]['url']);
+    }
+
+    public function testATrackingNumberUpsDoesNotKnowIsAnUnexpectedAnswer(): void
+    {
+        $this->expectException(UnexpectedCarrierResponseException::class);
+
+        $this->carrier(new MockResponse('{"trackResponse":{"shipment":[]}}', ['response_headers' => ['content-type' => 'application/json']]))->track('1Z999AA10123456784');
     }
 
     private function carrier(MockResponse $rateResponse): UpsCarrier

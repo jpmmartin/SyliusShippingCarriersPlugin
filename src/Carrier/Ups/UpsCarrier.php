@@ -19,6 +19,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateSet;
+use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingEvent;
 use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingInfo;
 use Psr\Http\Client\ClientExceptionInterface;
 use ShipStream\Ups\Api\Exception\GenerateTokenBadRequestException;
@@ -30,8 +31,10 @@ use ShipStream\Ups\Api\Exception\RateForbiddenException;
 use ShipStream\Ups\Api\Exception\RateTooManyRequestsException;
 use ShipStream\Ups\Api\Exception\RateUnauthorizedException;
 use ShipStream\Ups\Api\Exception\UnexpectedStatusCodeException;
+use ShipStream\Ups\Api\Model\Activity;
 use ShipStream\Ups\Api\Model\DimensionsUnitOfMeasurement;
 use ShipStream\Ups\Api\Model\Error;
+use ShipStream\Ups\Api\Model\Package as UpsPackage;
 use ShipStream\Ups\Api\Model\PackageDimensions;
 use ShipStream\Ups\Api\Model\PackagePackageWeight;
 use ShipStream\Ups\Api\Model\PackagePackagingType;
@@ -50,6 +53,7 @@ use ShipStream\Ups\Api\Model\ShipFromAddress;
 use ShipStream\Ups\Api\Model\ShipmentShipmentRatingOptions;
 use ShipStream\Ups\Api\Model\ShipperAddress;
 use ShipStream\Ups\Api\Model\ShipToAddress;
+use ShipStream\Ups\Api\Model\TrackApiResponse;
 use ShipStream\Ups\Exception\AuthenticationException;
 
 /**
@@ -63,6 +67,9 @@ final class UpsCarrier implements CarrierInterface
 
     /** Rates every UPS service between the two addresses in a single call. */
     private const REQUEST_OPTION_SHOP = 'Shop';
+
+    /** What UPS is told is asking, which it shows in its own logs. */
+    private const TRANSACTION_SOURCE = 'sylius-shipping-carriers-plugin';
 
     /** «02 - Package»: packaging of the shipper's own, not a UPS box. */
     private const PACKAGING_TYPE_PACKAGE = '02';
@@ -109,8 +116,87 @@ final class UpsCarrier implements CarrierInterface
 
     public function track(string $trackingNumber): TrackingInfo
     {
-        // The UPS tracking adapter is a task of its own, after the rate providers.
-        throw new CarrierUnavailableException('Tracking with UPS is not implemented yet.');
+        try {
+            $credentials = $this->credentialsProvider->get(CarrierCredentialsInterface::CARRIER_UPS);
+
+            $response = $this->clientFactory->create($credentials)->getSingleTrackResponseUsingGET(
+                $trackingNumber,
+                [],
+                // UPS wants a different id on every enquiry, and a name for what is asking.
+                ['transId' => bin2hex(random_bytes(16)), 'transactionSrc' => self::TRANSACTION_SOURCE],
+            );
+
+            if (!$response instanceof TrackApiResponse) {
+                throw new UnexpectedCarrierResponseException('UPS answered the tracking enquiry without a tracking response.');
+            }
+
+            return $this->readTracking($trackingNumber, $response);
+        } catch (\Throwable $exception) {
+            throw $this->translate($exception);
+        }
+    }
+
+    /**
+     * UPS answers with one shipment per enquiry and its packages; the plugin reports the first package, which is the
+     * one the tracking number names.
+     */
+    private function readTracking(string $trackingNumber, TrackApiResponse $response): TrackingInfo
+    {
+        $shipments = $response->getTrackResponse()->getShipment();
+        $package = ($shipments[0] ?? null)?->getPackage()[0] ?? null;
+        if (!$package instanceof UpsPackage) {
+            throw new UnexpectedCarrierResponseException(sprintf('UPS knows no package for the tracking number "%s".', $trackingNumber));
+        }
+
+        $events = [];
+        foreach ($package->isInitialized('activity') ? $package->getActivity() : [] as $activity) {
+            if (!$activity instanceof Activity) {
+                continue;
+            }
+
+            $description = $activity->isInitialized('status') ? (string) $activity->getStatus()->getDescription() : '';
+            if ('' === $description) {
+                continue;
+            }
+
+            $events[] = new TrackingEvent($this->occurredAt($activity), $description, $this->place($activity));
+        }
+
+        $status = $package->isInitialized('currentStatus') ? $package->getCurrentStatus()->getDescription() : null;
+
+        return new TrackingInfo($trackingNumber, '' === $status ? null : $status, $events);
+    }
+
+    /**
+     * UPS dates its events as `20260917` and `134500`, in the time of the place the event happened.
+     */
+    private function occurredAt(Activity $activity): ?\DateTimeImmutable
+    {
+        $date = $activity->isInitialized('date') ? $activity->getDate() : '';
+        if (1 !== preg_match('/^\d{8}$/', $date)) {
+            return null;
+        }
+
+        $time = $activity->isInitialized('time') ? $activity->getTime() : '';
+        $occurredAt = \DateTimeImmutable::createFromFormat('YmdHis', $date . (1 === preg_match('/^\d{6}$/', $time) ? $time : '000000'));
+
+        return false === $occurredAt ? null : $occurredAt;
+    }
+
+    private function place(Activity $activity): ?string
+    {
+        $address = $activity->isInitialized('location') ? $activity->getLocation()->getAddress() : null;
+        if (null === $address) {
+            return null;
+        }
+
+        $place = array_filter([
+            $address->isInitialized('city') ? $address->getCity() : null,
+            $address->isInitialized('stateProvince') ? $address->getStateProvince() : null,
+            $address->isInitialized('countryCode') ? $address->getCountryCode() : null,
+        ]);
+
+        return [] === $place ? null : implode(', ', $place);
     }
 
     private function buildRequest(RateRequest $request, ?string $accountNumber, string $pickupTypeCode): RATERequestWrapper

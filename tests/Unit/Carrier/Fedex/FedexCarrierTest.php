@@ -9,6 +9,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierCredentialsException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierResponseException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexConnectorFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
@@ -27,6 +28,7 @@ use Saloon\Http\PendingRequest;
 use Saloon\RateLimitPlugin\Stores\MemoryStore;
 use ShipStream\FedEx\Api\AuthorizationV1\Requests\ApiAuthorization;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Requests\RateAndTransitTimes;
+use ShipStream\FedEx\Api\TrackV1\Requests\TrackByTrackingNumber;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Lock\LockFactory;
@@ -41,6 +43,9 @@ final class FedexCarrierTest extends TestCase
 {
     /** @var list<array{url: string, body: array<array-key, mixed>}> */
     private array $rateRequests = [];
+
+    /** @var list<array{url: string, body: array<array-key, mixed>}> */
+    private array $trackingRequests = [];
 
     private int $tokenRequests = 0;
 
@@ -281,6 +286,58 @@ final class FedexCarrierTest extends TestCase
             new CredentialsProvider($repository),
             new FedexConnectorFactory($this->pool, new Encrypter($this->keyPath), $this->lockFactory, $this->timeout),
         );
+    }
+
+    public function testTheStatusAndTheScansOfAShipmentAreRead(): void
+    {
+        $this->mockTracking(new MockResponse($this->fixture('track.json'), 200, ['Content-Type' => 'application/json']));
+
+        $tracking = $this->process()->track('794953555571');
+
+        self::assertSame('794953555571', $tracking->trackingNumber);
+        self::assertSame('Delivered', $tracking->status);
+        self::assertCount(2, $tracking->events);
+        // FedEx sends its scans oldest first; the plugin reports the newest first.
+        self::assertSame('Delivered', $tracking->events[0]->description);
+        self::assertSame('Seattle, WA, US', $tracking->events[0]->location);
+        self::assertSame('2026-09-17 10:15:00', $tracking->events[0]->occurredAt?->format('Y-m-d H:i:s'));
+        self::assertSame('Shipment information sent to FedEx', $tracking->events[1]->description);
+    }
+
+    public function testTheTrackingNumberIsSentToFedex(): void
+    {
+        $this->mockTracking(new MockResponse($this->fixture('track.json'), 200, ['Content-Type' => 'application/json']));
+
+        $this->process()->track('794953555571');
+
+        self::assertSame(
+            [['trackingNumberInfo' => ['trackingNumber' => '794953555571']]],
+            $this->trackingRequests[0]['body']['trackingInfo'] ?? null,
+        );
+        self::assertTrue($this->trackingRequests[0]['body']['includeDetailedScans'] ?? null);
+    }
+
+    public function testATrackingNumberFedexDoesNotKnowIsAnUnexpectedAnswer(): void
+    {
+        $this->mockTracking(new MockResponse('{"output":{"completeTrackResults":[]}}', 200, ['Content-Type' => 'application/json']));
+
+        $this->expectException(UnexpectedCarrierResponseException::class);
+
+        $this->process()->track('794953555571');
+    }
+
+    private function mockTracking(MockResponse $trackingResponse): void
+    {
+        MockClient::destroyGlobal();
+        MockClient::global([
+            ApiAuthorization::class => fn (): MockResponse => new MockResponse($this->fixture('token.json'), 200, ['Content-Type' => 'application/json']),
+            TrackByTrackingNumber::class => function (PendingRequest $pendingRequest) use ($trackingResponse): MockResponse {
+                $body = $pendingRequest->body()?->all();
+                $this->trackingRequests[] = ['url' => $pendingRequest->getUrl(), 'body' => \is_array($body) ? $body : []];
+
+                return $trackingResponse;
+            },
+        ]);
     }
 
     private function mockFedex(MockResponse $rateResponse): void

@@ -9,3 +9,4 @@ them proves the mapping follows the documented schema, not that it reads what Fe
   a list rate.
 - `error.json`: the error body FedEx sends with a 4xx status.
 - `token.json`: a granted OAuth access token.
+- `track.json`: a tracking response for a delivered shipment with two scans.

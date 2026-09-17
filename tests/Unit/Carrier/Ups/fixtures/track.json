@@ -1,0 +1,63 @@
+{
+    "trackResponse": {
+        "shipment": [
+            {
+                "inquiryNumber": "1Z999AA10123456784",
+                "package": [
+                    {
+                        "trackingNumber": "1Z999AA10123456784",
+                        "currentStatus": {
+                            "code": "011",
+                            "description": "Delivered",
+                            "simplifiedTextDescription": "Delivered",
+                            "statusCode": "011",
+                            "type": "D"
+                        },
+                        "activity": [
+                            {
+                                "date": "20260917",
+                                "time": "101500",
+                                "location": {
+                                    "address": {
+                                        "city": "Seattle",
+                                        "stateProvince": "WA",
+                                        "countryCode": "US",
+                                        "country": "US"
+                                    },
+                                    "slic": "1234"
+                                },
+                                "status": {
+                                    "code": "011",
+                                    "description": "Delivered",
+                                    "simplifiedTextDescription": "Delivered",
+                                    "statusCode": "011",
+                                    "type": "D"
+                                }
+                            },
+                            {
+                                "date": "20260916",
+                                "time": "063000",
+                                "location": {
+                                    "address": {
+                                        "city": "Chicago",
+                                        "stateProvince": "IL",
+                                        "countryCode": "US",
+                                        "country": "US"
+                                    },
+                                    "slic": "5678"
+                                },
+                                "status": {
+                                    "code": "003",
+                                    "description": "Origin Scan",
+                                    "simplifiedTextDescription": "On the way",
+                                    "statusCode": "003",
+                                    "type": "I"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

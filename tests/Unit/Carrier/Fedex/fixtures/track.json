@@ -1,0 +1,48 @@
+{
+    "transactionId": "624deea6-b709-470c-8c39-4b5511281492",
+    "output": {
+        "completeTrackResults": [
+            {
+                "trackingNumber": "794953555571",
+                "trackResults": [
+                    {
+                        "trackingNumberInfo": {
+                            "trackingNumber": "794953555571",
+                            "carrierCode": "FDXE"
+                        },
+                        "latestStatusDetail": {
+                            "code": "DL",
+                            "derivedCode": "DL",
+                            "statusByLocale": "Delivered",
+                            "description": "Delivered"
+                        },
+                        "scanEvents": [
+                            {
+                                "date": "2026-09-16T06:30:00-05:00",
+                                "eventType": "OC",
+                                "eventDescription": "Shipment information sent to FedEx",
+                                "derivedStatus": "Shipment information sent to FedEx",
+                                "scanLocation": {
+                                    "city": "Chicago",
+                                    "stateOrProvinceCode": "IL",
+                                    "countryCode": "US"
+                                }
+                            },
+                            {
+                                "date": "2026-09-17T10:15:00-07:00",
+                                "eventType": "DL",
+                                "eventDescription": "Delivered",
+                                "derivedStatus": "Delivered",
+                                "scanLocation": {
+                                    "city": "Seattle",
+                                    "stateOrProvinceCode": "WA",
+                                    "countryCode": "US"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
