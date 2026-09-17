@@ -1,4 +1,5 @@
 # One file of suites per capability of the plugin, each running the features tagged with it.
 imports:
     - suites/rate_failure_policy.yml
+    - suites/shipping_origin.yml
     - suites/rate_quoting.yml

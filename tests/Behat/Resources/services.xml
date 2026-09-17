@@ -49,12 +49,27 @@
             <argument type="service" id="jpmmartin_carrier.cache.rates" />
         </service>
 
+        <!-- Pages -->
+        <service id="jpmmartin_carrier.behat.page.admin.shipping_origin.create" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Page\Admin\ShippingOrigin\CreatePage" parent="sylius.behat.page.admin.crud.create" public="false">
+            <argument type="string">jpmmartin_carrier_admin_shipping_origin_create</argument>
+        </service>
+
+        <service id="jpmmartin_carrier.behat.page.admin.shipping_origin.index" class="Sylius\Behat\Page\Admin\Crud\IndexPage" parent="sylius.behat.page.admin.crud.index" public="false">
+            <argument type="string">jpmmartin_carrier_admin_shipping_origin_index</argument>
+        </service>
+
         <!-- Domain -->
         <service id="jpmmartin_carrier.behat.context.domain.shipping_charge" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Domain\ShippingChargeContext">
             <argument type="service" id="doctrine.orm.entity_manager" />
         </service>
 
         <!-- Ui -->
+        <service id="jpmmartin_carrier.behat.context.ui.admin.managing_shipping_origins" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Admin\ManagingShippingOriginsContext">
+            <argument type="service" id="jpmmartin_carrier.behat.page.admin.shipping_origin.create" />
+            <argument type="service" id="jpmmartin_carrier.behat.page.admin.shipping_origin.index" />
+            <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
+        </service>
+
         <service id="jpmmartin_carrier.behat.context.ui.shop.checkout" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Shop\CheckoutContext">
             <argument type="service" id="behat.mink.default_session" />
             <argument type="service" id="behat.mink.parameters" />
