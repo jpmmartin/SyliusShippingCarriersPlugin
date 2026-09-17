@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<constraint-mapping
+        xmlns="http://symfony.com/schema/dic/constraint-mapping"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/constraint-mapping http://symfony.com/schema/dic/services/constraint-mapping-1.0.xsd"
+>
+    <class name="Sylius\Component\Core\Model\ShippingMethod">
+        <!-- Each group is given only to shipping methods of that calculator, by the extension's prepend. -->
+        <property name="configuration">
+            <constraint name="JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints\CarrierRateConfiguration">
+                <option name="carrier">ups</option>
+                <option name="groups">
+                    <value>jpmmartin_carrier_ups_rate</value>
+                </option>
+            </constraint>
+        </property>
+    </class>
+</constraint-mapping>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\DependencyInjection;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Shipping\CarrierServices;
 use Sylius\Bundle\CoreBundle\DependencyInjection\PrependDoctrineMigrationsTrait;
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Extension\AbstractResourceExtension;
 use Symfony\Component\Config\FileLocator;
@@ -23,6 +24,7 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
         $container->setParameter('jpmmartin_carrier.carrier_timeout', $config['carrier_timeout']);
         $container->setParameter('jpmmartin_carrier.rate_lifetime', $config['rate_lifetime']);
         $container->setParameter('jpmmartin_carrier.rate_retention', $config['rate_retention']);
+        $container->setParameter('jpmmartin_carrier.services', $config['services']);
 
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
 
@@ -36,6 +38,36 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
         $this->prependDoctrineMigrations($container);
         $this->prependDoctrineMapping($container);
         $this->prependRateCachePool($container);
+        $this->prependCarrierServices($container);
+        $this->prependShippingMethodValidationGroups($container);
+    }
+
+    /**
+     * Declared as the first configuration, so an application's own services are added to these, key by key,
+     * instead of replacing them.
+     */
+    private function prependCarrierServices(ContainerBuilder $container): void
+    {
+        $container->prependExtensionConfig($this->getAlias(), ['services' => CarrierServices::DEFAULTS]);
+    }
+
+    /**
+     * Sylius validates a shipping method with the groups set for its calculator, in the admin and in the API
+     * alike. Each carrier's group checks the configuration against that carrier's services.
+     */
+    private function prependShippingMethodValidationGroups(ContainerBuilder $container): void
+    {
+        if (!$container->hasExtension('sylius_shipping')) {
+            return;
+        }
+
+        $container->prependExtensionConfig('sylius_shipping', [
+            'shipping_method_calculator' => [
+                'validation_groups' => [
+                    'ups_rate' => ['sylius', 'jpmmartin_carrier_ups_rate'],
+                ],
+            ],
+        ]);
     }
 
     /**

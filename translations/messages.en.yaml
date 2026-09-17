@@ -11,6 +11,16 @@ jpmmartin_carrier:
             outer_height: Outer height
             max_weight: Maximum weight
     form:
+        shipping_calculator:
+            ups_rate: UPS rates
+            service: Service
+            choose_service: Choose a service
+            failure_policy: When the carrier does not answer
+            failure_policies:
+                hide: Hide this shipping method
+                flat: Offer it at a flat amount
+            flat_amount: Flat amount
+            flat_amount_help: Charged only when the carrier does not answer and the flat amount is chosen. Then every channel needs one.
         shipping_origin:
             weight_unit: Weight unit
             dimension_unit: Dimension unit

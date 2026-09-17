@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container
+        xmlns="http://symfony.com/schema/dic/services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+        <service id="jpmmartin_carrier.shipping.carrier_services" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\CarrierServices">
+            <argument>%jpmmartin_carrier.services%</argument>
+        </service>
+
+        <service id="jpmmartin_carrier.shipping_calculator.ups_rate" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator">
+            <argument type="service" id="jpmmartin_carrier.rate_provider" />
+            <argument>ups</argument>
+            <argument>ups_rate</argument>
+            <tag
+                name="sylius.shipping_calculator"
+                calculator="ups_rate"
+                form_type="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\Shipping\UpsRateConfigurationType"
+                label="jpmmartin_carrier.form.shipping_calculator.ups_rate"
+            />
+        </service>
+
+        <service id="jpmmartin_carrier.form.type.shipping.carrier_rate_configuration" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\Shipping\CarrierRateConfigurationType">
+            <argument type="service" id="jpmmartin_carrier.shipping.carrier_services" />
+            <tag name="form.type" />
+        </service>
+
+        <service id="jpmmartin_carrier.form.type.shipping.ups_rate_configuration" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\Shipping\UpsRateConfigurationType">
+            <tag name="form.type" />
+        </service>
+    </services>
+</container>

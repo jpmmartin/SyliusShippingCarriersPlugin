@@ -8,6 +8,13 @@ jpmmartin_carrier:
             same_as_other_origins: Every shipping origin must use the same units. The others use {{ unit }}.
         dimension_unit:
             same_as_other_origins: Every shipping origin must use the same units. The others use {{ unit }}.
+    shipping_method:
+        service:
+            invalid: Choose one of the services of this carrier.
+        failure_policy:
+            invalid: Choose whether this shipping method is hidden or offered at a flat amount when the carrier does not answer.
+        flat_amount:
+            required: Enter the flat amount for the channel {{ channel }}.
     checkout:
         destination_type:
             not_blank: Tell us whether we are delivering to a home or a business.

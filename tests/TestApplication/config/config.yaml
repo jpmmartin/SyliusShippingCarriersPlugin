@@ -26,6 +26,17 @@ when@rate_cache_in_memory:
                 jpmmartin_carrier.cache.rates:
                     adapter: cache.adapter.array
 
+# Kernel for CarrierRateCalculatorRegistrationTest: an application adds a service to a carrier's list and
+# renames one of the plugin's. Not named "test…" for the same reason as above.
+when@carrier_services_extended:
+    framework:
+        test: true
+    jpm_martin_sylius_shipping_carriers:
+        services:
+            ups:
+                '12': 'A service added by the application'
+                '03': 'Ground, renamed by the application'
+
 # Remove if you do not need to extend entities
 doctrine:
     orm:
