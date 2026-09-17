@@ -7,7 +7,7 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints;
 use Symfony\Component\Validator\Constraint;
 
 /**
- * Every origin declares the same units (D-16).
+ * Every origin declares the same units.
  */
 final class SameUnitsAsOtherOrigins extends Constraint
 {

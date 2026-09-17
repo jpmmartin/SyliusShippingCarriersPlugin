@@ -13,7 +13,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 final class CarrierHttpClientFactoryTest extends TestCase
 {
     /**
-     * CA-47 and D-27: the client UPS is called through gives up once the carrier timeout has passed.
+     * The client UPS is called through gives up once the carrier timeout has passed.
      */
     public function testEveryRequestCarriesTheCarrierTimeout(): void
     {

@@ -12,7 +12,7 @@ use ShipStream\FedEx\Auth\TokenSerializer;
 use ShipStream\FedEx\Contracts\TokenCache;
 
 /**
- * Keeps the FedEx access token where every process finds it, encrypted, as for UPS (D-25).
+ * Keeps the FedEx access token where every process finds it, encrypted, as for UPS.
  *
  * The SDK calls TokenCache statically, so the pool and the encrypter are bound to the class through
  * configure() rather than injected: FedexConnectorFactory binds them when it is built.

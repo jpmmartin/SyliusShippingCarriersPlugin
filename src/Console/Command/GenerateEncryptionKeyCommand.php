@@ -17,7 +17,7 @@ use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * Same behaviour as Sylius' `sylius:payment:generate-key` (D-15), for the key that encrypts the
+ * Same behaviour as Sylius' `sylius:payment:generate-key`, for the key that encrypts the
  * carrier credentials.
  */
 #[AsCommand(

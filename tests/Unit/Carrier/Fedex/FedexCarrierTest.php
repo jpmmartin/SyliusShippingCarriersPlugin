@@ -96,7 +96,7 @@ final class FedexCarrierTest extends TestCase
     }
 
     /**
-     * D-23: the account rate is what FedEx bills; without one, the rate FedEx gives applies.
+     * The account rate is what FedEx bills; without one, the rate FedEx gives applies.
      */
     public function testTheAccountRateIsUsedWhenThereIsOne(): void
     {
@@ -129,7 +129,7 @@ final class FedexCarrierTest extends TestCase
     }
 
     /**
-     * D-24: FedEx takes whole measures; they are sent rounded up, longest first, and the weight to a tenth.
+     * FedEx takes whole measures; they are sent rounded up, longest first, and the weight to a tenth.
      */
     public function testPackagesInCentimetresAndKilogramsAreSentRoundedUpLongestFirst(): void
     {
@@ -147,7 +147,7 @@ final class FedexCarrierTest extends TestCase
     }
 
     /**
-     * CA-48 and D-28: the recipient says whether it is a home; the shipper does not.
+     * The recipient says whether it is a home; the shipper does not.
      */
     public function testTheRecipientSaysWhetherItIsAHome(): void
     {
@@ -161,7 +161,7 @@ final class FedexCarrierTest extends TestCase
     }
 
     /**
-     * CA-46 and D-26.
+     * How packages reach FedEx changes the rates, so the quote carries it.
      */
     #[DataProvider('pickupTypes')]
     public function testThePickupTypeIsSentAsFedexNamesIt(string $pickupType, string $fedexPickupType): void
@@ -194,7 +194,7 @@ final class FedexCarrierTest extends TestCase
     }
 
     /**
-     * D-25: the token one process got serves the next one.
+     * The token one process got serves the next one.
      */
     public function testASecondProcessReusesTheTokenWithoutRequestingAnother(): void
     {
@@ -216,7 +216,7 @@ final class FedexCarrierTest extends TestCase
     }
 
     /**
-     * CA-47 and D-27: no request to FedEx, the token request included, waits longer than the carrier timeout.
+     * No request to FedEx, the token request included, waits longer than the carrier timeout.
      */
     public function testEveryRequestCarriesTheCarrierTimeout(): void
     {

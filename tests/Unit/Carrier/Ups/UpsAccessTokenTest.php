@@ -28,7 +28,7 @@ use Symfony\Component\Lock\PersistingStoreInterface;
 use Symfony\Component\Lock\Store\InMemoryStore;
 
 /**
- * D-25: the UPS access token is shared by every process and renewed by one of them at a time. Each process
+ * The UPS access token is shared by every process and renewed by one of them at a time. Each process
  * is simulated by its own client factory, sharing only what processes share: the cache pool and the lock
  * store.
  */

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JpmMartin\SyliusShippingCarriersPlugin\Destination;
 
 /**
- * Whether a destination is a home or a business, which changes the price of a delivery (CA-48).
+ * Whether a destination is a home or a business, which changes the price of a delivery.
  */
 final class DestinationType
 {

@@ -11,7 +11,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 
 /**
- * The values stored in CarrierCredentials::$credentials (D-13).
+ * The values stored in CarrierCredentials::$credentials.
  */
 final class CarrierCredentialsDataType extends AbstractType
 {
@@ -27,7 +27,7 @@ final class CarrierCredentialsDataType extends AbstractType
             ->add(self::CLIENT_ID, TextType::class, [
                 'label' => 'jpmmartin_carrier.form.credentials.client_id',
             ])
-            // Always rendered empty (D-14). Not required in HTML: on edit, empty keeps the stored one.
+            // Always rendered empty. Not required in HTML: on edit, empty keeps the stored one.
             ->add(self::CLIENT_SECRET, PasswordType::class, [
                 'label' => 'jpmmartin_carrier.form.credentials.client_secret',
                 'help' => 'jpmmartin_carrier.form.credentials.client_secret_help',

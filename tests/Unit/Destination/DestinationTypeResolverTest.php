@@ -16,7 +16,7 @@ use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 
 /**
- * CA-48: the buyer's choice, or the origin's default without one.
+ * The buyer's choice, or the origin's default without one.
  */
 final class DestinationTypeResolverTest extends TestCase
 {

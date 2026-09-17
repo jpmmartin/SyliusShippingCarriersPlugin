@@ -9,7 +9,7 @@ use ParagonIE\Halite\KeyFactory;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
- * The test that justifies D-6: the plugin's encryption keeps working when an installation turns
+ * Why the plugin has an encrypter of its own: its encryption keeps working when an installation turns
  * Sylius' payment encryption off, which removes the `sylius.encrypter` service altogether.
  *
  * The `no_payment_encryption` environment is configured in tests/TestApplication/config/config.yaml.

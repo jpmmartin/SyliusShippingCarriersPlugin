@@ -41,7 +41,7 @@ final class Version20260812140643 extends AbstractMigration
 
         $table->setPrimaryKey(['id']);
 
-        // One origin per channel (CA-2). Enforced by the database, not by a PHP guard.
+        // One origin per channel. Enforced by the database, not by a PHP guard.
         $table->addUniqueIndex(['channel_id'], 'uniq_jpmmartin_carrier_origin_channel');
 
         $table->addForeignKeyConstraint(

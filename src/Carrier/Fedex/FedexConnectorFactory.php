@@ -14,7 +14,7 @@ use Symfony\Component\Lock\LockFactory;
 
 /**
  * Builds the FedEx SDK connector for the stored credentials. The access token is shared by every process and
- * obtained under a lock (D-25), and no request waits longer than the carrier timeout (D-27).
+ * obtained under a lock, and no request waits longer than the carrier timeout.
  */
 final class FedexConnectorFactory
 {
@@ -47,7 +47,7 @@ final class FedexConnectorFactory
                 tokenCache: new FedexTokenCache(),
                 tokenLock: new FedexTokenLock($this->lockFactory),
             );
-            // Saloon passes the connector's config to Guzzle with every request, the token request included (D-27).
+            // Saloon passes the connector's config to Guzzle with every request, the token request included.
             $connector->config()->merge([
                 RequestOptions::CONNECT_TIMEOUT => $this->timeout,
                 RequestOptions::TIMEOUT => $this->timeout,

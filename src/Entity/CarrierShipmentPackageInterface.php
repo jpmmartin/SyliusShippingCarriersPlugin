@@ -10,7 +10,7 @@ use Sylius\Resource\Model\ResourceInterface;
 
 /**
  * A stored package. Its values are copied, not read from the box or the variants, so later changes to either
- * leave it as it was (D-10).
+ * leave it as it was.
  */
 interface CarrierShipmentPackageInterface extends ResourceInterface
 {
@@ -22,12 +22,12 @@ interface CarrierShipmentPackageInterface extends ResourceInterface
 
     public function setPosition(int $position): void;
 
-    /** Null for the fallback package, which uses no box (CA-39). */
+    /** Null for the fallback package, which uses no box. */
     public function getBoxName(): ?string;
 
     public function setBoxName(?string $boxName): void;
 
-    /** The outer measures declared to the carrier (CA-36), in the dimension unit. */
+    /** The outer measures declared to the carrier, in the dimension unit. */
     public function getLength(): ?float;
 
     public function setLength(?float $length): void;
@@ -44,7 +44,7 @@ interface CarrierShipmentPackageInterface extends ResourceInterface
 
     public function setDimensionUnit(?string $dimensionUnit): void;
 
-    /** The contents plus the empty box (CA-37), in the weight unit. */
+    /** The contents plus the empty box, in the weight unit. */
     public function getWeight(): ?float;
 
     public function setWeight(?float $weight): void;

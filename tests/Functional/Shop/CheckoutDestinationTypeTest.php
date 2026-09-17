@@ -26,7 +26,7 @@ use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\HttpFoundation\Session\SessionFactoryInterface;
 
 /**
- * CA-48 and D-28: the buyer chooses in the shop checkout whether the order goes to a home or a business.
+ * The buyer chooses in the shop checkout whether the order goes to a home or a business.
  */
 final class CheckoutDestinationTypeTest extends WebTestCase
 {

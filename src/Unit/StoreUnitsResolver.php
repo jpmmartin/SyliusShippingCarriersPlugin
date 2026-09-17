@@ -27,7 +27,7 @@ final readonly class StoreUnitsResolver implements StoreUnitsResolverInterface
 
     /**
      * Every origin declares the same units, so any of them tells. Without origins, the store is read in
-     * the units a new origin starts with (imperial, CA-15).
+     * the units a new origin starts with (imperial).
      */
     private function anyOrigin(): ?CarrierShippingOriginInterface
     {

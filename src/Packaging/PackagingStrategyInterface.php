@@ -9,19 +9,19 @@ use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Exception\UnpackableShipmen
 use Sylius\Component\Shipping\Model\ShipmentInterface;
 
 /**
- * Groups the units of a shipment into the packages that are quoted (CA-14). The plugin depends only on
- * this interface, so another strategy can replace the default one (CA-16).
+ * Groups the units of a shipment into the packages that are quoted. The plugin depends only on
+ * this interface, so another strategy can replace the default one.
  *
  * An implementation must be deterministic: the packages are computed again when the order is completed,
- * and they are stored only because they match the quoted ones (D-9).
+ * and they are stored only because they match the quoted ones.
  */
 interface PackagingStrategyInterface
 {
     /**
-     * @return non-empty-list<Package> Measured in the origin's units (D-16)
+     * @return non-empty-list<Package> Measured in the origin's units
      *
-     * @throws UnpackableShipmentException When the shipment cannot be quoted: a variant has no weight (CA-17),
-     *                                     or a unit fits no box, not even on its own (CA-40)
+     * @throws UnpackableShipmentException When the shipment cannot be quoted: a variant has no weight,
+     *                                     or a unit fits no box, not even on its own
      */
     public function pack(ShipmentInterface $shipment, CarrierShippingOriginInterface $origin): array;
 }

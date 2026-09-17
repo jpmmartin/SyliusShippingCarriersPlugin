@@ -42,7 +42,7 @@ use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\InMemoryStore;
 
 /**
- * CA-23: whatever a carrier does, what leaves an adapter is a CarrierException and never an exception of an
+ * Whatever a carrier does, what leaves an adapter is a CarrierException and never an exception of an
  * SDK, of the HTTP client or of the JSON decoding. Each failure is forced where it really happens: in the HTTP
  * layer each SDK sends through.
  */

@@ -73,7 +73,7 @@ final class UpsCarrierTest extends TestCase
     }
 
     /**
-     * D-23: the negotiated charge is what UPS bills; without one, the published charge applies.
+     * The negotiated charge is what UPS bills; without one, the published charge applies.
      */
     public function testTheNegotiatedChargeIsUsedWhenThereIsOneAndThePublishedOneOtherwise(): void
     {
@@ -134,7 +134,7 @@ final class UpsCarrierTest extends TestCase
     }
 
     /**
-     * CA-48 and D-28: UPS reads the residential indicator by its presence, so only a home carries it.
+     * UPS reads the residential indicator by its presence, so only a home carries it.
      */
     public function testOnlyAResidentialDestinationCarriesTheResidentialIndicator(): void
     {
@@ -148,7 +148,7 @@ final class UpsCarrierTest extends TestCase
     }
 
     /**
-     * D-24: UPS takes whole measures, longest first, and the weight to a tenth, both rounded up.
+     * UPS takes whole measures, longest first, and the weight to a tenth, both rounded up.
      */
     public function testPackagesInCentimetresAndKilogramsAreSentRoundedUpLongestFirst(): void
     {
@@ -164,7 +164,7 @@ final class UpsCarrierTest extends TestCase
     }
 
     /**
-     * CA-46 and D-26: the rates are asked for with how packages reach UPS.
+     * The rates are asked for with how packages reach UPS.
      */
     #[DataProvider('pickupTypes')]
     public function testThePickupTypeIsSentWithItsUpsCode(string $pickupType, string $code): void

@@ -77,7 +77,7 @@ final class CarrierCredentialsAdminTest extends WebTestCase
         self::assertSame('secret-1', $credentials->getCredentials()['client_secret']);
         $id = $credentials->getId();
 
-        // D-14: the edit form never shows the stored secret.
+        // The edit form never shows the stored secret.
         $crawler = $this->client->request('GET', sprintf('/admin/carrier-credentials/%d/edit', $id));
         self::assertResponseIsSuccessful();
         self::assertStringNotContainsString('secret-1', (string) $this->client->getResponse()->getContent());
@@ -113,7 +113,7 @@ final class CarrierCredentialsAdminTest extends WebTestCase
     }
 
     /**
-     * CA-7: the environment is an explicit choice, so the form refuses credentials without one.
+     * The environment is an explicit choice, so the form refuses credentials without one.
      */
     public function testCredentialsWithoutAnEnvironmentAreRejected(): void
     {
@@ -130,7 +130,7 @@ final class CarrierCredentialsAdminTest extends WebTestCase
     }
 
     /**
-     * CA-46: how packages reach the carrier changes the rates, so there is no default either.
+     * How packages reach the carrier changes the rates, so there is no default either.
      */
     public function testCredentialsWithoutAPickupTypeAreRejected(): void
     {
@@ -147,7 +147,7 @@ final class CarrierCredentialsAdminTest extends WebTestCase
     }
 
     /**
-     * D-13: FedEx does not quote without an account number.
+     * FedEx does not quote without an account number.
      */
     public function testFedExCredentialsNeedAnAccountNumber(): void
     {

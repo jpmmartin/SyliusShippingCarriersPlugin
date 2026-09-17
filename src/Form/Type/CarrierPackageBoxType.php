@@ -41,7 +41,7 @@ final class CarrierPackageBoxType extends AbstractResourceType
             'label' => 'jpmmartin_carrier.form.package_box.name',
         ]);
 
-        // A box has no unit of its own: it is read in the store's units (D-16), so the labels say which.
+        // A box has no unit of its own: it is read in the store's units, so the labels say which.
         foreach (self::MEASURES as $field => $key) {
             $builder->add($field, NumberType::class, [
                 'label' => 'jpmmartin_carrier.form.package_box.' . $key,

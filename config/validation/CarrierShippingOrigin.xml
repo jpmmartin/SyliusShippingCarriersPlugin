@@ -6,14 +6,14 @@
         xsi:schemaLocation="http://symfony.com/schema/dic/constraint-mapping http://symfony.com/schema/dic/services/constraint-mapping-1.0.xsd"
 >
     <class name="JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin">
-        <!-- The database enforces one origin per channel (CA-2); this turns a violation into a form error. -->
+        <!-- The database enforces one origin per channel; this turns a violation into a form error. -->
         <constraint name="Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity">
             <option name="fields">channel</option>
             <option name="message">jpmmartin_carrier.shipping_origin.channel.unique</option>
             <option name="groups">sylius</option>
         </constraint>
 
-        <!-- Variant measures are shared by every channel, so every origin declares the same units (D-16). -->
+        <!-- Variant measures are shared by every channel, so every origin declares the same units. -->
         <constraint name="JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints\SameUnitsAsOtherOrigins">
             <option name="groups">sylius</option>
         </constraint>
@@ -52,7 +52,7 @@
                 <option name="groups">sylius</option>
             </constraint>
         </property>
-        <!-- Required and without a default: it changes the price (CA-48). -->
+        <!-- Required and without a default: it changes the price. -->
         <property name="defaultDestinationType">
             <constraint name="NotBlank">
                 <option name="message">jpmmartin_carrier.shipping_origin.default_destination_type.not_blank</option>

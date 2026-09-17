@@ -9,8 +9,8 @@ use Sylius\Component\Shipping\Model\ShipmentInterface;
 use Sylius\Resource\Model\ResourceInterface;
 
 /**
- * The packages of a shipment, stored when its order is completed (CA-42), or the reason they could not be
- * (CA-45). Nothing recomputes or changes them afterwards (CA-43, CA-44).
+ * The packages of a shipment, stored when its order is completed, or the reason they could not be.
+ * Nothing recomputes or changes them afterwards.
  */
 interface CarrierShipmentPackagingInterface extends ResourceInterface
 {
@@ -27,7 +27,7 @@ interface CarrierShipmentPackagingInterface extends ResourceInterface
     /** Only a failed packaging has one. */
     public function getFailureReason(): ?string;
 
-    /** Records that the packages could not be stored, and why (CA-45). */
+    /** Records that the packages could not be stored, and why. */
     public function fail(string $reason): void;
 
     public function getCreatedAt(): \DateTimeImmutable;

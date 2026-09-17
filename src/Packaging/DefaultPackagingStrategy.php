@@ -17,10 +17,10 @@ use Webmozart\Assert\Assert;
 /**
  * The strategy the plugin ships with. It goes through the units from the largest to the smallest and keeps
  * a single package open, which it closes when the next unit would take it over the maximum weight or out
- * of every box (CA-14, D-20). Without boxes for the origin, the units are split by weight into fallback
- * packages (D-21).
+ * of every box. Without boxes for the origin, the units are split by weight into fallback
+ * packages.
  *
- * A shipment it cannot pack is logged with the reason before the exception leaves (CA-17, CA-39, CA-40).
+ * A shipment it cannot pack is logged with the reason before the exception leaves.
  */
 final class DefaultPackagingStrategy implements PackagingStrategyInterface
 {
@@ -43,7 +43,7 @@ final class DefaultPackagingStrategy implements PackagingStrategyInterface
 
             return [] === $boxes ? $this->packWithoutBoxes($units, $origin) : $this->packInBoxes($units, $boxes, $origin);
         } catch (UnpackableShipmentException $exception) {
-            // At error level: below it, a production log may never write the entry (D-22).
+            // At error level: below it, a production log may never write the entry.
             $this->logger->error('The shipment cannot be packed, so it cannot be quoted: {reason}', [
                 'reason' => $exception->getMessage(),
                 'shipment_id' => $shipment->getId(),
@@ -83,7 +83,7 @@ final class DefaultPackagingStrategy implements PackagingStrategyInterface
                 $packages[] = $this->packageInBox($contents, $weight, $box, $origin);
             }
 
-            // Not even on its own: no fallback package hides it (CA-40).
+            // Not even on its own: no fallback package hides it.
             $box = $this->boxSelector->select($unit->volume(), $unit->weight, $origin->getMaxPackageWeight(), $boxes)
                 ?? throw new UnpackableShipmentException(sprintf(
                     '%s fits no box of the origin on its own, by volume or by weight.',
@@ -171,7 +171,7 @@ final class DefaultPackagingStrategy implements PackagingStrategyInterface
     }
 
     /**
-     * @return non-empty-list<MeasuredUnit> From the largest to the smallest (D-20)
+     * @return non-empty-list<MeasuredUnit> From the largest to the smallest
      */
     private function measure(ShipmentInterface $shipment): array
     {
@@ -205,7 +205,7 @@ final class DefaultPackagingStrategy implements PackagingStrategyInterface
             throw new UnpackableShipmentException('The shipment has no units to pack.');
         }
 
-        // Two units that swap places here have the same measures, so they give the same packages (D-9).
+        // Two units that swap places here have the same measures, so they give the same packages.
         usort($units, static fn (MeasuredUnit $one, MeasuredUnit $other): int => [$other->volume(), $other->weight, $other->length, $other->width, $other->height]
             <=> [$one->volume(), $one->weight, $one->length, $one->width, $one->height]);
 
@@ -213,7 +213,7 @@ final class DefaultPackagingStrategy implements PackagingStrategyInterface
     }
 
     /**
-     * No unit weighs or measures 0, so a 0 is a value nobody declared (D-19).
+     * No unit weighs or measures 0, so a 0 is a value nobody declared.
      */
     private function declared(?float $value): ?float
     {

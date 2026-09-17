@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JpmMartin\SyliusShippingCarriersPlugin\Rate;
 
 /**
- * Every rate a single carrier call returned, one per service (CA-8).
+ * Every rate a single carrier call returned, one per service.
  */
 final readonly class RateSet
 {

@@ -54,7 +54,7 @@ final class CarrierCredentialsTest extends KernelTestCase
     }
 
     /**
-     * The criterion this task exists for: the secret never reaches the database in the clear. It is
+     * What the encryption is for: the secret never reaches the database in the clear. It is
      * checked on the raw column, not through the entity, which would show it decrypted.
      */
     public function testTheSecretIsNotStoredInTheClear(): void
@@ -113,7 +113,7 @@ final class CarrierCredentialsTest extends KernelTestCase
     }
 
     /**
-     * CA-7: no default that points at production. The database refuses credentials without an
+     * No default that points at production. The database refuses credentials without an
      * environment.
      */
     public function testTheEnvironmentHasNoDefault(): void
@@ -133,7 +133,7 @@ final class CarrierCredentialsTest extends KernelTestCase
     }
 
     /**
-     * CA-46: how packages reach the carrier changes the rates, so the database refuses credentials without it.
+     * How packages reach the carrier changes the rates, so the database refuses credentials without it.
      */
     public function testThePickupTypeHasNoDefault(): void
     {

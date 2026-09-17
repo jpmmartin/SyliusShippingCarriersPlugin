@@ -15,7 +15,7 @@ use Sylius\Component\Shipping\Model\ShipmentUnitInterface;
 final class FallbackPackagerTest extends TestCase
 {
     /**
-     * The property that makes the estimate safe (CA-39), over many random contents.
+     * The property that makes the estimate safe, over many random contents.
      */
     public function testThePackageIsNeverSmallerThanItsContents(): void
     {

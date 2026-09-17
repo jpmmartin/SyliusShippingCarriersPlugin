@@ -1,6 +1,6 @@
 sylius_twig_hooks:
     hooks:
-        # The destination type belongs to the whole address form, after the addresses (CA-48, D-28).
+        # The destination type belongs to the whole address form, after the addresses.
         'sylius_shop.checkout.address.content.form':
             destination_type:
                 template: '@JpmMartinSyliusShippingCarriersPlugin/shop/checkout/address/destination_type.html.twig'

@@ -73,7 +73,7 @@ final class CarrierShippingOriginType extends AbstractResourceType
                 'label' => 'jpmmartin_carrier.form.shipping_origin.max_package_weight',
                 'empty_data' => '0',
             ])
-            // Nothing preselected: it changes the price when the buyer has not chosen a type (CA-48).
+            // Nothing preselected: it changes the price when the buyer has not chosen a type.
             ->add('defaultDestinationType', ChoiceType::class, [
                 'label' => 'jpmmartin_carrier.form.shipping_origin.default_destination_type',
                 'help' => 'jpmmartin_carrier.form.shipping_origin.default_destination_type_help',
@@ -83,7 +83,7 @@ final class CarrierShippingOriginType extends AbstractResourceType
                     'jpmmartin_carrier.form.destination_type.commercial' => DestinationType::COMMERCIAL,
                 ],
             ])
-            // Optional restriction to part of the catalog; none selected means every box (CA-35).
+            // Optional restriction to part of the catalog; none selected means every box.
             ->add('boxes', EntityType::class, [
                 'class' => $this->boxClass,
                 'label' => 'jpmmartin_carrier.form.shipping_origin.boxes',

@@ -12,7 +12,7 @@ use Symfony\Component\Config\Definition\Processor;
 final class ConfigurationTest extends TestCase
 {
     /**
-     * CA-47: without configuration, a request to a carrier may take 10 seconds.
+     * Without configuration, a request to a carrier may take 10 seconds.
      */
     public function testTheCarrierTimeoutIsTenSecondsByDefault(): void
     {

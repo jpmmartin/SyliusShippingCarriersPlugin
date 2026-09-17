@@ -47,7 +47,7 @@ final class ShippingOriginAdminTest extends WebTestCase
     }
 
     /**
-     * CA-1: the administrator creates, edits and deletes an origin from the admin.
+     * The administrator creates, edits and deletes an origin from the admin.
      */
     public function testTheAdministratorCreatesEditsAndDeletesAnOrigin(): void
     {
@@ -114,7 +114,7 @@ final class ShippingOriginAdminTest extends WebTestCase
     }
 
     /**
-     * D-16: variant measures are shared by every channel, so every origin declares the same units.
+     * Variant measures are shared by every channel, so every origin declares the same units.
      */
     public function testAnOriginWithUnitsOtherOriginsDoNotUseIsRejected(): void
     {
@@ -139,7 +139,7 @@ final class ShippingOriginAdminTest extends WebTestCase
     }
 
     /**
-     * CA-48: the default destination type changes the price, so it has no default either.
+     * The default destination type changes the price, so it has no default either.
      */
     public function testAnOriginWithoutADefaultDestinationTypeIsRejected(): void
     {
@@ -160,7 +160,7 @@ final class ShippingOriginAdminTest extends WebTestCase
     }
 
     /**
-     * CA-35: an origin can be restricted to part of the catalog from its form.
+     * An origin can be restricted to part of the catalog from its form.
      */
     public function testTheAdministratorRestrictsAnOriginToSomeBoxes(): void
     {

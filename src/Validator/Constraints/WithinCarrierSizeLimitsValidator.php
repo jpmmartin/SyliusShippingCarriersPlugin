@@ -13,10 +13,10 @@ use Webmozart\Assert\Assert;
 
 final class WithinCarrierSizeLimitsValidator extends ConstraintValidator
 {
-    /** Maximum outer length, in inches, published by UPS and by FedEx Ground and Express (plan §7). */
+    /** Maximum outer length, in inches, published by UPS and by FedEx Ground and Express. */
     public const MAX_LENGTH_IN = 108.0;
 
-    /** Maximum outer length plus girth, in inches (plan §7). */
+    /** Maximum outer length plus girth, in inches. */
     public const MAX_LENGTH_PLUS_GIRTH_IN = 165.0;
 
     private const CENTIMETRES_PER_INCH = 2.54;

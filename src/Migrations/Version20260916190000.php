@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Adds how packages reach each carrier to its credentials (CA-46), with the DBAL Schema API so it runs on any
+ * Adds how packages reach each carrier to its credentials, with the DBAL Schema API so it runs on any
  * platform Doctrine supports (see Version20260812140643).
  */
 final class Version20260916190000 extends AbstractMigration

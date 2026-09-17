@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 final class CarrierTimeoutTest extends KernelTestCase
 {
     /**
-     * CA-47: an application that configures nothing waits 10 seconds at most for a carrier.
+     * An application that configures nothing waits 10 seconds at most for a carrier.
      */
     public function testAnApplicationWithoutConfigurationWaitsTenSecondsAtMost(): void
     {

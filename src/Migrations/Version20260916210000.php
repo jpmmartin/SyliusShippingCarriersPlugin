@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Creates the destination type the buyer chose for each order (CA-48), with the DBAL Schema API so it runs on
+ * Creates the destination type the buyer chose for each order, with the DBAL Schema API so it runs on
  * any platform Doctrine supports (see Version20260812140643).
  */
 final class Version20260916210000 extends AbstractMigration

@@ -54,7 +54,7 @@ final class CarrierShippingOriginTest extends KernelTestCase
             CarrierShippingOriginInterface::DEFAULT_MAX_PACKAGE_WEIGHT_LB,
             $origin->getMaxPackageWeight(),
         );
-        // No default destination type: the administrator always chooses it (CA-48).
+        // No default destination type: the administrator always chooses it.
         self::assertNull($origin->getDefaultDestinationType());
     }
 
@@ -77,7 +77,7 @@ final class CarrierShippingOriginTest extends KernelTestCase
     }
 
     /**
-     * The criterion this whole task exists for (CA-2): one origin per channel.
+     * One origin per channel.
      *
      * It asserts the database rejects the second row, not that some PHP guard
      * does. A unique constraint that only lives in the mapping is not a

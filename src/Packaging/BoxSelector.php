@@ -8,14 +8,14 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
 
 /**
  * Picks the box for the contents of a package. Volumes are compared, not shapes: contents that fit by
- * volume but not by shape get a box smaller than the one they need (plan §6).
+ * volume but not by shape get a box smaller than the one they need.
  */
 final class BoxSelector
 {
     /**
-     * The box with the smallest inner volume (CA-38) among those whose inner volume holds the contents
-     * (CA-36) and whose maximum weight, like the package's, holds the contents plus the empty box (CA-37).
-     * On equal inner volume, the smaller outer volume wins, and then the box that comes first (D-17).
+     * The box with the smallest inner volume among those whose inner volume holds the contents
+     * and whose maximum weight, like the package's, holds the contents plus the empty box.
+     * On equal inner volume, the smaller outer volume wins, and then the box that comes first.
      *
      * @param list<CarrierPackageBoxInterface> $boxes In catalog order, the one findApplicableToOrigin() returns
      */

@@ -17,7 +17,7 @@
             <argument type="service" id="logger" />
         </service>
 
-        <!-- Point this alias at another service to replace the packaging strategy (CA-16). -->
+        <!-- Point this alias at another service to replace the packaging strategy. -->
         <service id="jpmmartin_carrier.packaging_strategy" alias="jpmmartin_carrier.packaging_strategy.default" />
         <service id="JpmMartin\SyliusShippingCarriersPlugin\Packaging\PackagingStrategyInterface" alias="jpmmartin_carrier.packaging_strategy" />
     </services>

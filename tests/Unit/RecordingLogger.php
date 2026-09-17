@@ -7,7 +7,7 @@ namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit;
 use Psr\Log\AbstractLogger;
 
 /**
- * Keeps what is logged, so a test can check that the spec's log entries are written.
+ * Keeps what is logged, so a test can check that an entry is written.
  */
 final class RecordingLogger extends AbstractLogger
 {

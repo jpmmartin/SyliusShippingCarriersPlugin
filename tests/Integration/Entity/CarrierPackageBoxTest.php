@@ -46,7 +46,7 @@ final class CarrierPackageBoxTest extends KernelTestCase
     }
 
     /**
-     * CA-34: a box keeps its inner and outer measures apart, plus its tare and its maximum weight.
+     * A box keeps its inner and outer measures apart, plus its tare and its maximum weight.
      */
     public function testItPersistsABoxWithSeparateInnerAndOuterMeasures(): void
     {
@@ -65,7 +65,7 @@ final class CarrierPackageBoxTest extends KernelTestCase
     }
 
     /**
-     * CA-35: an origin without assignments uses the whole catalog.
+     * An origin without assignments uses the whole catalog.
      */
     public function testAnOriginWithoutAssignmentsSeesTheWholeCatalog(): void
     {
@@ -79,7 +79,7 @@ final class CarrierPackageBoxTest extends KernelTestCase
     }
 
     /**
-     * CA-35: an origin restricted to part of the catalog only sees that part.
+     * An origin restricted to part of the catalog only sees that part.
      */
     public function testAnOriginRestrictedToSomeBoxesOnlySeesThose(): void
     {

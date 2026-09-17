@@ -42,17 +42,17 @@ use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Responses\RatcResponseVo;
 
 /**
  * FedEx through shipstream/fedex-rest-sdk. Every exception of the SDK, of Saloon or of the JSON decoding is
- * translated here to a CarrierException (CA-23).
+ * translated here to a CarrierException.
  */
 final class FedexCarrier implements CarrierInterface
 {
-    /** The rates of the merchant's account, what FedEx bills (D-23). */
+    /** The rates of the merchant's account, what FedEx bills. */
     private const RATE_TYPE_ACCOUNT = 'ACCOUNT';
 
     /** Packaging of the shipper's own, not a FedEx box. */
     private const PACKAGING_TYPE_YOUR_PACKAGING = 'YOUR_PACKAGING';
 
-    /** @var array<string, string> FedEx pickup types (D-26) */
+    /** @var array<string, string> FedEx pickup types */
     private const PICKUP_TYPES = [
         CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED => 'USE_SCHEDULED_PICKUP',
         CarrierCredentialsInterface::PICKUP_TYPE_DROP_OFF => 'DROPOFF_AT_FEDEX_LOCATION',
@@ -106,7 +106,7 @@ final class FedexCarrier implements CarrierInterface
     /**
      * FedEx rates without the street.
      *
-     * @param bool|null $residential Only for the recipient, whether it is a home or a business (D-28)
+     * @param bool|null $residential Only for the recipient, whether it is a home or a business
      */
     private function address(Address $address, ?bool $residential = null): FedexAddress
     {
@@ -130,7 +130,7 @@ final class FedexCarrier implements CarrierInterface
                 value: $this->roundUp($package->weight, 1),
             ),
             dimensions: new Dimensions(
-                // FedEx takes whole measures; rounding up keeps the declared package from being smaller (D-24).
+                // FedEx takes whole measures; rounding up keeps the declared package from being smaller.
                 length: (int) $this->roundUp($sides[0], 0),
                 width: (int) $this->roundUp($sides[1], 0),
                 height: (int) $this->roundUp($sides[2], 0),
@@ -178,7 +178,7 @@ final class FedexCarrier implements CarrierInterface
     }
 
     /**
-     * The account rate when FedEx gives one, and otherwise the first it gives (D-23).
+     * The account rate when FedEx gives one, and otherwise the first it gives.
      */
     private function accountRate(RateReplyDetail $detail): ?RatedShipmentDetail
     {

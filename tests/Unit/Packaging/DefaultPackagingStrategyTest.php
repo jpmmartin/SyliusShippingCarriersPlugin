@@ -78,7 +78,7 @@ final class DefaultPackagingStrategyTest extends TestCase
     }
 
     /**
-     * D-9 and D-20: taken in the order they arrive, these units would give three units in the large box
+     * Taken in the order they arrive, these units would give three units in the large box
      * and one in the small one.
      */
     public function testTheSameUnitsInAnotherOrderGiveTheSamePackages(): void
@@ -149,7 +149,7 @@ final class DefaultPackagingStrategyTest extends TestCase
     }
 
     /**
-     * CA-40: the shipment does not fall back to a package without a box.
+     * The shipment does not fall back to a package without a box.
      */
     public function testAUnitThatFitsNoBoxOnItsOwnMakesTheShipmentUnpackable(): void
     {
@@ -161,7 +161,7 @@ final class DefaultPackagingStrategyTest extends TestCase
     }
 
     /**
-     * CA-39 and D-21: without boxes, the maximum package weight still holds.
+     * Without boxes, the maximum package weight still holds.
      */
     public function testWithoutBoxesAUnitHeavierThanTheMaximumMakesTheShipmentUnpackable(): void
     {
@@ -185,7 +185,7 @@ final class DefaultPackagingStrategyTest extends TestCase
     }
 
     /**
-     * The reason is both the exception message and what is logged, at error level (D-22).
+     * The reason is both the exception message and what is logged, at error level.
      */
     private function assertUnpackable(string $reason, DefaultPackagingStrategy $strategy, ShipmentInterface $shipment): void
     {

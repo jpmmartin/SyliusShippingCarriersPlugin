@@ -7,8 +7,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Packaging;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 
 /**
- * The package declared when the origin has no box to use (CA-39): the units stacked on their shortest
- * side (D-18), `max(length) × max(width) × sum(heights)`. Every unit fits in
+ * The package declared when the origin has no box to use: the units stacked on their shortest
+ * side, `max(length) × max(width) × sum(heights)`. Every unit fits in
  * `max(length) × max(width) × its height`, so the package is never smaller than its contents and the
  * possible error is quoting too much, never too little.
  */

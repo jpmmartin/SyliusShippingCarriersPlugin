@@ -45,7 +45,7 @@ final class PackageBoxAdminTest extends WebTestCase
     }
 
     /**
-     * CA-34: the administrator creates, edits and deletes boxes from the admin.
+     * The administrator creates, edits and deletes boxes from the admin.
      */
     public function testTheAdministratorCreatesEditsAndDeletesABox(): void
     {
@@ -79,7 +79,7 @@ final class PackageBoxAdminTest extends WebTestCase
     }
 
     /**
-     * The verification T-10 names: a store in inches rejects a box 120" long.
+     * A store in inches rejects a box 120" long.
      */
     public function testABoxLongerThanCarriersAcceptIsRejected(): void
     {
@@ -99,7 +99,7 @@ final class PackageBoxAdminTest extends WebTestCase
     }
 
     /**
-     * CA-41: the box is read in the store's units. 120 cm is about 47", well within the limits.
+     * The box is read in the store's units. 120 cm is about 47", well within the limits.
      */
     public function testA120CentimetreBoxIsAcceptedInAStoreInCentimetres(): void
     {

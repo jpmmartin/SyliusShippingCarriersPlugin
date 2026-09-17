@@ -41,7 +41,7 @@
             <constraint name="Positive"><option name="groups">sylius</option></constraint>
         </property>
 
-        <!-- A box may weigh nothing worth counting, but its tare is never negative (CA-37). -->
+        <!-- A box may weigh nothing worth counting, but its tare is never negative. -->
         <property name="emptyWeight">
             <constraint name="NotBlank"><option name="groups">sylius</option></constraint>
             <constraint name="PositiveOrZero"><option name="groups">sylius</option></constraint>

@@ -7,8 +7,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Entity;
 use Sylius\Resource\Model\ResourceInterface;
 
 /**
- * A box from the installation-wide catalog (CA-34, CA-35). Its measures carry no unit of their own:
- * they are read in the length and weight units of the origin that uses the box (CA-41).
+ * A box from the installation-wide catalog. Its measures carry no unit of their own:
+ * they are read in the length and weight units of the origin that uses the box.
  */
 interface CarrierPackageBoxInterface extends ResourceInterface
 {
@@ -16,7 +16,7 @@ interface CarrierPackageBoxInterface extends ResourceInterface
 
     public function setName(?string $name): void;
 
-    /** Inner measures decide whether the content fits (CA-36). */
+    /** Inner measures decide whether the content fits. */
     public function getInnerLength(): ?float;
 
     public function setInnerLength(?float $innerLength): void;
@@ -29,7 +29,7 @@ interface CarrierPackageBoxInterface extends ResourceInterface
 
     public function setInnerHeight(?float $innerHeight): void;
 
-    /** Outer measures are the ones declared to the carrier (CA-36). */
+    /** Outer measures are the ones declared to the carrier. */
     public function getOuterLength(): ?float;
 
     public function setOuterLength(?float $outerLength): void;
@@ -42,7 +42,7 @@ interface CarrierPackageBoxInterface extends ResourceInterface
 
     public function setOuterHeight(?float $outerHeight): void;
 
-    /** Tare, added to the content's weight (CA-37). */
+    /** Tare, added to the content's weight. */
     public function getEmptyWeight(): ?float;
 
     public function setEmptyWeight(?float $emptyWeight): void;

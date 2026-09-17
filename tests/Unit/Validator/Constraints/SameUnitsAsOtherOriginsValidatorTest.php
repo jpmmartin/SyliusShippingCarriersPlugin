@@ -74,7 +74,7 @@ final class SameUnitsAsOtherOriginsValidatorTest extends ConstraintValidatorTest
     }
 
     /**
-     * The trade-off D-16 accepts: with two or more origins, the store's units cannot change from one of them.
+     * The accepted cost of one set of units for the whole store: with two or more origins, the store's units cannot change from one of them.
      */
     public function testOneOfSeveralOriginsCannotChangeItsUnits(): void
     {

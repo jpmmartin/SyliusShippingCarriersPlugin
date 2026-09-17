@@ -49,7 +49,7 @@ final class CarrierHttpClientTest extends TestCase
     }
 
     /**
-     * D-27: a timeout once the headers arrived must not leave an empty body the SDK takes for an unreadable answer.
+     * A timeout once the headers arrived must not leave an empty body the SDK takes for an unreadable answer.
      */
     public function testACarrierThatStopsInTheMiddleOfItsAnswerIsANetworkError(): void
     {

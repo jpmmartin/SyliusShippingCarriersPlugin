@@ -8,7 +8,7 @@ use Sylius\Component\Shipping\Model\ShipmentUnitInterface;
 
 /**
  * A shipment unit with its weight and measures, in the origin's units. Whatever order its measures come
- * in, its longest side is the length and its shortest one the height (D-18).
+ * in, its longest side is the length and its shortest one the height.
  */
 final readonly class MeasuredUnit
 {

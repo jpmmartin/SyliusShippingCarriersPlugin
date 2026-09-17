@@ -54,21 +54,21 @@ use ShipStream\Ups\Exception\AuthenticationException;
 
 /**
  * UPS through shipstream/ups-rest-php-sdk. Every exception of the SDK, of the HTTP client or of the
- * serializer is translated here to a CarrierException (CA-23).
+ * serializer is translated here to a CarrierException.
  */
 final class UpsCarrier implements CarrierInterface
 {
     /** The Rating API release the requests are written against, the one `Client::rate()` documents. */
     private const RATING_VERSION = 'v2403';
 
-    /** Rates every UPS service between the two addresses in a single call (CA-8). */
+    /** Rates every UPS service between the two addresses in a single call. */
     private const REQUEST_OPTION_SHOP = 'Shop';
 
     /** «02 - Package»: packaging of the shipper's own, not a UPS box. */
     private const PACKAGING_TYPE_PACKAGE = '02';
 
     /**
-     * UPS pickup type codes: 01 Daily Pickup, 03 Customer Counter, 06 One Time Pickup (D-26).
+     * UPS pickup type codes: 01 Daily Pickup, 03 Customer Counter, 06 One Time Pickup.
      *
      * @var array<string, string>
      */
@@ -124,7 +124,7 @@ final class UpsCarrier implements CarrierInterface
         ;
 
         if (null !== $accountNumber) {
-            // UPS only returns negotiated rates for a valid account number that has them (D-23).
+            // UPS only returns negotiated rates for a valid account number that has them.
             $shipper->setShipperNumber($accountNumber);
             $shipment->setShipmentRatingOptions((new ShipmentShipmentRatingOptions())->setNegotiatedRatesIndicator('Y'));
         }
@@ -132,7 +132,7 @@ final class UpsCarrier implements CarrierInterface
         return (new RATERequestWrapper())->setRateRequest(
             (new UpsRateRequest())
                 ->setRequest((new RateRequestRequest())->setRequestOption(self::REQUEST_OPTION_SHOP))
-                // How packages reach UPS changes the rate chart it prices with (D-26).
+                // How packages reach UPS changes the rate chart it prices with.
                 ->setPickupType((new RateRequestPickupType())->setCode($pickupTypeCode))
                 ->setShipment($shipment),
         );
@@ -155,7 +155,7 @@ final class UpsCarrier implements CarrierInterface
             $upsAddress->setStateProvinceCode($address->provinceCode);
         }
 
-        // UPS reads the indicator by its presence alone, so it is only sent for a home (D-28).
+        // UPS reads the indicator by its presence alone, so it is only sent for a home.
         if ($upsAddress instanceof ShipToAddress && $address->residential) {
             $upsAddress->setResidentialAddressIndicator('Y');
         }
@@ -196,7 +196,7 @@ final class UpsCarrier implements CarrierInterface
 
     /**
      * UPS takes each measure in three characters and the weight in five, so a measure is sent whole and the
-     * weight to a tenth. Rounding up keeps the declared package from ever being smaller than the real one (D-24).
+     * weight to a tenth. Rounding up keeps the declared package from ever being smaller than the real one.
      */
     private function roundUp(float $value, int $decimals): string
     {
@@ -216,7 +216,7 @@ final class UpsCarrier implements CarrierInterface
 
         $rates = [];
         foreach ($response->getRateResponse()->getRatedShipment() as $ratedShipment) {
-            // The negotiated charge is what UPS bills the account; without one, the published charge applies (D-23).
+            // The negotiated charge is what UPS bills the account; without one, the published charge applies.
             $charge = $ratedShipment->getNegotiatedRateCharges()?->getTotalCharge() ?? $ratedShipment->getTotalCharges();
 
             $rates[] = new Rate(

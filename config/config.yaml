@@ -2,5 +2,5 @@ imports:
     - { resource: "twig_hooks/**/*.yaml" }
 
 parameters:
-    # Key file for the carrier credentials, separate from Sylius' payment key (D-6).
+    # Key file for the carrier credentials, separate from Sylius' payment key.
     env(JPMMARTIN_CARRIER_ENCRYPTION_KEY_PATH): '%kernel.project_dir%/config/encryption/jpmmartin_carrier.key'

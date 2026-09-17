@@ -22,8 +22,8 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
  * Lets the buyer say, in the address step of the shop checkout, whether the order goes to a home or a
- * business (CA-48). The field belongs to the whole form, not to the shipping address: a channel that does not
- * ask for a separate shipping address hides that block and copies the billing address into it (D-28).
+ * business. The field belongs to the whole form, not to the shipping address: a channel that does not
+ * ask for a separate shipping address hides that block and copies the billing address into it.
  */
 final class CheckoutAddressTypeExtension extends AbstractTypeExtension
 {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JpmMartin\SyliusShippingCarriersPlugin\Tracking;
 
 /**
- * What the carrier reports about a shipment: its current status and the events it knows of (CA-25).
+ * What the carrier reports about a shipment: its current status and the events it knows of.
  */
 final readonly class TrackingInfo
 {

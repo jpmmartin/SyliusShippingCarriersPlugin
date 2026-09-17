@@ -15,7 +15,7 @@ use Symfony\Component\Lock\LockFactory;
 /**
  * Builds the UPS SDK client for the stored credentials, over a PSR-18 client that does not throw on 4xx or
  * 5xx responses, so the SDK sees them and raises its own exceptions. The access token is shared by every
- * process and renewed under a lock (D-25).
+ * process and renewed under a lock.
  */
 final class UpsClientFactory
 {

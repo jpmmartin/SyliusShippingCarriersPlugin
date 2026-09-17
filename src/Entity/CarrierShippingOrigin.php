@@ -34,7 +34,7 @@ class CarrierShippingOrigin implements CarrierShippingOriginInterface
      * that is the interface registered as the `sylius.channel` resource, and
      * therefore the one DoctrineTargetEntitiesResolverPass knows how to map.
      *
-     * Unique on purpose: one origin per channel (CA-2).
+     * Unique on purpose: one origin per channel.
      */
     #[ORM\ManyToOne(targetEntity: \Sylius\Component\Channel\Model\ChannelInterface::class)]
     #[ORM\JoinColumn(name: 'channel_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
@@ -64,12 +64,12 @@ class CarrierShippingOrigin implements CarrierShippingOriginInterface
     #[ORM\Column(name: 'max_package_weight', type: 'float')]
     protected float $maxPackageWeight = self::DEFAULT_MAX_PACKAGE_WEIGHT_LB;
 
-    /** No default: it changes the price, so the administrator always chooses it (CA-48). */
+    /** No default: it changes the price, so the administrator always chooses it. */
     #[ORM\Column(name: 'default_destination_type', type: 'string', length: 16)]
     protected ?string $defaultDestinationType = null;
 
     /**
-     * Optional restriction to part of the catalog; empty means every box (CA-35). Removing a box or an
+     * Optional restriction to part of the catalog; empty means every box. Removing a box or an
      * origin removes the assignment, never the other side.
      *
      * @var Collection<int, CarrierPackageBoxInterface>

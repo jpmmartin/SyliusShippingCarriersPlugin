@@ -24,7 +24,7 @@ final class CarrierCredentialsType extends AbstractResourceType
                     'jpmmartin_carrier.form.credentials.carriers.fedex' => CarrierCredentialsInterface::CARRIER_FEDEX,
                 ],
             ])
-            // Nothing preselected: pointing at production must be an explicit choice (CA-7).
+            // Nothing preselected: pointing at production must be an explicit choice.
             ->add('environment', ChoiceType::class, [
                 'label' => 'jpmmartin_carrier.form.credentials.environment',
                 'placeholder' => 'jpmmartin_carrier.form.credentials.choose_environment',
@@ -33,7 +33,7 @@ final class CarrierCredentialsType extends AbstractResourceType
                     'jpmmartin_carrier.form.credentials.environments.production' => CarrierCredentialsInterface::ENVIRONMENT_PRODUCTION,
                 ],
             ])
-            // Nothing preselected either: it changes the price (CA-46).
+            // Nothing preselected either: it changes the price.
             ->add('pickupType', ChoiceType::class, [
                 'label' => 'jpmmartin_carrier.form.credentials.pickup_type',
                 'placeholder' => 'jpmmartin_carrier.form.credentials.choose_pickup_type',
@@ -56,7 +56,7 @@ final class CarrierCredentialsType extends AbstractResourceType
     }
 
     /**
-     * The secret is never rendered back (D-14), so an edit that leaves it empty means "unchanged",
+     * The secret is never rendered back, so an edit that leaves it empty means "unchanged",
      * not "remove it".
      */
     private function keepTheStoredSecretWhenLeftEmpty(FormEvent $event): void

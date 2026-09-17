@@ -61,7 +61,7 @@ interface CarrierShippingOriginInterface extends ResourceInterface
     public function setDimensionUnit(string $dimensionUnit): void;
 
     /**
-     * The destination type rates are asked for with when the buyer has not chosen one (CA-48), a
+     * The destination type rates are asked for with when the buyer has not chosen one, a
      * DestinationType value.
      */
     public function getDefaultDestinationType(): ?string;
@@ -73,7 +73,7 @@ interface CarrierShippingOriginInterface extends ResourceInterface
     public function setMaxPackageWeight(float $maxPackageWeight): void;
 
     /**
-     * The boxes this origin is restricted to. Empty means the whole catalog (CA-35).
+     * The boxes this origin is restricted to. Empty means the whole catalog.
      *
      * @return Collection<int, CarrierPackageBoxInterface>
      */

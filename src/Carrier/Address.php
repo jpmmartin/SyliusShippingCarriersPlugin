@@ -13,8 +13,8 @@ final readonly class Address
 {
     /**
      * @param string|null $provinceCode The subdivision as the carriers take it, without a country prefix: `CA`
-     * @param bool $residential Whether a destination is a home rather than a business, which changes the price
-     *                          (CA-48); meaningless for an origin
+     * @param bool $residential Whether a destination is a home rather than a business, which changes the price;
+     *                          meaningless for an origin
      */
     public function __construct(
         public string $countryCode,

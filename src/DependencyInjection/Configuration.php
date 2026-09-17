@@ -36,7 +36,7 @@ final class Configuration implements ConfigurationInterface
             ->children()
                 ->scalarNode('driver')->defaultValue(SyliusResourceBundle::DRIVER_DOCTRINE_ORM)->end()
                 ->floatNode('carrier_timeout')
-                    ->info('Seconds a request to a carrier may take before it counts as a failure of the carrier (CA-47).')
+                    ->info('Seconds a request to a carrier may take before it counts as a failure of the carrier.')
                     ->defaultValue(10.0)
                     ->min(0.1)
                 ->end()

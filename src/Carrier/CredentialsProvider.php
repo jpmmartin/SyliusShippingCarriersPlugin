@@ -9,7 +9,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 
 /**
- * The credentials an adapter calls its carrier with, as the administrator stored them (CA-7).
+ * The credentials an adapter calls its carrier with, as the administrator stored them.
  */
 final readonly class CredentialsProvider
 {

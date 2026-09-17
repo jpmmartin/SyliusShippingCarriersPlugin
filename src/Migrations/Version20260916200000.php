@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Adds the default destination type to each shipping origin (CA-48), with the DBAL Schema API so it runs on
+ * Adds the default destination type to each shipping origin, with the DBAL Schema API so it runs on
  * any platform Doctrine supports (see Version20260812140643).
  */
 final class Version20260916200000 extends AbstractMigration

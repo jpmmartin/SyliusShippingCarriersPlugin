@@ -26,7 +26,7 @@ final class Version20260916144157 extends AbstractMigration
 
         $table->addColumn('id', 'integer', ['autoincrement' => true]);
         $table->addColumn('carrier', 'string', ['length' => 16, 'notnull' => true]);
-        // No default: the environment is always an explicit choice (CA-7).
+        // No default: the environment is always an explicit choice.
         $table->addColumn('environment', 'string', ['length' => 16, 'notnull' => true]);
         // Every value is encrypted by the plugin before it reaches this column.
         $table->addColumn('credentials', 'json', ['notnull' => true]);

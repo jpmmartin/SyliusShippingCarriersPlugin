@@ -7,8 +7,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints;
 use Symfony\Component\Validator\Constraint;
 
 /**
- * A box both supported carriers accept (plan §7): outer length up to 108", outer length plus girth up
- * to 165". Checked on the outer measures, the ones declared to the carrier (D-16).
+ * A box both supported carriers accept: outer length up to 108", outer length plus girth up
+ * to 165". Checked on the outer measures, the ones declared to the carrier.
  */
 final class WithinCarrierSizeLimits extends Constraint
 {

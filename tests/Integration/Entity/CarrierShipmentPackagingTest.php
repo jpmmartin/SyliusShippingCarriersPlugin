@@ -47,7 +47,7 @@ final class CarrierShipmentPackagingTest extends KernelTestCase
     }
 
     /**
-     * Base of CA-42: each package keeps the values it was declared with and the units it carries.
+     * Each package keeps the values it was declared with and the units it carries.
      */
     public function testItStoresAPackagingWithTwoPackagesAndTheirUnits(): void
     {
@@ -75,7 +75,7 @@ final class CarrierShipmentPackagingTest extends KernelTestCase
     }
 
     /**
-     * Base of CA-45: a packaging that could not be stored keeps why, and has no packages.
+     * A packaging that could not be stored keeps why, and has no packages.
      */
     public function testItStoresAFailedPackagingWithItsReason(): void
     {

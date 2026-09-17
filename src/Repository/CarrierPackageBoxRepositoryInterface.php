@@ -15,8 +15,8 @@ use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 interface CarrierPackageBoxRepositoryInterface extends RepositoryInterface
 {
     /**
-     * The boxes the origin is restricted to, or the whole catalog when it has none (CA-35). Always
-     * in the same order, so packaging the same content gives the same packages (D-9).
+     * The boxes the origin is restricted to, or the whole catalog when it has none. Always
+     * in the same order, so packaging the same content gives the same packages.
      *
      * @return list<CarrierPackageBoxInterface>
      */

@@ -22,12 +22,12 @@ class CarrierCredentials implements CarrierCredentialsInterface
 
     /**
      * No default on purpose, in PHP or in the database: whether the credentials go against the
-     * sandbox or production is always an explicit choice (CA-7).
+     * sandbox or production is always an explicit choice.
      */
     #[ORM\Column(type: 'string', length: 16)]
     protected ?string $environment = null;
 
-    /** No default either: it changes the price, so the administrator always chooses it (CA-46). */
+    /** No default either: it changes the price, so the administrator always chooses it. */
     #[ORM\Column(name: 'pickup_type', type: 'string', length: 16)]
     protected ?string $pickupType = null;
 

@@ -10,12 +10,12 @@ use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingInfo;
 
 /**
  * The port every carrier adapter implements. Nothing from a carrier SDK crosses it, in either direction:
- * requests and results are the plugin's own types, and every failure is a CarrierException (CA-23).
+ * requests and results are the plugin's own types, and every failure is a CarrierException.
  */
 interface CarrierInterface
 {
     /**
-     * Every service the carrier offers for the request, in a single call (CA-8).
+     * Every service the carrier offers for the request, in a single call.
      *
      * @throws CarrierException
      */

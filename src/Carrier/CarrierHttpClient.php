@@ -18,7 +18,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  *
  * Symfony's own Psr18Client streams the body after the headers arrive, and a timeout in the middle of it then
  * leaves the SDK an empty body that it reports as an unreadable answer. Read here, the same timeout is a
- * network error, and the carrier is reported as unavailable (D-27).
+ * network error, and the carrier is reported as unavailable.
  */
 final readonly class CarrierHttpClient implements ClientInterface
 {

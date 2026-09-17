@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Creates the stored packages of a shipment (CA-42, CA-45), with the DBAL Schema API so it runs on any
+ * Creates the stored packages of a shipment, with the DBAL Schema API so it runs on any
  * platform Doctrine supports (see Version20260812140643).
  */
 final class Version20260916180000 extends AbstractMigration
@@ -30,7 +30,7 @@ final class Version20260916180000 extends AbstractMigration
         $packaging->addColumn('id', 'integer', ['autoincrement' => true]);
         $packaging->addColumn('shipment_id', 'integer', ['notnull' => true]);
         $packaging->addColumn('state', 'string', ['length' => 16, 'notnull' => true]);
-        // Only a failed packaging has a reason (CA-45).
+        // Only a failed packaging has a reason.
         $packaging->addColumn('failure_reason', 'text', ['notnull' => false]);
         $packaging->addColumn('created_at', 'datetime_immutable', ['notnull' => true]);
         $packaging->setPrimaryKey(['id']);
@@ -38,12 +38,12 @@ final class Version20260916180000 extends AbstractMigration
         $packaging->addUniqueIndex(['shipment_id'], 'uniq_jpmmartin_carrier_packaging_shipment');
         $packaging->addForeignKeyConstraint('sylius_shipment', ['shipment_id'], ['id'], ['onDelete' => 'CASCADE'], 'fk_jpmmartin_carrier_packaging_shipment');
 
-        // Every value is copied when the order is completed, never read from a box (D-10).
+        // Every value is copied when the order is completed, never read from a box.
         $package = $schema->createTable(self::PACKAGE_TABLE);
         $package->addColumn('id', 'integer', ['autoincrement' => true]);
         $package->addColumn('packaging_id', 'integer', ['notnull' => true]);
         $package->addColumn('position', 'integer', ['notnull' => true]);
-        // Empty for the fallback package, which uses no box (CA-39).
+        // Empty for the fallback package, which uses no box.
         $package->addColumn('box_name', 'string', ['length' => 255, 'notnull' => false]);
         foreach (['length', 'width', 'height', 'weight'] as $column) {
             $package->addColumn($column, 'float', ['notnull' => true]);

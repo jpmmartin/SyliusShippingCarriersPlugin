@@ -8,7 +8,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 
 /**
  * What a carrier is asked to rate: the packages of a shipment between two addresses. No service is named,
- * so a single call returns every service (CA-8).
+ * so a single call returns every service.
  */
 final readonly class RateRequest
 {

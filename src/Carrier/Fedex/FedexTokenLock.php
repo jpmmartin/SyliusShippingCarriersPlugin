@@ -10,7 +10,7 @@ use Symfony\Component\Lock\LockInterface;
 
 /**
  * Makes the processes that find no FedEx access token get one at a time: the first one requests it, and the
- * others find it in the cache once they get the lock (D-25).
+ * others find it in the cache once they get the lock.
  */
 final class FedexTokenLock implements TokenLock
 {
