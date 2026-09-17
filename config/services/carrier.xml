@@ -36,6 +36,7 @@
         <service id="jpmmartin_carrier.carrier.ups" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsCarrier">
             <argument type="service" id="jpmmartin_carrier.carrier.credentials_provider" />
             <argument type="service" id="jpmmartin_carrier.carrier.ups.client_factory" />
+            <tag name="jpmmartin_carrier.carrier" carrier="ups" />
         </service>
 
         <service id="jpmmartin_carrier.carrier.fedex.connector_factory" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexConnectorFactory">
@@ -48,6 +49,7 @@
         <service id="jpmmartin_carrier.carrier.fedex" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexCarrier">
             <argument type="service" id="jpmmartin_carrier.carrier.credentials_provider" />
             <argument type="service" id="jpmmartin_carrier.carrier.fedex.connector_factory" />
+            <tag name="jpmmartin_carrier.carrier" carrier="fedex" />
         </service>
     </services>
 </container>

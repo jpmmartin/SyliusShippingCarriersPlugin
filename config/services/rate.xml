@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container
+        xmlns="http://symfony.com/schema/dic/services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+        <service id="jpmmartin_carrier.rate.request_factory" class="JpmMartin\SyliusShippingCarriersPlugin\Rate\RateRequestFactory">
+            <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
+            <argument type="service" id="jpmmartin_carrier.packaging_strategy" />
+            <argument type="service" id="jpmmartin_carrier.resolver.destination_type" />
+        </service>
+
+        <service id="jpmmartin_carrier.rate.currency_converter" class="JpmMartin\SyliusShippingCarriersPlugin\Rate\RateCurrencyConverter">
+            <argument type="service" id="sylius.repository.exchange_rate" />
+            <argument type="service" id="sylius.converter.currency" />
+            <argument type="service" id="logger" />
+        </service>
+
+        <service id="jpmmartin_carrier.rate_provider" class="JpmMartin\SyliusShippingCarriersPlugin\Rate\RateProvider">
+            <argument type="service" id="jpmmartin_carrier.rate.request_factory" />
+            <argument type="service" id="jpmmartin_carrier.carrier.credentials_provider" />
+            <argument type="tagged_locator" tag="jpmmartin_carrier.carrier" index-by="carrier" />
+            <argument type="service" id="jpmmartin_carrier.cache.rates" />
+            <argument type="service" id="jpmmartin_carrier.rate.currency_converter" />
+            <argument type="service" id="clock" />
+            <argument>%jpmmartin_carrier.rate_lifetime%</argument>
+            <argument>%jpmmartin_carrier.rate_retention%</argument>
+            <!-- A failure of a carrier is remembered for one request only. -->
+            <tag name="kernel.reset" method="reset" />
+        </service>
+        <service id="JpmMartin\SyliusShippingCarriersPlugin\Rate\RateProviderInterface" alias="jpmmartin_carrier.rate_provider" />
+    </services>
+</container>
