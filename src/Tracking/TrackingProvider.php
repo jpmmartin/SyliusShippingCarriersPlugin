@@ -7,11 +7,10 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Tracking;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
-use JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator;
+use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
-use Sylius\Component\Registry\ServiceRegistryInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
@@ -33,7 +32,7 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
      * @param int $lifetime Seconds a stored status is given before the carrier is asked again
      */
     public function __construct(
-        private readonly ServiceRegistryInterface $calculators,
+        private readonly ShipmentCarrier $shipmentCarrier,
         private readonly CredentialsProvider $credentialsProvider,
         private readonly ContainerInterface $carriers,
         private readonly CacheItemPoolInterface $cache,
@@ -44,7 +43,7 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
     public function track(ShipmentInterface $shipment): ?TrackingInfo
     {
         $trackingNumber = $shipment->getTracking();
-        $carrier = $this->carrierOf($shipment);
+        $carrier = $this->shipmentCarrier->of($shipment);
         if (null === $trackingNumber || '' === trim($trackingNumber) || null === $carrier) {
             return null;
         }
@@ -93,13 +92,5 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
     public function reset(): void
     {
         $this->failedKeys = [];
-    }
-
-    private function carrierOf(ShipmentInterface $shipment): ?string
-    {
-        $calculatorName = $shipment->getMethod()?->getCalculator();
-        $calculator = null !== $calculatorName && $this->calculators->has($calculatorName) ? $this->calculators->get($calculatorName) : null;
-
-        return $calculator instanceof CarrierRateCalculator ? $calculator->getCarrier() : null;
     }
 }

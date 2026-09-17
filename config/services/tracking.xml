@@ -7,7 +7,7 @@
 >
     <services>
         <service id="jpmmartin_carrier.tracking_provider" class="JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingProvider">
-            <argument type="service" id="sylius.registry.shipping_calculator" />
+            <argument type="service" id="jpmmartin_carrier.shipping.shipment_carrier" />
             <argument type="service" id="jpmmartin_carrier.carrier.credentials_provider" />
             <argument type="tagged_locator" tag="jpmmartin_carrier.carrier" index-by="carrier" />
             <argument type="service" id="jpmmartin_carrier.cache.tracking" />
@@ -16,5 +16,15 @@
             <tag name="kernel.reset" method="reset" />
         </service>
         <service id="JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingProviderInterface" alias="jpmmartin_carrier.tracking_provider" />
+
+        <service id="jpmmartin_carrier.twig.shipment_tracking_runtime" class="JpmMartin\SyliusShippingCarriersPlugin\Twig\ShipmentTrackingRuntime">
+            <argument type="service" id="jpmmartin_carrier.shipping.shipment_carrier" />
+            <argument type="service" id="jpmmartin_carrier.tracking_provider" />
+            <tag name="twig.runtime" />
+        </service>
+
+        <service id="jpmmartin_carrier.twig.shipment_tracking_extension" class="JpmMartin\SyliusShippingCarriersPlugin\Twig\ShipmentTrackingExtension">
+            <tag name="twig.extension" />
+        </service>
     </services>
 </container>

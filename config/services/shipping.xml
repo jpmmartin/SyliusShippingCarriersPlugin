@@ -10,6 +10,10 @@
             <argument>%jpmmartin_carrier.services%</argument>
         </service>
 
+        <service id="jpmmartin_carrier.shipping.shipment_carrier" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier">
+            <argument type="service" id="sylius.registry.shipping_calculator" />
+        </service>
+
         <service id="jpmmartin_carrier.shipping.charge_resolver" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShippingChargeResolver">
             <argument type="service" id="jpmmartin_carrier.rate_provider" />
         </service>

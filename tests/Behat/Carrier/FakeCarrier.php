@@ -11,6 +11,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierRe
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateSet;
+use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingEvent;
 use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingInfo;
 
 /**
@@ -29,13 +30,7 @@ final readonly class FakeCarrier implements CarrierInterface
     {
         $this->state->recordCall($this->carrier, $request->destination->residential);
 
-        match ($this->state->failure($this->carrier)) {
-            FakeCarrierState::FAILURE_TIMEOUT => throw new CarrierUnavailableException(sprintf('%s did not answer in time.', $this->carrier)),
-            FakeCarrierState::FAILURE_SERVER_ERROR => throw new CarrierUnavailableException(sprintf('%s answered with a server error.', $this->carrier)),
-            FakeCarrierState::FAILURE_UNREADABLE => throw new UnexpectedCarrierResponseException(sprintf('%s answered with something that cannot be read.', $this->carrier)),
-            FakeCarrierState::FAILURE_CREDENTIALS => throw new CarrierCredentialsException(sprintf('%s rejected the credentials.', $this->carrier)),
-            null => null,
-        };
+        $this->failAsTold();
 
         $rates = [];
         foreach ($this->state->rates($this->carrier) as $serviceCode => $rate) {
@@ -47,6 +42,27 @@ final readonly class FakeCarrier implements CarrierInterface
 
     public function track(string $trackingNumber): TrackingInfo
     {
-        throw new CarrierUnavailableException(sprintf('The fake %s does not track shipments.', $this->carrier));
+        $this->state->recordTrackCall($this->carrier);
+
+        $this->failAsTold();
+
+        $tracking = $this->state->tracking($this->carrier) ?? ['status' => null, 'events' => []];
+        $events = [];
+        foreach ($tracking['events'] as $event) {
+            $events[] = new TrackingEvent(new \DateTimeImmutable($event['occurred_at']), $event['description'], $event['location']);
+        }
+
+        return new TrackingInfo($trackingNumber, $tracking['status'], $events);
+    }
+
+    private function failAsTold(): void
+    {
+        match ($this->state->failure($this->carrier)) {
+            FakeCarrierState::FAILURE_TIMEOUT => throw new CarrierUnavailableException(sprintf('%s did not answer in time.', $this->carrier)),
+            FakeCarrierState::FAILURE_SERVER_ERROR => throw new CarrierUnavailableException(sprintf('%s answered with a server error.', $this->carrier)),
+            FakeCarrierState::FAILURE_UNREADABLE => throw new UnexpectedCarrierResponseException(sprintf('%s answered with something that cannot be read.', $this->carrier)),
+            FakeCarrierState::FAILURE_CREDENTIALS => throw new CarrierCredentialsException(sprintf('%s rejected the credentials.', $this->carrier)),
+            null => null,
+        };
     }
 }

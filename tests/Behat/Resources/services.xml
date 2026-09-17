@@ -25,6 +25,7 @@
         <service id="jpmmartin_carrier.behat.context.hook.carrier" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Hook\CarrierContext">
             <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
             <argument type="service" id="jpmmartin_carrier.cache.rates" />
+            <argument type="service" id="jpmmartin_carrier.cache.tracking" />
             <argument>%sylius.behat.clock.date_file%</argument>
         </service>
 
@@ -55,6 +56,12 @@
             <argument type="service" id="jpmmartin_carrier.cache.rates" />
             <argument type="service" id="sylius.behat.clock" />
             <argument>%sylius.behat.clock.date_file%</argument>
+        </service>
+
+        <service id="jpmmartin_carrier.behat.context.setup.tracking" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Setup\TrackingContext">
+            <argument type="service" id="sylius.behat.shared_storage" />
+            <argument type="service" id="sylius.repository.order" />
+            <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
         </service>
 
         <!-- Pages -->
@@ -114,6 +121,11 @@
             <argument type="service" id="router" />
             <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
             <argument type="service" id="sylius.behat.page.shop.checkout.address" />
+        </service>
+
+        <service id="jpmmartin_carrier.behat.context.ui.shop.shipment_tracking" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Shop\ShipmentTrackingContext">
+            <argument type="service" id="behat.mink.default_session" />
+            <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
         </service>
     </services>
 </container>

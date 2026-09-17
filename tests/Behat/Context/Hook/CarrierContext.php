@@ -12,7 +12,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Carrier\FakeCarrierState;
 
 /**
- * Every scenario starts with carriers that have not been told how to answer, no rates stored from an earlier
+ * Every scenario starts with carriers that have not been told how to answer, nothing stored from an earlier
  * scenario, and a fresh key to encrypt the carrier credentials it stores.
  */
 final class CarrierContext implements Context
@@ -24,6 +24,7 @@ final class CarrierContext implements Context
     public function __construct(
         private readonly FakeCarrierState $fakeCarrierState,
         private readonly CacheItemPoolInterface $rateCache,
+        private readonly CacheItemPoolInterface $trackingCache,
         private readonly string $clockDateFile,
     ) {
     }
@@ -32,8 +33,9 @@ final class CarrierContext implements Context
     public function prepareCarriers(): void
     {
         $this->fakeCarrierState->reset();
-        // The rate cache lives on the filesystem and outlives the database purge between scenarios.
+        // The caches live on the filesystem and outlive the database purge between scenarios.
         $this->rateCache->clear();
+        $this->trackingCache->clear();
         // So does the time a scenario travelled to.
         $this->forgetTheTimeTravelled();
 

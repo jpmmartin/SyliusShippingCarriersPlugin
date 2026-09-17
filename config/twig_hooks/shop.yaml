@@ -5,3 +5,10 @@ sylius_twig_hooks:
             destination_type:
                 template: '@JpmMartinSyliusShippingCarriersPlugin/shop/checkout/address/destination_type.html.twig'
                 priority: 50
+
+        # Where the shipments are goes with the order the buyer opens in their account, right after the payment and
+        # shipment statuses and before the items. Not on the shared hook: at checkout nothing has shipped yet.
+        'sylius_shop.account.order.show.content.main.summary':
+            carrier_tracking:
+                template: '@JpmMartinSyliusShippingCarriersPlugin/shop/account/order/tracking.html.twig'
+                priority: 150

@@ -10,6 +10,10 @@ jpmmartin_carrier:
             outer_width: Outer width
             outer_height: Outer height
             max_weight: Maximum weight
+        tracking:
+            title: Where your order is
+            unavailable: The carrier could not be reached, so there is no status right now. Your tracking number is above.
+            no_events: The carrier has no events for this shipment yet.
     form:
         shipping_calculator:
             ups_rate: UPS rates

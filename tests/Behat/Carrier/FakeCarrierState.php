@@ -56,6 +56,54 @@ final class FakeCarrierState
         $this->write($state);
     }
 
+    /**
+     * The carrier is told what to answer when it is asked where a shipment is.
+     *
+     * @param list<array{occurred_at: string, description: string, location: string|null}> $events
+     */
+    public function trackShipment(string $carrier, ?string $status, array $events): void
+    {
+        $state = $this->read();
+        $state[$carrier]['failure'] = null;
+        $state[$carrier]['tracking'] = ['status' => $status, 'events' => $events];
+
+        $this->write($state);
+    }
+
+    /**
+     * @param array{occurred_at: string, description: string, location: string|null} $event
+     */
+    public function addTrackingEvent(string $carrier, array $event): void
+    {
+        $tracking = $this->tracking($carrier) ?? ['status' => null, 'events' => []];
+        $tracking['events'][] = $event;
+
+        $this->trackShipment($carrier, $tracking['status'], $tracking['events']);
+    }
+
+    /**
+     * Null when the carrier was never told where a shipment is.
+     *
+     * @return array{status: string|null, events: list<array{occurred_at: string, description: string, location: string|null}>}|null
+     */
+    public function tracking(string $carrier): ?array
+    {
+        return $this->read()[$carrier]['tracking'] ?? null;
+    }
+
+    public function recordTrackCall(string $carrier): void
+    {
+        $state = $this->read();
+        $state[$carrier]['track_calls'] = ($state[$carrier]['track_calls'] ?? 0) + 1;
+
+        $this->write($state);
+    }
+
+    public function trackCalls(string $carrier): int
+    {
+        return $this->read()[$carrier]['track_calls'] ?? 0;
+    }
+
     public function recordCall(string $carrier, bool $residentialDestination): void
     {
         $state = $this->read();
@@ -77,7 +125,7 @@ final class FakeCarrierState
     {
         $state = $this->read();
         foreach ($state as $carrier => $carrierState) {
-            unset($carrierState['calls'], $carrierState['residential_destination']);
+            unset($carrierState['calls'], $carrierState['residential_destination'], $carrierState['track_calls']);
             $state[$carrier] = $carrierState;
         }
 
@@ -113,7 +161,7 @@ final class FakeCarrierState
     }
 
     /**
-     * @return array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool}>
+     * @return array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool, track_calls?: int, tracking?: array{status: string|null, events: list<array{occurred_at: string, description: string, location: string|null}>}}>
      */
     private function read(): array
     {
@@ -121,14 +169,14 @@ final class FakeCarrierState
             return [];
         }
 
-        /** @var array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool}> $state */
+        /** @var array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool, track_calls?: int, tracking?: array{status: string|null, events: list<array{occurred_at: string, description: string, location: string|null}>}}> $state */
         $state = json_decode((string) file_get_contents($this->path), true, flags: \JSON_THROW_ON_ERROR);
 
         return $state;
     }
 
     /**
-     * @param array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool}> $state
+     * @param array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool, track_calls?: int, tracking?: array{status: string|null, events: list<array{occurred_at: string, description: string, location: string|null}>}}> $state
      */
     private function write(array $state): void
     {

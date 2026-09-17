@@ -1,0 +1,50 @@
+{% set tracked_shipments = jpmmartin_carrier_tracked_shipments(hookable_metadata.context.order) %}
+
+{% if tracked_shipments is not empty %}
+    <div class="card border-0 bg-body-tertiary mb-3" {{ sylius_test_html_attribute('carrier-tracking') }}>
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <div>{{ 'jpmmartin_carrier.ui.tracking.title'|trans }}</div>
+        </div>
+
+        {% for tracked in tracked_shipments %}
+            <div class="card-body d-flex flex-column gap-2" {{ sylius_test_html_attribute('carrier-tracking-shipment', tracked.trackingNumber) }}>
+                <div class="d-flex justify-content-between gap-4">
+                    <div>{{ tracked.shipment.method.name }}</div>
+                    <div {{ sylius_test_html_attribute('carrier-tracking-number') }}>{{ tracked.trackingNumber }}</div>
+                </div>
+
+                {% if tracked.tracking is null %}
+                    <div class="text-body-secondary" {{ sylius_test_html_attribute('carrier-tracking-unavailable') }}>
+                        {{ 'jpmmartin_carrier.ui.tracking.unavailable'|trans }}
+                    </div>
+                {% else %}
+                    {% if tracked.tracking.status is not null %}
+                        <div {{ sylius_test_html_attribute('carrier-tracking-status') }}>
+                            {{ tracked.tracking.status }}
+                        </div>
+                    {% endif %}
+
+                    {% if tracked.tracking.events is empty %}
+                        <div class="text-body-secondary" {{ sylius_test_html_attribute('carrier-tracking-no-events') }}>
+                            {{ 'jpmmartin_carrier.ui.tracking.no_events'|trans }}
+                        </div>
+                    {% else %}
+                        <ul class="list-unstyled mb-0" {{ sylius_test_html_attribute('carrier-tracking-events') }}>
+                            {% for event in tracked.tracking.events %}
+                                <li class="d-flex flex-wrap gap-2">
+                                    {% if event.occurredAt is not null %}
+                                        <span class="text-body-secondary">{{ event.occurredAt|format_datetime('medium', 'short') }}</span>
+                                    {% endif %}
+                                    <span>{{ event.description }}</span>
+                                    {% if event.location is not null %}
+                                        <span class="text-body-secondary">{{ event.location }}</span>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

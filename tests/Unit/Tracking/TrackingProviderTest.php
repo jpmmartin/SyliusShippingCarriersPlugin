@@ -11,6 +11,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateProviderInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator;
+use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShippingChargeResolver;
 use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingEvent;
 use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingInfo;
@@ -144,7 +145,7 @@ final class TrackingProviderTest extends TestCase
         $credentialsRepository->method('findOneBy')->willReturnCallback(fn (): ?CarrierCredentials => $this->credentials);
 
         return new TrackingProvider(
-            $calculators,
+            new ShipmentCarrier($calculators),
             new CredentialsProvider($credentialsRepository),
             new ServiceLocator(['ups' => fn (): CarrierInterface => $this->ups]),
             $this->cache,
