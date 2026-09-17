@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container
+        xmlns="http://symfony.com/schema/dic/services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+        <service id="jpmmartin_carrier.resolver.destination_type" class="JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationTypeResolver">
+            <argument type="service" id="jpmmartin_carrier.repository.order_destination" />
+            <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
+        </service>
+        <service id="JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationTypeResolverInterface" alias="jpmmartin_carrier.resolver.destination_type" />
+
+        <service id="jpmmartin_carrier.form.extension.checkout_address" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Extension\CheckoutAddressTypeExtension">
+            <argument type="service" id="jpmmartin_carrier.resolver.destination_type" />
+            <argument type="service" id="jpmmartin_carrier.repository.order_destination" />
+            <argument type="service" id="jpmmartin_carrier.factory.order_destination" />
+            <argument type="service" id="jpmmartin_carrier.manager.order_destination" />
+            <tag name="form.type_extension" />
+        </service>
+    </services>
+</container>

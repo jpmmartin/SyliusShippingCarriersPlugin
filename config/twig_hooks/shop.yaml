@@ -1,8 +1,7 @@
-# Define your own shop Twig hooks here.
-#
-# sylius_twig_hooks:
-#     hooks:
-#         'sylius_shop.checkout.select_shipping.content':
-#             some_block:
-#                 template: '@JpmMartinSyliusShippingCarriersPlugin/shop/…'
-#                 priority: 0
+sylius_twig_hooks:
+    hooks:
+        # The destination type belongs to the whole address form, after the addresses (CA-48, D-28).
+        'sylius_shop.checkout.address.content.form':
+            destination_type:
+                template: '@JpmMartinSyliusShippingCarriersPlugin/shop/checkout/address/destination_type.html.twig'
+                priority: 50

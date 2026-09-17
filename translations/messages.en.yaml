@@ -28,6 +28,8 @@ jpmmartin_carrier:
         destination_type:
             residential: Home
             commercial: Business
+        checkout:
+            destination_type: Where are we delivering?
         package_box:
             name: Name
             inner_length: Inner length (%unit%)

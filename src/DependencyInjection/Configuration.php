@@ -6,6 +6,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\DependencyInjection;
 
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierOrderDestination;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierOrderDestinationInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBox;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackage;
@@ -94,6 +96,21 @@ final class Configuration implements ConfigurationInterface
                                         ->scalarNode('interface')->defaultValue(CarrierPackageBoxInterface::class)->cannotBeEmpty()->end()
                                         ->scalarNode('controller')->defaultValue(ResourceController::class)->cannotBeEmpty()->end()
                                         ->scalarNode('repository')->defaultValue(CarrierPackageBoxRepository::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('order_destination')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->variableNode('options')->end()
+                                ->arrayNode('classes')
+                                    ->addDefaultsIfNotSet()
+                                    ->children()
+                                        ->scalarNode('model')->defaultValue(CarrierOrderDestination::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('interface')->defaultValue(CarrierOrderDestinationInterface::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('controller')->defaultValue(ResourceController::class)->cannotBeEmpty()->end()
                                         ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
                                     ->end()
                                 ->end()

@@ -1,0 +1,7 @@
+{% set form = hookable_metadata.context.form %}
+
+{% if form.destinationType is defined %}
+    <div class="mb-4" {{ sylius_test_html_attribute('destination-type') }}>
+        {{ form_row(form.destinationType) }}
+    </div>
+{% endif %}

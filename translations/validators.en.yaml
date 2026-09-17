@@ -8,6 +8,9 @@ jpmmartin_carrier:
             same_as_other_origins: Every shipping origin must use the same units. The others use {{ unit }}.
         dimension_unit:
             same_as_other_origins: Every shipping origin must use the same units. The others use {{ unit }}.
+    checkout:
+        destination_type:
+            not_blank: Tell us whether we are delivering to a home or a business.
     package_box:
         outer_length:
             too_long: Carriers do not accept a box this long. The longest outer side can be at most {{ limit }} {{ unit }}.
