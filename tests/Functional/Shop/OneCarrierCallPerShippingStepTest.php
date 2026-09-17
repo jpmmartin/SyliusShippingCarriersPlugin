@@ -5,17 +5,11 @@ declare(strict_types=1);
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Functional\Shop;
 
 use Doctrine\ORM\EntityManagerInterface;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
-use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
-use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
-use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateSet;
-use PHPUnit\Framework\MockObject\Stub;
 use Psr\Cache\CacheItemPoolInterface;
 use Sylius\Component\Core\Model\ShippingMethod;
 use Sylius\Component\Core\OrderCheckoutStates;
-use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpKernel\DependencyInjection\ServicesResetterInterface;
@@ -52,7 +46,7 @@ final class OneCarrierCallPerShippingStepTest extends WebTestCase
             ['03', ...self::OTHER_SERVICES],
         )));
         self::getContainer()->set('jpmmartin_carrier.carrier.ups', $this->ups);
-        self::getContainer()->set('jpmmartin_carrier.carrier.credentials_provider', $this->credentialsProvider());
+        $this->replaceCredentialsProvider();
 
         $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
         self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
@@ -109,21 +103,6 @@ final class OneCarrierCallPerShippingStepTest extends WebTestCase
         $this->ups->requests = [];
     }
 
-    private function createOrigin(): void
-    {
-        $origin = new CarrierShippingOrigin();
-        $origin->setChannel($this->channel);
-        $origin->setStreet('1 Main St');
-        $origin->setCity('Chicago');
-        $origin->setPostcode('60601');
-        $origin->setCountryCode('US');
-        $origin->setProvinceCode('IL');
-        $origin->setDefaultDestinationType('commercial');
-
-        $this->entityManager->persist($origin);
-        $this->entityManager->flush();
-    }
-
     private function createOtherUpsServices(): void
     {
         $zone = $this->upsGround->getZone();
@@ -146,26 +125,5 @@ final class OneCarrierCallPerShippingStepTest extends WebTestCase
         }
 
         $this->entityManager->flush();
-    }
-
-    /**
-     * Stored credentials are encrypted with a key the test application does not have, and no real call is made.
-     */
-    private function credentialsProvider(): CredentialsProvider
-    {
-        $credentials = new CarrierCredentials();
-        $credentials->setCarrier(CarrierCredentialsInterface::CARRIER_UPS);
-        $credentials->setEnvironment(CarrierCredentialsInterface::ENVIRONMENT_SANDBOX);
-        $credentials->setPickupType(CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED);
-        $credentials->setCredentials([
-            CarrierCredentialsInterface::CLIENT_ID => 'ups-client-id',
-            CarrierCredentialsInterface::CLIENT_SECRET => 'ups-client-secret',
-        ]);
-
-        /** @var RepositoryInterface<CarrierCredentialsInterface>&Stub $repository */
-        $repository = $this->createStub(RepositoryInterface::class);
-        $repository->method('findOneBy')->willReturn($credentials);
-
-        return new CredentialsProvider($repository);
     }
 }

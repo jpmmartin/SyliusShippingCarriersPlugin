@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Functional\Shop;
 
 use Doctrine\ORM\EntityManagerInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
+use PHPUnit\Framework\MockObject\Stub;
 use Sylius\Component\Addressing\Model\Country;
 use Sylius\Component\Addressing\Model\Scope;
 use Sylius\Component\Addressing\Model\Zone;
@@ -26,6 +31,7 @@ use Sylius\Component\Currency\Model\Currency;
 use Sylius\Component\Locale\Model\Locale;
 use Sylius\Component\Order\Modifier\OrderItemQuantityModifierInterface;
 use Sylius\Component\Order\Processor\OrderProcessorInterface;
+use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Sylius\Resource\Factory\FactoryInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\BrowserKit\Cookie;
@@ -199,5 +205,42 @@ trait ShopCheckoutFixturesTrait
         $address->setCountryCode('US');
 
         return $address;
+    }
+
+    private function createOrigin(): void
+    {
+        $origin = new CarrierShippingOrigin();
+        $origin->setChannel($this->channel);
+        $origin->setStreet('1 Main St');
+        $origin->setCity('Chicago');
+        $origin->setPostcode('60601');
+        $origin->setCountryCode('US');
+        $origin->setProvinceCode('IL');
+        $origin->setDefaultDestinationType('commercial');
+
+        $this->entityManager->persist($origin);
+        $this->entityManager->flush();
+    }
+
+    /**
+     * UPS credentials the rate provider finds without the store holding encrypted ones: the test application has no
+     * encryption key, and no real call is made. Must run before the first request.
+     */
+    private function replaceCredentialsProvider(): void
+    {
+        $credentials = new CarrierCredentials();
+        $credentials->setCarrier(CarrierCredentialsInterface::CARRIER_UPS);
+        $credentials->setEnvironment(CarrierCredentialsInterface::ENVIRONMENT_SANDBOX);
+        $credentials->setPickupType(CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED);
+        $credentials->setCredentials([
+            CarrierCredentialsInterface::CLIENT_ID => 'ups-client-id',
+            CarrierCredentialsInterface::CLIENT_SECRET => 'ups-client-secret',
+        ]);
+
+        /** @var RepositoryInterface<CarrierCredentialsInterface>&Stub $repository */
+        $repository = $this->createStub(RepositoryInterface::class);
+        $repository->method('findOneBy')->willReturn($credentials);
+
+        self::getContainer()->set('jpmmartin_carrier.carrier.credentials_provider', new CredentialsProvider($repository));
     }
 }

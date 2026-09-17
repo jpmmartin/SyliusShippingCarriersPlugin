@@ -46,6 +46,15 @@
             <argument type="service" id="sylius.fixture.example_factory.shipping_method" />
             <argument type="service" id="sylius.repository.shipping_method" />
             <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
+            <argument type="service" id="jpmmartin_carrier.cache.rates" />
+        </service>
+
+        <!-- Ui -->
+        <service id="jpmmartin_carrier.behat.context.ui.shop.checkout" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Shop\CheckoutContext">
+            <argument type="service" id="behat.mink.default_session" />
+            <argument type="service" id="behat.mink.parameters" />
+            <argument type="service" id="router" />
+            <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
         </service>
     </services>
 </container>
