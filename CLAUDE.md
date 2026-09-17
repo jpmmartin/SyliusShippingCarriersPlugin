@@ -311,9 +311,23 @@ Non-obvious wiring, none of which is discoverable from the commands themselves:
   `FriendsOfBehat\SymfonyExtension` in `behat.yml.dist`. The kernel is the test application's, not
   one of ours.
 - **Behat suites are not defined in `behat.yml.dist`.** It imports
-  `tests/Behat/Resources/suites.yml`; contexts and pages are wired as services in
-  `tests/Behat/Resources/services.xml`, which the kernel picks up through
-  `tests/TestApplication/config/services_test.php`.
+  `tests/Behat/Resources/suites.yml`, which imports one file per capability from
+  `tests/Behat/Resources/suites/`. Each suite runs the features of `features/<capability>/` tagged
+  with it. Contexts and pages are wired as services in `tests/Behat/Resources/services.xml`, which the
+  kernel picks up through `tests/TestApplication/config/services_test.php`.
+- **In the `test` environment UPS and FedEx are fakes, for PHPUnit too.**
+  `tests/Behat/Resources/services.xml` replaces `jpmmartin_carrier.carrier.ups` and
+  `jpmmartin_carrier.carrier.fedex` with `Tests\...\Behat\Carrier\FakeCarrier`, whose answer and call
+  count live in `%kernel.cache_dir%/jpmmartin_carrier_fake_carriers.json`. A file, because
+  `FriendsOfBehat\SymfonyExtension` sets up contexts in one kernel and serves requests from another,
+  so nothing kept in memory reaches the carrier the shop calls. No test calls a real carrier.
+- **The rate cache is on the filesystem in `test` as well.** It outlives the database and earlier
+  runs, so a test that counts carrier calls or expects a new rate must clear
+  `jpmmartin_carrier.cache.rates` first. The Behat carrier hook does it before every scenario.
+- **Behat and PHPUnit share the test database.** Sylius purges it before each scenario and the
+  plugin's database hook purges it after, because the PHPUnit tests expect it empty. A Behat run cut
+  short can leave rows behind that make PHPUnit fail on unique constraints; running any scenario to
+  the end cleans them.
 - **`etc/build/`** must exist — `FriendsOfBehat\MinkDebugExtension` writes screenshots and logs
   there. It is kept by `etc/build/.gitignore`.
 - **`friends-of-behat/page-object-extension` is a class library, not a Behat extension.** It ships
@@ -331,13 +345,6 @@ vendor/bin/behat --strict --tags="@javascript"
 
 Not bugs in the configuration above — real gaps, recorded so nobody rediscovers them:
 
-- `features/running_a_sylius_feature.feature` is tagged `@managing_channels`, but `suites.yml`
-  defines only a `greeting_customer` suite filtering `@greeting_customer`. **That feature belongs
-  to no suite and never runs.**
-- `vendor/bin/phpstan analyse` reports 4 errors at level max, all in inherited skeleton code
-  (missing iterable value types in three files, one `string|null` passed to `str_starts_with`).
-  They are unfixed on purpose: fixing them is a `fix:`/`refactor:` commit, not part of adding
-  configuration.
 - `rector/rector` 1.2.10 has no Symfony set past `SYMFONY_71` while the stack resolves Symfony
   7.4, and `sylius/sylius-rector` 2.0 ships **no** Sylius 2.x upgrade set — only `plus/` and
   `price-history/`. Do not add a `SyliusSetList` entry for 2.x; it does not exist.
@@ -357,9 +364,9 @@ still present alongside the plugin's own code.
   `src/DependencyInjection/Configuration.php`
 - **Namespaces**: `JpmMartin\SyliusShippingCarriersPlugin\` → `src/`;
   `Tests\JpmMartin\SyliusShippingCarriersPlugin\` → `tests/` and `tests/TestApplication/src/`
-- **Services**: `config/services.xml` (plus an empty `config/services/`)
-- **Config**: `config/config.yaml`, `config/routes/{admin,shop}.yaml`,
-  `config/twig_hooks/shop.yaml` — note there is currently **no** `config/twig_hooks/admin.yaml`
+- **Services**: `config/services.xml`, which imports every file under `config/services/`
+- **Config**: `config/config.yaml`, `config/routes/`, `config/twig_hooks/`, and validation mappings
+  in `config/validation/`
 - **Migrations**: `src/Migrations/`
 - **Templates**: `templates/`
 
@@ -368,9 +375,10 @@ still present alongside the plugin's own code.
   `vendor/bin/console` and the public dir (`extra.public-dir`)
 - **Asset management**: Webpack Encore, driven through the test application's `yarn build`
 - **Symfony version pin**: `extra.symfony.require` is `^7.4`
-- **Test scaffolding**: `tests/{Unit,Integration,Functional}` exist but hold only `.gitignore`
-  placeholders; `tests/Behat/{Context,Page,Resources}` and the skeleton's three `features/*.feature`
-  files are inherited demo material, not plugin coverage
+- **Tests**: PHPUnit in `tests/{Unit,Integration,Functional}`; Behat features in
+  `features/<capability>/`, one folder per capability of the OpenSpec change, with the plugin's
+  contexts in `tests/Behat/Context/`. What an administrator or a buyer sees is tested with both;
+  pieces nobody sees are tested only with PHPUnit, as in Sylius's official plugins
 - **Tooling**: PHPStan, ECS, Rector, PHPUnit and Behat are installed and configured at the repo
   root (`phpstan.neon`, `ecs.php`, `rector.php`, `phpunit.xml.dist`, `behat.yml.dist`)
 
