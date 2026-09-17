@@ -32,12 +32,18 @@ final class CreatePage extends BaseCreatePage
         $this->getElement('default_destination_type')->selectOption($destinationType);
     }
 
+    public function restrictToBox(string $boxName): void
+    {
+        $this->getElement('boxes')->selectOption($boxName, true);
+    }
+
     /**
      * @return array<string, string>
      */
     protected function getDefinedElements(): array
     {
         return array_merge(parent::getDefinedElements(), [
+            'boxes' => '#jpmmartin_carrier_shipping_origin_boxes',
             'channel' => '#jpmmartin_carrier_shipping_origin_channel',
             'city' => '#jpmmartin_carrier_shipping_origin_city',
             'country_code' => '#jpmmartin_carrier_shipping_origin_countryCode',

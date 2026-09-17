@@ -2,5 +2,6 @@
 imports:
     - suites/carrier_services.yml
     - suites/rate_failure_policy.yml
+    - suites/shipment_packaging.yml
     - suites/shipping_origin.yml
     - suites/rate_quoting.yml

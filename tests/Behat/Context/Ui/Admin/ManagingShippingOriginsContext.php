@@ -7,6 +7,7 @@ namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Admin;
 use Behat\Behat\Context\Context;
 use Behat\Step\Then;
 use Behat\Step\When;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use Sylius\Behat\Page\Admin\Crud\IndexPageInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
@@ -55,6 +56,12 @@ final readonly class ManagingShippingOriginsContext implements Context
         $this->createPage->chooseDefaultDestinationType(ucfirst($destinationType));
     }
 
+    #[When('it ships only in the :boxName box')]
+    public function itShipsOnlyInTheBox(string $boxName): void
+    {
+        $this->createPage->restrictToBox($boxName);
+    }
+
     #[When('I add it')]
     public function iAddIt(): void
     {
@@ -87,6 +94,17 @@ final readonly class ManagingShippingOriginsContext implements Context
     public function itShouldDeliverToUnlessTheBuyerSaysOtherwise(string $destinationType): void
     {
         Assert::same($this->onlyOrigin()->getDefaultDestinationType(), $destinationType);
+    }
+
+    #[Then('it should ship only in the :boxName box')]
+    public function itShouldShipOnlyInTheBox(string $boxName): void
+    {
+        $boxes = $this->onlyOrigin()->getBoxes();
+
+        Assert::count($boxes, 1);
+        $box = $boxes->first();
+        Assert::isInstanceOf($box, CarrierPackageBoxInterface::class);
+        Assert::same($box->getName(), $boxName);
     }
 
     #[Then('I should be told that the channel already ships from somewhere')]

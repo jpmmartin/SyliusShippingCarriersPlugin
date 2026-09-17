@@ -32,6 +32,11 @@
         </service>
 
         <!-- Setup -->
+        <service id="jpmmartin_carrier.behat.context.setup.packaging" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Setup\PackagingContext">
+            <argument type="service" id="jpmmartin_carrier.factory.package_box" />
+            <argument type="service" id="jpmmartin_carrier.repository.package_box" />
+        </service>
+
         <service id="jpmmartin_carrier.behat.context.setup.shipping_origin" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Setup\ShippingOriginContext">
             <argument type="service" id="sylius.behat.shared_storage" />
             <argument type="service" id="jpmmartin_carrier.factory.shipping_origin" />
@@ -52,6 +57,14 @@
         <!-- Pages -->
         <service id="jpmmartin_carrier.behat.page.admin.carrier_credentials.create" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Page\Admin\CarrierCredentials\CreatePage" parent="sylius.behat.page.admin.crud.create" public="false">
             <argument type="string">jpmmartin_carrier_admin_credentials_create</argument>
+        </service>
+
+        <service id="jpmmartin_carrier.behat.page.admin.package_box.create" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Page\Admin\PackageBox\CreatePage" parent="sylius.behat.page.admin.crud.create" public="false">
+            <argument type="string">jpmmartin_carrier_admin_package_box_create</argument>
+        </service>
+
+        <service id="jpmmartin_carrier.behat.page.admin.package_box.index" class="Sylius\Behat\Page\Admin\Crud\IndexPage" parent="sylius.behat.page.admin.crud.index" public="false">
+            <argument type="string">jpmmartin_carrier_admin_package_box_index</argument>
         </service>
 
         <service id="jpmmartin_carrier.behat.page.admin.shipping_origin.create" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Page\Admin\ShippingOrigin\CreatePage" parent="sylius.behat.page.admin.crud.create" public="false">
@@ -78,6 +91,12 @@
         <service id="jpmmartin_carrier.behat.context.ui.admin.managing_carrier_credentials" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Admin\ManagingCarrierCredentialsContext">
             <argument type="service" id="jpmmartin_carrier.behat.page.admin.carrier_credentials.create" />
             <argument type="service" id="jpmmartin_carrier.repository.credentials" />
+        </service>
+
+        <service id="jpmmartin_carrier.behat.context.ui.admin.managing_package_boxes" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Admin\ManagingPackageBoxesContext">
+            <argument type="service" id="jpmmartin_carrier.behat.page.admin.package_box.create" />
+            <argument type="service" id="jpmmartin_carrier.behat.page.admin.package_box.index" />
+            <argument type="service" id="jpmmartin_carrier.repository.package_box" />
         </service>
 
         <service id="jpmmartin_carrier.behat.context.ui.admin.managing_shipping_origins" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Admin\ManagingShippingOriginsContext">
