@@ -92,6 +92,23 @@ final class CarrierCustomsDataTest extends KernelTestCase
     }
 
     /**
+     * Two catalogues that punctuate the same code differently must not end up declaring two different things,
+     * so the separators are dropped on the way in.
+     */
+    public function testTheCodeIsKeptAsTheDigitsItIsWhateverSeparatorsWereTyped(): void
+    {
+        $customsData = new CarrierCustomsData();
+
+        foreach (['6912.00.21', '6912 00 21', '6912-00-21', ' 69120021 '] as $typed) {
+            $customsData->setHsCode($typed);
+            self::assertSame('69120021', $customsData->getHsCode());
+        }
+
+        $customsData->setHsCode('   ');
+        self::assertNull($customsData->getHsCode());
+    }
+
+    /**
      * The decision that makes the plugin live alongside others: overriding a Sylius model is exclusive, so
      * two plugins that both did it could not be installed together. The customs data lives in a table of its
      * own, and `ProductVariant` stays Sylius's.

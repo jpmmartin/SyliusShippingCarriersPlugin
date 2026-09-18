@@ -33,3 +33,6 @@ jpmmartin_carrier:
             not_blank: Choose how packages reach the carrier, since it changes the rates.
         account_number:
             required_for_fedex: FedEx needs an account number to quote rates.
+    customs_data:
+        hs_code:
+            invalid: '"%hs_code%" is not a Harmonized System code: it must be six to ten digits.'

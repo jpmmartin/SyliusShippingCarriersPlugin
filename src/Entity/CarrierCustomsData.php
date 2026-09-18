@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JpmMartin\SyliusShippingCarriersPlugin\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JpmMartin\SyliusShippingCarriersPlugin\Customs\HsCodeNormalizer;
 use Sylius\Component\Core\Model\ProductVariantInterface;
 
 /**
@@ -67,7 +68,8 @@ class CarrierCustomsData implements CarrierCustomsDataInterface
 
     public function setHsCode(?string $hsCode): void
     {
-        $this->hsCode = $hsCode;
+        // Two catalogues that punctuate the same code differently must not declare two different things.
+        $this->hsCode = HsCodeNormalizer::normalize($hsCode);
     }
 
     public function getCountryOfOrigin(): ?string

@@ -16,6 +16,10 @@
             <tag name="validator.constraint_validator" alias="jpmmartin_carrier_same_units_as_other_origins" />
         </service>
 
+        <service id="jpmmartin_carrier.validator.hs_code" class="JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints\HsCodeValidator">
+            <tag name="validator.constraint_validator" alias="jpmmartin_carrier_hs_code" />
+        </service>
+
         <service id="jpmmartin_carrier.validator.within_carrier_size_limits" class="JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints\WithinCarrierSizeLimitsValidator">
             <argument type="service" id="jpmmartin_carrier.resolver.store_units" />
             <tag name="validator.constraint_validator" alias="jpmmartin_carrier_within_carrier_size_limits" />
