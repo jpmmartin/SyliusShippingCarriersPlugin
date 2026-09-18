@@ -14,6 +14,9 @@ use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
 final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExtension implements PrependExtensionInterface
 {
+    /** The Flysystem storage the plugin keeps its labels and customs documents in. */
+    public const DOCUMENT_STORAGE = 'jpmmartin_carrier.storage.documents';
+
     use PrependDoctrineMigrationsTrait;
 
     /** @psalm-suppress UnusedVariable */
@@ -26,6 +29,7 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
         $container->setParameter('jpmmartin_carrier.rate_retention', $config['rate_retention']);
         $container->setParameter('jpmmartin_carrier.tracking_lifetime', $config['tracking_lifetime']);
         $container->setParameter('jpmmartin_carrier.services', $config['services']);
+        $container->setParameter('jpmmartin_carrier.documents_dir', $config['documents_dir']);
 
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
 
@@ -39,6 +43,7 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
         $this->prependDoctrineMigrations($container);
         $this->prependDoctrineMapping($container);
         $this->prependRateCachePool($container);
+        $this->prependDocumentStorage($container);
         $this->prependCarrierServices($container);
         $this->prependShippingMethodValidationGroups($container);
         $this->prependApiPlatformMapping($container);
@@ -103,6 +108,37 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
                     'jpmmartin_carrier.cache.tracking' => [
                         'adapter' => 'cache.adapter.filesystem',
                     ],
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Where the labels and the customs documents the plugin issues are kept.
+     *
+     * Declared the way Sylius declares its own storage for images, with two differences that are the point of
+     * it: it lives under var/, outside the directory the web server publishes, and it is private. An
+     * application points it somewhere else — S3, another directory — by declaring a storage of the same name
+     * in its own configuration, which is loaded after this one and replaces it.
+     */
+    private function prependDocumentStorage(ContainerBuilder $container): void
+    {
+        if (!$container->hasExtension('flysystem')) {
+            return;
+        }
+
+        // The directory is resolved here and not left as a parameter reference: `prepend` runs before `load`,
+        // so a parameter of ours does not exist yet when Flysystem's extension is loaded.
+        /** @var array{documents_dir: string} $config */
+        $config = $this->processConfiguration(new Configuration(), $container->getExtensionConfig($this->getAlias()));
+
+        $container->prependExtensionConfig('flysystem', [
+            'storages' => [
+                self::DOCUMENT_STORAGE => [
+                    'adapter' => 'local',
+                    'options' => ['directory' => $config['documents_dir']],
+                    'visibility' => 'private',
+                    'directory_visibility' => 'private',
                 ],
             ],
         ]);
