@@ -1,0 +1,6 @@
+{% set form = hookable_metadata.context.form %}
+
+<div class="card-body" {{ sylius_test_html_attribute('customs-data') }}>
+    {{ form_row(form.jpmmartinCarrierCustomsData.hsCode) }}
+    {{ form_row(form.jpmmartinCarrierCustomsData.countryOfOrigin) }}
+</div>

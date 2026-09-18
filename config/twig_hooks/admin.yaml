@@ -1,0 +1,39 @@
+sylius_twig_hooks:
+    hooks:
+        # The customs data of a variant is declared where the variant is edited, as one more section of its
+        # form. Negative priority so it comes after the sections Sylius ships with.
+        'sylius_admin.product_variant.create.content.form.side_navigation':
+            jpmmartin_carrier_customs_data:
+                template: '@JpmMartinSyliusShippingCarriersPlugin/admin/product_variant/form/side_navigation/customs_data.html.twig'
+                priority: -100
+
+        'sylius_admin.product_variant.update.content.form.side_navigation':
+            jpmmartin_carrier_customs_data:
+                template: '@JpmMartinSyliusShippingCarriersPlugin/admin/product_variant/form/side_navigation/customs_data.html.twig'
+                priority: -100
+
+        'sylius_admin.product_variant.create.content.form.sections':
+            jpmmartin_carrier_customs_data:
+                template: '@JpmMartinSyliusShippingCarriersPlugin/admin/product_variant/form/sections/customs_data.html.twig'
+                priority: -100
+
+        'sylius_admin.product_variant.update.content.form.sections':
+            jpmmartin_carrier_customs_data:
+                template: '@JpmMartinSyliusShippingCarriersPlugin/admin/product_variant/form/sections/customs_data.html.twig'
+                priority: -100
+
+        'sylius_admin.product_variant.create.content.form.sections.jpmmartin_carrier_customs_data':
+            header:
+                template: '@JpmMartinSyliusShippingCarriersPlugin/admin/product_variant/form/sections/customs_data/header.html.twig'
+                priority: 100
+            body:
+                template: '@JpmMartinSyliusShippingCarriersPlugin/admin/product_variant/form/sections/customs_data/body.html.twig'
+                priority: 0
+
+        'sylius_admin.product_variant.update.content.form.sections.jpmmartin_carrier_customs_data':
+            header:
+                template: '@JpmMartinSyliusShippingCarriersPlugin/admin/product_variant/form/sections/customs_data/header.html.twig'
+                priority: 100
+            body:
+                template: '@JpmMartinSyliusShippingCarriersPlugin/admin/product_variant/form/sections/customs_data/body.html.twig'
+                priority: 0

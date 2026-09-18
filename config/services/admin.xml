@@ -48,6 +48,22 @@
             <tag name="sylius.invokable_grid" />
         </service>
 
+        <service id="jpmmartin_carrier.form.type.customs_data" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\CarrierCustomsDataType">
+            <argument>%jpmmartin_carrier.model.customs_data.class%</argument>
+            <argument type="collection">
+                <argument>sylius</argument>
+            </argument>
+            <tag name="form.type" />
+        </service>
+
+        <!-- The customs data of a variant is declared where the variant is edited. -->
+        <service id="jpmmartin_carrier.form.extension.admin_product_variant" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Extension\AdminProductVariantTypeExtension">
+            <argument type="service" id="jpmmartin_carrier.repository.customs_data" />
+            <argument type="service" id="jpmmartin_carrier.factory.customs_data" />
+            <argument type="service" id="jpmmartin_carrier.manager.customs_data" />
+            <tag name="form.type_extension" />
+        </service>
+
         <service id="jpmmartin_carrier.listener.admin_menu" class="JpmMartin\SyliusShippingCarriersPlugin\Menu\AdminMenuListener">
             <tag name="kernel.event_listener" event="sylius.menu.admin.main" />
         </service>

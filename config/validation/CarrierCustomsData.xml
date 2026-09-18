@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<constraint-mapping
+        xmlns="http://symfony.com/schema/dic/constraint-mapping"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/constraint-mapping https://symfony.com/schema/dic/constraint-mapping/constraint-mapping-1.0.xsd"
+>
+    <class name="JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCustomsData">
+        <property name="hsCode">
+            <!-- Not NotBlank: a variant that never crosses a border needs none of this. What customs requires
+                 is checked when a shipment is issued, where the message can name the variant. -->
+            <constraint name="JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints\HsCode">
+                <option name="groups">
+                    <value>sylius</value>
+                </option>
+            </constraint>
+        </property>
+
+        <property name="countryOfOrigin">
+            <constraint name="Country">
+                <option name="message">jpmmartin_carrier.customs_data.country_of_origin.invalid</option>
+                <option name="groups">
+                    <value>sylius</value>
+                </option>
+            </constraint>
+        </property>
+    </class>
+</constraint-mapping>

@@ -3,6 +3,7 @@ jpmmartin_carrier:
         shipping_origin: Shipping origin
         shipping_origins: Shipping origins
         credentials: Carrier credentials
+        customs_data: Customs
         package_box: Package box
         package_boxes: Package boxes
         box_grid:
@@ -45,6 +46,12 @@ jpmmartin_carrier:
             commercial: Business
         checkout:
             destination_type: Where are we delivering?
+        customs_data:
+            hs_code: Harmonized System code
+            hs_code_help: Six to ten digits. Dots, spaces and hyphens are accepted and dropped.
+            country_of_origin: Country of origin
+            country_of_origin_help: Where the goods were made, which is not always where they ship from.
+            choose_country_of_origin: Choose a country of origin
         package_box:
             name: Name
             inner_length: Inner length (%unit%)

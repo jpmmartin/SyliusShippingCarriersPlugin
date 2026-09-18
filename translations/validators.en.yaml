@@ -36,3 +36,5 @@ jpmmartin_carrier:
     customs_data:
         hs_code:
             invalid: '"%hs_code%" is not a Harmonized System code: it must be six to ten digits.'
+        country_of_origin:
+            invalid: Choose a country that exists.
