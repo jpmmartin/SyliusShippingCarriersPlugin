@@ -1,5 +1,6 @@
 imports:
     - { resource: "twig_hooks/**/*.yaml" }
+    - { resource: "grids/**/*.yaml" }
 
 parameters:
     # Key file for the carrier credentials, separate from Sylius' payment key.

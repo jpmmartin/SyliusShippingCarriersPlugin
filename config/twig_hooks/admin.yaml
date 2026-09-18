@@ -37,3 +37,12 @@ sylius_twig_hooks:
             body:
                 template: '@JpmMartinSyliusShippingCarriersPlugin/admin/product_variant/form/sections/customs_data/body.html.twig'
                 priority: 0
+
+        # The list of variants customs could not be told about falls through to Sylius's shared index page;
+        # only its heading is its own.
+        'jpmmartin_carrier_admin.incomplete_customs_data.index.content.header.title_block':
+            title:
+                template: '@SyliusAdmin/shared/crud/common/content/header/title_block/title.html.twig'
+                configuration:
+                    title: jpmmartin_carrier.ui.incomplete_customs_data
+                priority: 100

@@ -1,0 +1,21 @@
+sylius_grid:
+    grids:
+        # The variants customs could not be told about: no customs data at all, or a field left empty.
+        jpmmartin_carrier_admin_incomplete_customs_data:
+            driver:
+                name: doctrine/orm
+                options:
+                    class: "%sylius.model.product_variant.class%"
+                    repository:
+                        method: ["expr:service('jpmmartin_carrier.repository.incomplete_customs_data')", createIncompleteListQueryBuilder]
+            sorting:
+                code: asc
+            fields:
+                code:
+                    type: string
+                    label: sylius.ui.code
+                    sortable: ~
+            filters:
+                code:
+                    type: string
+                    label: sylius.ui.code

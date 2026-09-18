@@ -4,6 +4,7 @@ jpmmartin_carrier:
         shipping_origins: Shipping origins
         credentials: Carrier credentials
         customs_data: Customs
+        incomplete_customs_data: Variants missing customs data
         package_box: Package box
         package_boxes: Package boxes
         box_grid:

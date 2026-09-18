@@ -48,6 +48,12 @@
             <tag name="sylius.invokable_grid" />
         </service>
 
+        <service id="jpmmartin_carrier.repository.incomplete_customs_data" class="JpmMartin\SyliusShippingCarriersPlugin\Repository\IncompleteCustomsDataRepository" public="true">
+            <argument type="service" id="doctrine.orm.entity_manager" />
+            <argument>%sylius.model.product_variant.class%</argument>
+            <argument>%jpmmartin_carrier.model.customs_data.class%</argument>
+        </service>
+
         <service id="jpmmartin_carrier.form.type.customs_data" class="JpmMartin\SyliusShippingCarriersPlugin\Form\Type\CarrierCustomsDataType">
             <argument>%jpmmartin_carrier.model.customs_data.class%</argument>
             <argument type="collection">

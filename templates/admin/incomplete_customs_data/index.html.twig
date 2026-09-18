@@ -1,0 +1,14 @@
+{% extends '@SyliusAdmin/shared/layout/base.html.twig' %}
+
+{# Its own prefix before Sylius's common one: everything falls through to the shared crud page except the
+   heading, which must not read "Product variants". Sylius's own product variant hooks are deliberately not
+   used, as their breadcrumbs expect a product this page has no reason to have. #}
+{% set prefixes = ['jpmmartin_carrier_admin.incomplete_customs_data', 'sylius_admin.common'] %}
+
+{% set title = 'jpmmartin_carrier.ui.incomplete_customs_data' %}
+
+{% block title %}{{ title|trans }} | {{ parent() }}{% endblock %}
+
+{% block body %}
+    {% hook 'index' with { _prefixes: prefixes, resources, title } %}
+{% endblock %}

@@ -43,3 +43,18 @@ jpmmartin_carrier_admin_credentials:
             type: JpmMartin\SyliusShippingCarriersPlugin\Form\Type\CarrierCredentialsType
         permission: true
     type: sylius.resource
+
+# The variants customs could not be told about. Read-only: the data itself is edited on the variant.
+#
+# A plain route on Sylius's own controller, not a `sylius.resource` one: a resource route for an alias that is
+# not ours would take over the name of Sylius's variant index, `sylius_admin_product_variant_index`.
+jpmmartin_carrier_admin_incomplete_customs_data_index:
+    path: /incomplete-customs-data
+    methods: [GET]
+    defaults:
+        _controller: sylius.controller.product_variant::indexAction
+        _sylius:
+            section: admin
+            template: "@JpmMartinSyliusShippingCarriersPlugin/admin/incomplete_customs_data/index.html.twig"
+            grid: jpmmartin_carrier_admin_incomplete_customs_data
+            permission: true
