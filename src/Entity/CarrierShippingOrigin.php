@@ -55,6 +55,22 @@ class CarrierShippingOrigin implements CarrierShippingOriginInterface
     #[ORM\Column(name: 'province_code', type: 'string', nullable: true)]
     protected ?string $provinceCode = null;
 
+    /**
+     * Who the parcel is from, as it is printed on the label and as a returned parcel comes back.
+     *
+     * Nullable in the column and required in the form: an origin created before labels existed must not stop
+     * working, but nobody can save one now without saying who is sending.
+     */
+    #[ORM\Column(name: 'company_name', type: 'string', nullable: true)]
+    protected ?string $companyName = null;
+
+    #[ORM\Column(name: 'contact_name', type: 'string', nullable: true)]
+    protected ?string $contactName = null;
+
+    /** Carriers ask for it, and refuse an international shipment without one. */
+    #[ORM\Column(type: 'string', length: 32, nullable: true)]
+    protected ?string $phone = null;
+
     #[ORM\Column(name: 'weight_unit', type: 'string', length: 8)]
     protected string $weightUnit = self::WEIGHT_UNIT_LB;
 
@@ -148,6 +164,46 @@ class CarrierShippingOrigin implements CarrierShippingOriginInterface
     public function setProvinceCode(?string $provinceCode): void
     {
         $this->provinceCode = $provinceCode;
+    }
+
+    public function getCompanyName(): ?string
+    {
+        return $this->companyName;
+    }
+
+    public function setCompanyName(?string $companyName): void
+    {
+        $this->companyName = $companyName;
+    }
+
+    public function getContactName(): ?string
+    {
+        return $this->contactName;
+    }
+
+    public function setContactName(?string $contactName): void
+    {
+        $this->contactName = $contactName;
+    }
+
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function setPhone(?string $phone): void
+    {
+        $this->phone = $phone;
+    }
+
+    /**
+     * Whether a label can be printed with this origin as its sender.
+     */
+    public function hasContact(): bool
+    {
+        return null !== $this->companyName && '' !== $this->companyName &&
+            null !== $this->contactName && '' !== $this->contactName &&
+            null !== $this->phone && '' !== $this->phone;
     }
 
     public function getWeightUnit(): string

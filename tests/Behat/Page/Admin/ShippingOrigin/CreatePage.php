@@ -8,6 +8,13 @@ use Sylius\Behat\Page\Admin\Crud\CreatePage as BaseCreatePage;
 
 final class CreatePage extends BaseCreatePage
 {
+    public function specifySender(string $companyName, string $contactName, string $phone): void
+    {
+        $this->getElement('company_name')->setValue($companyName);
+        $this->getElement('contact_name')->setValue($contactName);
+        $this->getElement('phone')->setValue($phone);
+    }
+
     public function specifyAddress(string $street, string $city, string $postcode, string $countryName): void
     {
         $this->getElement('street')->setValue($street);
@@ -46,6 +53,9 @@ final class CreatePage extends BaseCreatePage
             'boxes' => '#jpmmartin_carrier_shipping_origin_boxes',
             'channel' => '#jpmmartin_carrier_shipping_origin_channel',
             'city' => '#jpmmartin_carrier_shipping_origin_city',
+            'company_name' => '#jpmmartin_carrier_shipping_origin_companyName',
+            'contact_name' => '#jpmmartin_carrier_shipping_origin_contactName',
+            'phone' => '#jpmmartin_carrier_shipping_origin_phone',
             'country_code' => '#jpmmartin_carrier_shipping_origin_countryCode',
             'default_destination_type' => '#jpmmartin_carrier_shipping_origin_defaultDestinationType',
             'dimension_unit' => '#jpmmartin_carrier_shipping_origin_dimensionUnit',

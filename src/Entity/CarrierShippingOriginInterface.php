@@ -52,6 +52,22 @@ interface CarrierShippingOriginInterface extends ResourceInterface
 
     public function setProvinceCode(?string $provinceCode): void;
 
+    /** Who the parcel is from, as it is printed on the label. */
+    public function getCompanyName(): ?string;
+
+    public function setCompanyName(?string $companyName): void;
+
+    public function getContactName(): ?string;
+
+    public function setContactName(?string $contactName): void;
+
+    public function getPhone(): ?string;
+
+    public function setPhone(?string $phone): void;
+
+    /** Whether a label can be printed with this origin as its sender. */
+    public function hasContact(): bool;
+
     public function getWeightUnit(): string;
 
     public function setWeightUnit(string $weightUnit): void;

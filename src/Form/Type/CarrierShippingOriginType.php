@@ -35,6 +35,17 @@ final class CarrierShippingOriginType extends AbstractResourceType
             ->add('channel', ChannelChoiceType::class, [
                 'label' => 'sylius.ui.channel',
             ])
+            // Who the parcel is from: printed on the label, and where a returned parcel goes back to.
+            ->add('companyName', TextType::class, [
+                'label' => 'jpmmartin_carrier.form.shipping_origin.company_name',
+            ])
+            ->add('contactName', TextType::class, [
+                'label' => 'jpmmartin_carrier.form.shipping_origin.contact_name',
+            ])
+            ->add('phone', TextType::class, [
+                'label' => 'jpmmartin_carrier.form.shipping_origin.phone',
+                'help' => 'jpmmartin_carrier.form.shipping_origin.phone_help',
+            ])
             ->add('street', TextType::class, [
                 'label' => 'sylius.form.address.street',
             ])

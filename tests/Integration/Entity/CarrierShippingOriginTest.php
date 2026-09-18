@@ -58,6 +58,47 @@ final class CarrierShippingOriginTest extends KernelTestCase
         self::assertNull($origin->getDefaultDestinationType());
     }
 
+    /**
+     * Without a sender nothing prints: a carrier refuses a label with no name and no phone to return it to.
+     */
+    public function testItKeepsWhoTheParcelsAreSentBy(): void
+    {
+        $origin = $this->createOrigin($this->createChannel('web-sender'));
+        $origin->setCompanyName('Swaypc');
+        $origin->setContactName('Juan Pablo Moreno Martin');
+        $origin->setPhone('13057800955');
+
+        $this->entityManager->persist($origin);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $stored = $this->entityManager->getRepository(CarrierShippingOrigin::class)->find((int) $origin->getId());
+        self::assertInstanceOf(CarrierShippingOrigin::class, $stored);
+        self::assertSame('Swaypc', $stored->getCompanyName());
+        self::assertSame('Juan Pablo Moreno Martin', $stored->getContactName());
+        self::assertSame('13057800955', $stored->getPhone());
+        self::assertTrue($stored->hasContact());
+    }
+
+    /**
+     * An origin created before labels existed keeps working; what it cannot do is print one, and it says so
+     * instead of letting the carrier say it.
+     */
+    public function testAnOriginWithoutASenderSaysItCannotPrintALabel(): void
+    {
+        $origin = new CarrierShippingOrigin();
+        self::assertFalse($origin->hasContact());
+
+        $origin->setCompanyName('Swaypc');
+        self::assertFalse($origin->hasContact());
+
+        $origin->setContactName('Juan Pablo Moreno Martin');
+        self::assertFalse($origin->hasContact());
+
+        $origin->setPhone('13057800955');
+        self::assertTrue($origin->hasContact());
+    }
+
     public function testItPersistsAnOrigin(): void
     {
         $origin = $this->createOrigin($this->createChannel('web-persist'));

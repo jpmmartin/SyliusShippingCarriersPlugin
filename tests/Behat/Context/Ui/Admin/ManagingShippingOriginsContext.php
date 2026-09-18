@@ -32,6 +32,12 @@ final readonly class ManagingShippingOriginsContext implements Context
         $this->createPage->open();
     }
 
+    #[When('/^the parcels are sent by "([^"]+)", "([^"]+)", on "([^"]+)"$/')]
+    public function theParcelsAreSentBy(string $companyName, string $contactName, string $phone): void
+    {
+        $this->createPage->specifySender($companyName, $contactName, $phone);
+    }
+
     #[When('/^I ship from "([^"]+)", "([^"]+)" "([^"]+)" in the "([^"]+)"$/')]
     public function iShipFrom(string $street, string $city, string $postcode, string $countryName): void
     {

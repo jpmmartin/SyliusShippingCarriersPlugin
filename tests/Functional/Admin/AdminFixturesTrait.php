@@ -85,6 +85,9 @@ trait AdminFixturesTrait
     {
         $origin = new CarrierShippingOrigin();
         $origin->setChannel($channel);
+        $origin->setCompanyName('Swaypc');
+        $origin->setContactName('Juan Pablo Moreno Martin');
+        $origin->setPhone('13057800955');
         $origin->setStreet('Gran Via 1');
         $origin->setCity('Madrid');
         $origin->setPostcode('28013');

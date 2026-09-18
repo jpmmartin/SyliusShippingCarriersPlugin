@@ -29,6 +29,10 @@ jpmmartin_carrier:
             flat_amount: Flat amount
             flat_amount_help: Charged only when the carrier does not answer and the flat amount is chosen. Then every channel needs one.
         shipping_origin:
+            company_name: Sender company
+            contact_name: Contact person
+            phone: Phone
+            phone_help: Carriers ask for it, and refuse an international shipment without one.
             weight_unit: Weight unit
             dimension_unit: Dimension unit
             max_package_weight: Maximum package weight

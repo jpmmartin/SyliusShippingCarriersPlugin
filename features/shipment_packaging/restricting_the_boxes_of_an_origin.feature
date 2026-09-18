@@ -13,6 +13,7 @@ Feature: Restricting the boxes of an origin
     Scenario: Restricting an origin to one box of the catalog
         When I want to add a new shipping origin
         And I ship the orders of the "United States" channel
+        And the parcels are sent by "The store", "Ada Lovelace", on "13057800955"
         And I ship from "1 Main St", "Chicago" "60601" in the "United States"
         And I declare the catalog in "Pounds (lb)" and "Inches (in)"
         And I deliver to a "business" unless the buyer says otherwise

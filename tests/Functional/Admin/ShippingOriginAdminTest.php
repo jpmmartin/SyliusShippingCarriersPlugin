@@ -56,6 +56,9 @@ final class ShippingOriginAdminTest extends WebTestCase
 
         $this->submitCreateForm([
             self::FORM . '[channel]' => 'web-admin-origin',
+            self::FORM . '[companyName]' => 'Swaypc',
+            self::FORM . '[contactName]' => 'Juan Pablo Moreno Martin',
+            self::FORM . '[phone]' => '13057800955',
             self::FORM . '[street]' => 'Gran Via 1',
             self::FORM . '[city]' => 'Madrid',
             self::FORM . '[postcode]' => '28013',
@@ -102,6 +105,9 @@ final class ShippingOriginAdminTest extends WebTestCase
 
         $this->submitCreateForm([
             self::FORM . '[channel]' => 'web-admin-duplicate',
+            self::FORM . '[companyName]' => 'Swaypc',
+            self::FORM . '[contactName]' => 'Juan Pablo Moreno Martin',
+            self::FORM . '[phone]' => '13057800955',
             self::FORM . '[street]' => 'Diagonal 1',
             self::FORM . '[city]' => 'Barcelona',
             self::FORM . '[postcode]' => '08019',
@@ -124,6 +130,9 @@ final class ShippingOriginAdminTest extends WebTestCase
 
         $this->submitCreateForm([
             self::FORM . '[channel]' => 'web-units-second',
+            self::FORM . '[companyName]' => 'Swaypc',
+            self::FORM . '[contactName]' => 'Juan Pablo Moreno Martin',
+            self::FORM . '[phone]' => '13057800955',
             self::FORM . '[street]' => 'Diagonal 1',
             self::FORM . '[city]' => 'Barcelona',
             self::FORM . '[postcode]' => '08019',
@@ -148,6 +157,9 @@ final class ShippingOriginAdminTest extends WebTestCase
 
         $this->submitCreateForm([
             self::FORM . '[channel]' => 'web-admin-destination',
+            self::FORM . '[companyName]' => 'Swaypc',
+            self::FORM . '[contactName]' => 'Juan Pablo Moreno Martin',
+            self::FORM . '[phone]' => '13057800955',
             self::FORM . '[street]' => 'Gran Via 1',
             self::FORM . '[city]' => 'Madrid',
             self::FORM . '[postcode]' => '28013',
@@ -171,6 +183,9 @@ final class ShippingOriginAdminTest extends WebTestCase
 
         $this->submitCreateForm([
             self::FORM . '[channel]' => 'web-admin-boxes',
+            self::FORM . '[companyName]' => 'Swaypc',
+            self::FORM . '[contactName]' => 'Juan Pablo Moreno Martin',
+            self::FORM . '[phone]' => '13057800955',
             self::FORM . '[street]' => 'Gran Via 1',
             self::FORM . '[city]' => 'Madrid',
             self::FORM . '[postcode]' => '28013',

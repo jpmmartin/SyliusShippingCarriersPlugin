@@ -40,6 +40,10 @@ final readonly class ShippingOriginContext implements Context
 
         $origin = $this->originFactory->createNew();
         $origin->setChannel($channel);
+        // Without a sender no label prints, so an origin a scenario sets up has one.
+        $origin->setCompanyName('The store');
+        $origin->setContactName('Ada Lovelace');
+        $origin->setPhone('13057800955');
         $origin->setStreet($street);
         $origin->setCity($city);
         $origin->setPostcode($postcode);

@@ -11,6 +11,7 @@ Feature: Managing shipping origins
     Scenario: Saying where a channel ships from
         When I want to add a new shipping origin
         And I ship the orders of the "United States" channel
+        And the parcels are sent by "The store", "Ada Lovelace", on "13057800955"
         And I ship from "1 Main St", "Chicago" "60601" in the "United States"
         And I declare the catalog in "Pounds (lb)" and "Inches (in)"
         And I deliver to a "business" unless the buyer says otherwise
@@ -24,6 +25,7 @@ Feature: Managing shipping origins
         Given the store ships from "1 Main St", "Chicago" "60601" in the "United States"
         When I want to add a new shipping origin
         And I ship the orders of the "United States" channel
+        And the parcels are sent by "The store", "Ada Lovelace", on "13057800955"
         And I ship from "500 Pine St", "Seattle" "98101" in the "United States"
         And I declare the catalog in "Pounds (lb)" and "Inches (in)"
         And I deliver to a "business" unless the buyer says otherwise
@@ -34,6 +36,7 @@ Feature: Managing shipping origins
     Scenario: Trying not to say where deliveries go by default
         When I want to add a new shipping origin
         And I ship the orders of the "United States" channel
+        And the parcels are sent by "The store", "Ada Lovelace", on "13057800955"
         And I ship from "1 Main St", "Chicago" "60601" in the "United States"
         And I declare the catalog in "Pounds (lb)" and "Inches (in)"
         And I add it

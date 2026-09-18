@@ -23,6 +23,23 @@
                 <option name="groups">sylius</option>
             </constraint>
         </property>
+        <!-- Required here and not in the column: an origin created before labels existed keeps working, but
+             nobody saves one now without saying who is sending, because no label prints without it. -->
+        <property name="companyName">
+            <constraint name="NotBlank">
+                <option name="groups">sylius</option>
+            </constraint>
+        </property>
+        <property name="contactName">
+            <constraint name="NotBlank">
+                <option name="groups">sylius</option>
+            </constraint>
+        </property>
+        <property name="phone">
+            <constraint name="NotBlank">
+                <option name="groups">sylius</option>
+            </constraint>
+        </property>
         <property name="street">
             <constraint name="NotBlank">
                 <option name="groups">sylius</option>
