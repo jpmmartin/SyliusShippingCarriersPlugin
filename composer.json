@@ -15,6 +15,7 @@
         "php": "^8.2",
         "paragonie/halite": "^5.0",
         "shipstream/fedex-rest-sdk": "^1.6",
+        "league/flysystem-bundle": "^3.3",
         "shipstream/ups-rest-php-sdk": "^2.3",
         "sylius/sylius": "^2.2",
         "symfony/lock": "^6.4 || ^7.4"
