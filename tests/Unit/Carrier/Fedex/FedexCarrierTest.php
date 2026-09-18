@@ -297,7 +297,7 @@ final class FedexCarrierTest extends TestCase
         self::assertSame('794953555571', $tracking->trackingNumber);
         self::assertSame('Delivered', $tracking->status);
         self::assertCount(2, $tracking->events);
-        // FedEx sends its scans oldest first; the plugin reports the newest first.
+        // Whatever order FedEx sends its scans in, the plugin reports the newest first.
         self::assertSame('Delivered', $tracking->events[0]->description);
         self::assertSame('Seattle, WA, US', $tracking->events[0]->location);
         self::assertSame('2026-09-17 10:15:00', $tracking->events[0]->occurredAt?->format('Y-m-d H:i:s'));

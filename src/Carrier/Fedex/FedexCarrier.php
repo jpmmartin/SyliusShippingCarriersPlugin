@@ -136,7 +136,7 @@ final class FedexCarrier implements CarrierInterface
         }
 
         $events = [];
-        foreach (array_reverse($result->scanEvents ?? []) as $scan) {
+        foreach ($result->scanEvents ?? [] as $scan) {
             if (!$scan instanceof ScanEvent) {
                 continue;
             }
