@@ -1,0 +1,35 @@
+{
+    "ShipmentResponse": {
+        "Response": {
+            "ResponseStatus": {
+                "Code": "1",
+                "Description": "Success"
+            }
+        },
+        "ShipmentResults": {
+            "ShipmentIdentificationNumber": "1Z999AA10123456784",
+            "PackageResults": [
+                {
+                    "TrackingNumber": "1Z999AA10123456784",
+                    "ShippingLabel": {
+                        "ImageFormat": {
+                            "Code": "GIF",
+                            "Description": "GIF"
+                        },
+                        "GraphicImage": "R0lGODlhIGEgVVBTIGxhYmVs"
+                    }
+                },
+                {
+                    "TrackingNumber": "1Z999AA10123456785",
+                    "ShippingLabel": {
+                        "ImageFormat": {
+                            "Code": "GIF",
+                            "Description": "GIF"
+                        },
+                        "GraphicImage": "R0lGODlhIGEgVVBTIGxhYmVs"
+                    }
+                }
+            ]
+        }
+    }
+}

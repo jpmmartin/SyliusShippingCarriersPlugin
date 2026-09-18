@@ -9,8 +9,6 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierCredentialsException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierResponseException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\MinorUnits;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
@@ -21,19 +19,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateSet;
 use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingEvent;
 use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingInfo;
-use Psr\Http\Client\ClientExceptionInterface;
-use ShipStream\Ups\Api\Exception\GenerateTokenBadRequestException;
-use ShipStream\Ups\Api\Exception\GenerateTokenForbiddenException;
-use ShipStream\Ups\Api\Exception\GenerateTokenTooManyRequestsException;
-use ShipStream\Ups\Api\Exception\GenerateTokenUnauthorizedException;
-use ShipStream\Ups\Api\Exception\RateBadRequestException;
-use ShipStream\Ups\Api\Exception\RateForbiddenException;
-use ShipStream\Ups\Api\Exception\RateTooManyRequestsException;
-use ShipStream\Ups\Api\Exception\RateUnauthorizedException;
-use ShipStream\Ups\Api\Exception\UnexpectedStatusCodeException;
 use ShipStream\Ups\Api\Model\Activity;
 use ShipStream\Ups\Api\Model\DimensionsUnitOfMeasurement;
-use ShipStream\Ups\Api\Model\Error;
 use ShipStream\Ups\Api\Model\Package as UpsPackage;
 use ShipStream\Ups\Api\Model\PackageDimensions;
 use ShipStream\Ups\Api\Model\PackagePackageWeight;
@@ -54,7 +41,6 @@ use ShipStream\Ups\Api\Model\ShipmentShipmentRatingOptions;
 use ShipStream\Ups\Api\Model\ShipperAddress;
 use ShipStream\Ups\Api\Model\ShipToAddress;
 use ShipStream\Ups\Api\Model\TrackApiResponse;
-use ShipStream\Ups\Exception\AuthenticationException;
 
 /**
  * UPS through shipstream/ups-rest-php-sdk. Every exception of the SDK, of the HTTP client or of the
@@ -70,6 +56,11 @@ final class UpsCarrier implements CarrierInterface
 
     /** What UPS is told is asking, which it shows in its own logs. */
     private const TRANSACTION_SOURCE = 'sylius-shipping-carriers-plugin';
+
+    /** What is being asked of UPS, for the message when it refuses. */
+    private const RATE_OPERATION = 'the rate request';
+
+    private const TRACKING_OPERATION = 'the tracking request';
 
     /** «02 - Package»: packaging of the shipper's own, not a UPS box. */
     private const PACKAGING_TYPE_PACKAGE = '02';
@@ -88,6 +79,7 @@ final class UpsCarrier implements CarrierInterface
     public function __construct(
         private readonly CredentialsProvider $credentialsProvider,
         private readonly UpsClientFactory $clientFactory,
+        private readonly UpsErrorTranslator $errorTranslator = new UpsErrorTranslator(),
     ) {
     }
 
@@ -110,7 +102,7 @@ final class UpsCarrier implements CarrierInterface
 
             return $this->readRates($response);
         } catch (\Throwable $exception) {
-            throw $this->translate($exception);
+            throw $this->errorTranslator->translate($exception, self::RATE_OPERATION);
         }
     }
 
@@ -132,7 +124,7 @@ final class UpsCarrier implements CarrierInterface
 
             return $this->readTracking($trackingNumber, $response);
         } catch (\Throwable $exception) {
-            throw $this->translate($exception);
+            throw $this->errorTranslator->translate($exception, self::TRACKING_OPERATION);
         }
     }
 
@@ -313,43 +305,5 @@ final class UpsCarrier implements CarrierInterface
         }
 
         return new RateSet($rates);
-    }
-
-    private function translate(\Throwable $exception): CarrierException
-    {
-        return match (true) {
-            $exception instanceof CarrierException => $exception,
-            $exception instanceof RateUnauthorizedException,
-            $exception instanceof RateForbiddenException,
-            $exception instanceof GenerateTokenBadRequestException,
-            $exception instanceof GenerateTokenUnauthorizedException,
-            $exception instanceof GenerateTokenForbiddenException => new CarrierCredentialsException(sprintf('UPS rejected the credentials: %s', $this->errors($exception)), 0, $exception),
-            $exception instanceof RateBadRequestException => new CarrierRejectedRequestException(sprintf('UPS rejected the rate request: %s', $this->errors($exception)), 0, $exception),
-            $exception instanceof RateTooManyRequestsException,
-            $exception instanceof GenerateTokenTooManyRequestsException => new CarrierUnavailableException('UPS refused the request: too many requests.', 0, $exception),
-            // The SDK wraps whatever failed while getting the access token; the cause decides.
-            $exception instanceof AuthenticationException => null !== $exception->getPrevious()
-                ? $this->translate($exception->getPrevious())
-                : new CarrierCredentialsException(sprintf('UPS did not grant an access token: %s', $exception->getMessage()), 0, $exception),
-            $exception instanceof UnexpectedStatusCodeException => $exception->getCode() >= 500
-                ? new CarrierUnavailableException(sprintf('UPS answered with HTTP %d.', $exception->getCode()), 0, $exception)
-                : new UnexpectedCarrierResponseException(sprintf('UPS answered with an unexpected HTTP %d.', $exception->getCode()), 0, $exception),
-            $exception instanceof ClientExceptionInterface => new CarrierUnavailableException(sprintf('UPS could not be reached: %s', $exception->getMessage()), 0, $exception),
-            default => new UnexpectedCarrierResponseException(sprintf('UPS answered with something the plugin cannot read: %s', $exception->getMessage()), 0, $exception),
-        };
-    }
-
-    private function errors(
-        RateBadRequestException|RateUnauthorizedException|RateForbiddenException|GenerateTokenBadRequestException|GenerateTokenUnauthorizedException|GenerateTokenForbiddenException $exception,
-    ): string {
-        try {
-            return implode(' - ', array_map(
-                static fn (Error $error): string => sprintf('%s: %s', $error->getCode(), $error->getMessage()),
-                $exception->getErrorResponse()->getResponse()->getErrors(),
-            ));
-        } catch (\Throwable) {
-            // An error body without the expected shape still leaves the status behind the message.
-            return $exception->getMessage();
-        }
     }
 }
