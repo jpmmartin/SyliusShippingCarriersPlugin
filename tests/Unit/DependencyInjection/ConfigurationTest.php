@@ -71,6 +71,38 @@ final class ConfigurationTest extends TestCase
     }
 
     /**
+     * The two carriers share no format: UPS does not issue PDF at all. The default is the best one each of
+     * them prints that a shop without a label printer can open.
+     */
+    public function testEachCarrierPrintsTheOfficeFormatItOffersByDefault(): void
+    {
+        $formats = $this->process([])['label_formats'];
+
+        self::assertIsArray($formats);
+        self::assertSame('GIF', $formats['ups']);
+        self::assertSame('PDF', $formats['fedex']);
+    }
+
+    public function testAWarehouseWithAThermalPrinterAsksForZpl(): void
+    {
+        $formats = $this->process([['label_formats' => ['ups' => 'ZPL', 'fedex' => 'ZPLII']]])['label_formats'];
+
+        self::assertIsArray($formats);
+        self::assertSame('ZPL', $formats['ups']);
+        self::assertSame('ZPLII', $formats['fedex']);
+    }
+
+    /**
+     * Refused here rather than at the carrier with a shipment half issued.
+     */
+    public function testAFormatTheCarrierDoesNotPrintIsRefused(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->process([['label_formats' => ['ups' => 'PDF']]]);
+    }
+
+    /**
      * A rate would be gone before it expired, and there would never be a last known rate.
      */
     public function testARetentionShorterThanTheLifetimeIsRefused(): void

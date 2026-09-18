@@ -39,6 +39,10 @@
             <tag name="jpmmartin_carrier.carrier" carrier="ups" />
         </service>
 
+        <service id="jpmmartin_carrier.carrier.label_formats" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats">
+            <argument>%jpmmartin_carrier.label_formats%</argument>
+        </service>
+
         <service id="jpmmartin_carrier.carrier.fedex.connector_factory" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexConnectorFactory">
             <argument type="service" id="jpmmartin_carrier.cache.access_token" />
             <argument type="service" id="jpmmartin_carrier.encrypter" />

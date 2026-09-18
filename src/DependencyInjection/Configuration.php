@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\DependencyInjection;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCustomsData;
@@ -65,6 +66,26 @@ final class Configuration implements ConfigurationInterface
                     ->info('Seconds the status of a shipment is kept before the carrier is asked again.')
                     ->defaultValue(300)
                     ->min(1)
+                ->end()
+                ->arrayNode('label_formats')
+                    ->info('What to ask each carrier to print its labels as. The two carriers share no format: UPS does not issue PDF.')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('ups')
+                            ->defaultValue(LabelFormats::DEFAULTS[CarrierCredentialsInterface::CARRIER_UPS])
+                            ->validate()
+                                ->ifNotInArray(LabelFormats::SUPPORTED[CarrierCredentialsInterface::CARRIER_UPS])
+                                ->thenInvalid('UPS does not print labels as %s. It offers GIF, ZPL, EPL and SPL.')
+                            ->end()
+                        ->end()
+                        ->scalarNode('fedex')
+                            ->defaultValue(LabelFormats::DEFAULTS[CarrierCredentialsInterface::CARRIER_FEDEX])
+                            ->validate()
+                                ->ifNotInArray(LabelFormats::SUPPORTED[CarrierCredentialsInterface::CARRIER_FEDEX])
+                                ->thenInvalid('FedEx is not known to print labels as %s. It offers PDF and ZPLII.')
+                            ->end()
+                        ->end()
+                    ->end()
                 ->end()
                 ->arrayNode('services')
                     ->info('The services an administrator can choose for a shipping method, as the carrier\'s service code and the name shown for it. Entries are added to the ones the plugin ships with, or rename them.')
