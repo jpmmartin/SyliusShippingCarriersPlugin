@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container
+        xmlns="http://symfony.com/schema/dic/services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+        <!-- The only way into a storage that is private and outside the published directory. -->
+        <service id="jpmmartin_carrier.controller.admin.download_document" class="JpmMartin\SyliusShippingCarriersPlugin\Controller\Admin\DownloadCarrierDocumentAction" public="true">
+            <argument type="service" id="jpmmartin_carrier.storage.documents" />
+            <argument type="service" id="security.authorization_checker" />
+        </service>
+    </services>
+</container>

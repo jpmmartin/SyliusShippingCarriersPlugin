@@ -58,3 +58,12 @@ jpmmartin_carrier_admin_incomplete_customs_data_index:
             template: "@JpmMartinSyliusShippingCarriersPlugin/admin/incomplete_customs_data/index.html.twig"
             grid: jpmmartin_carrier_admin_incomplete_customs_data
             permission: true
+
+# The only way to a document of the plugin: the storage is private and outside the published directory.
+jpmmartin_carrier_admin_document_download:
+    path: /carrier-documents/{path}
+    methods: [GET]
+    requirements:
+        path: ".+"
+    defaults:
+        _controller: jpmmartin_carrier.controller.admin.download_document
