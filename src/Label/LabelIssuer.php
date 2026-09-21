@@ -35,7 +35,7 @@ use Sylius\Resource\Factory\FactoryInterface;
  * pays for a second shipment. That case is kept apart as «needs check» so that nobody, and nothing, retries it
  * on its own.
  */
-final readonly class LabelIssuer
+final readonly class LabelIssuer implements LabelIssuerInterface
 {
     /**
      * @param ContainerInterface $labelCarriers The label adapters, by carrier code

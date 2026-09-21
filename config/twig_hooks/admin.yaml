@@ -46,3 +46,10 @@ sylius_twig_hooks:
                 configuration:
                     title: jpmmartin_carrier.ui.incomplete_customs_data
                 priority: 100
+
+        # Issuing the labels of a shipment is one more action of that shipment, next to the ones Sylius
+        # ships. Nothing is offered for a shipment of another shipping method.
+        'sylius_admin.order.show.content.sections.shipments.item.actions':
+            jpmmartin_carrier_issue_labels:
+                template: '@JpmMartinSyliusShippingCarriersPlugin/admin/order/show/content/sections/shipments/item/actions/issue_labels.html.twig'
+                priority: 150

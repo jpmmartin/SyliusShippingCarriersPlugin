@@ -1,0 +1,22 @@
+{# Only for a shipment sent by a carrier of this plugin: another shipping method is offered nothing. #}
+{% set shipment = hookable_metadata.context.shipment %}
+{% set labels = jpmmartin_carrier_shipment_labels(shipment) %}
+
+{% if labels is not null %}
+    {% if labels.canBeIssued() %}
+        <form method="post" action="{{ path('jpmmartin_carrier_admin_shipment_issue_labels', {'id': shipment.id}) }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('jpmmartin_carrier_issue_labels') }}">
+            <button type="submit" class="btn btn-icon" data-bs-toggle="tooltip" data-bs-title="{{ 'jpmmartin_carrier.ui.labels.issue'|trans }}" {{ sylius_test_html_attribute('jpmmartin-carrier-issue-labels-button') }}>
+                {{ ux_icon('tabler:tag') }}
+            </button>
+        </form>
+    {% elseif labels.needsCheck() %}
+        <span class="badge bg-warning" data-bs-toggle="tooltip" data-bs-title="{{ labels.failureReason() }}" {{ sylius_test_html_attribute('jpmmartin-carrier-labels-need-check') }}>
+            {{ 'jpmmartin_carrier.ui.labels.needs_check'|trans }}
+        </span>
+    {% else %}
+        <span class="badge bg-success" {{ sylius_test_html_attribute('jpmmartin-carrier-labels-issued') }}>
+            {{ 'jpmmartin_carrier.ui.labels.issued'|trans }}
+        </span>
+    {% endif %}
+{% endif %}

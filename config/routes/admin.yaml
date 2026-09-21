@@ -67,3 +67,13 @@ jpmmartin_carrier_admin_document_download:
         path: ".+"
     defaults:
         _controller: jpmmartin_carrier.controller.admin.download_document
+
+# Issuing the labels of a shipment is always something an administrator asked for, never a side effect, so it
+# is its own route and it only answers to POST.
+jpmmartin_carrier_admin_shipment_issue_labels:
+    path: /carrier-shipments/{id}/issue-labels
+    methods: [POST]
+    requirements:
+        id: \d+
+    defaults:
+        _controller: jpmmartin_carrier.controller.admin.issue_labels

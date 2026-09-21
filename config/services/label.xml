@@ -32,5 +32,26 @@
             <argument type="service" id="clock" />
             <argument type="service" id="logger" />
         </service>
+        <service id="JpmMartin\SyliusShippingCarriersPlugin\Label\LabelIssuerInterface" alias="jpmmartin_carrier.label.issuer" />
+
+        <!-- Issuing is always asked for from the admin, so it has its own action and its own route. -->
+        <service id="jpmmartin_carrier.controller.admin.issue_labels" class="JpmMartin\SyliusShippingCarriersPlugin\Controller\Admin\IssueCarrierLabelsAction" public="true">
+            <argument type="service" id="sylius.repository.shipment" />
+            <argument type="service" id="jpmmartin_carrier.label.issuer" />
+            <argument type="service" id="security.authorization_checker" />
+            <argument type="service" id="security.csrf.token_manager" />
+            <argument type="service" id="security.token_storage" />
+            <argument type="service" id="router" />
+        </service>
+
+        <service id="jpmmartin_carrier.twig.shipment_labels_runtime" class="JpmMartin\SyliusShippingCarriersPlugin\Twig\ShipmentLabelsRuntime">
+            <argument type="service" id="jpmmartin_carrier.shipping.shipment_carrier" />
+            <argument type="service" id="jpmmartin_carrier.repository.shipment_export" />
+            <tag name="twig.runtime" />
+        </service>
+
+        <service id="jpmmartin_carrier.twig.shipment_labels_extension" class="JpmMartin\SyliusShippingCarriersPlugin\Twig\ShipmentLabelsExtension">
+            <tag name="twig.extension" />
+        </service>
     </services>
 </container>
