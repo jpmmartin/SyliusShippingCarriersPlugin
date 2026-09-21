@@ -27,6 +27,8 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
 
     private const DOWNLOAD_LINK = 'data-test-jpmmartin-carrier-label-download-link';
 
+    private const VOID_REFUSED = 'data-test-jpmmartin-carrier-void-refused';
+
     private const LABEL_PATH = 'labels/void-test/1Z999AA10123456784-0.gif';
 
     private const LABEL_CONTENTS = 'GIF89a a UPS label';
@@ -100,6 +102,41 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
         self::assertStringNotContainsString(self::VOID_BUTTON, $content);
         self::assertStringNotContainsString(self::DOWNLOAD_LINK, $content);
         self::assertStringContainsString(self::ISSUE_BUTTON, $content, 'Once cancelled there is nothing to overwrite, so it may be issued again.');
+    }
+
+    /**
+     * A carrier that refused to cancel leaves the labels issued and still being billed, so the reason stays on
+     * the screen and not only in the message that flashed by when it was tried.
+     */
+    public function testTheReasonACarrierGaveForNotCancellingStaysOnTheShipment(): void
+    {
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
+        $label = $this->export($order->getShipments()->first(), CarrierShipmentExportInterface::STATE_ISSUED);
+        $export = $label->getExport();
+        self::assertInstanceOf(CarrierShipmentExportInterface::class, $export);
+        $export->setFailureReason('UPS did not void the shipment: it is past the void window.');
+        $this->entityManager->flush();
+        $this->client->loginUser($this->createAdmin('void-refused-admin'), 'admin');
+
+        $this->client->request('GET', '/admin/orders/' . $order->getId());
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString(self::VOID_REFUSED, $content);
+        self::assertStringContainsString('it is past the void window', $content);
+        self::assertStringContainsString(self::VOID_BUTTON, $content, 'It is still issued, so it may still be tried again.');
+    }
+
+    public function testAShipmentThatWasCancelledShowsNoRefusal(): void
+    {
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
+        $this->export($order->getShipments()->first(), CarrierShipmentExportInterface::STATE_VOIDED);
+        $this->client->loginUser($this->createAdmin('no-refusal-admin'), 'admin');
+
+        $this->client->request('GET', '/admin/orders/' . $order->getId());
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString(self::VOID_REFUSED, (string) $this->client->getResponse()->getContent());
     }
 
     public function testAnIssuedLabelIsDownloadedByAnAuthorisedAdministrator(): void

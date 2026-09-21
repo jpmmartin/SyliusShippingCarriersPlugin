@@ -20,6 +20,13 @@
                 {{ ux_icon('tabler:file-download') }}
             </a>
         {% endfor %}
+        {% if labels.failureReason() is not null %}
+            {# The carrier refused to cancel these labels. They are still issued and still being billed, so it
+               stays on the screen and not only in the message that flashed by. #}
+            <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-title="{{ labels.failureReason() }}" {{ sylius_test_html_attribute('jpmmartin-carrier-void-refused') }}>
+                {{ 'jpmmartin_carrier.ui.labels.void_refused'|trans }}
+            </span>
+        {% endif %}
         <form method="post" action="{{ path('jpmmartin_carrier_admin_shipment_void_labels', {'id': shipment.id}) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('jpmmartin_carrier_void_labels') }}">
             <button type="submit" class="btn btn-icon" data-bs-toggle="tooltip" data-bs-title="{{ 'jpmmartin_carrier.ui.labels.void'|trans }}" {{ sylius_test_html_attribute('jpmmartin-carrier-void-labels-button') }}>
