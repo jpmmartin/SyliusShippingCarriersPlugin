@@ -16,10 +16,13 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\VoidResult;
+use JpmMartin\SyliusShippingCarriersPlugin\Customs\CustomsDataProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationTypeResolverInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCustomsData;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCustomsDataInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExport;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabel;
@@ -48,6 +51,11 @@ use Psr\Log\LogLevel;
 use Sylius\Component\Core\Model\Address;
 use Sylius\Component\Core\Model\Channel;
 use Sylius\Component\Core\Model\Order;
+use Sylius\Component\Core\Model\OrderItem;
+use Sylius\Component\Core\Model\OrderItemUnit;
+use Sylius\Component\Core\Model\Product;
+use Sylius\Component\Core\Model\ProductVariant;
+use Sylius\Component\Core\Model\ProductVariantInterface;
 use Sylius\Component\Core\Model\Shipment;
 use Sylius\Component\Core\Model\ShippingMethod;
 use Sylius\Component\Registry\ServiceRegistry;
@@ -95,6 +103,12 @@ final class LabelIssuerTest extends TestCase
 
     private ?CarrierShippingOriginInterface $origin = null;
 
+    /** Where the order is going. Only a shipment that leaves its country declares anything. */
+    private string $destinationCountry = 'US';
+
+    /** @var array<string, CarrierCustomsDataInterface> The customs data of the catalogue, by variant code */
+    private array $customsData = [];
+
     /** What happens while the rows are being committed, so a test can look at the storage at that instant. */
     private ?\Closure $whileCommitting = null;
 
@@ -109,6 +123,8 @@ final class LabelIssuerTest extends TestCase
         $this->credentials = $this->storedCredentials();
         $this->origin = $this->origin();
         $this->whileCommitting = null;
+        $this->destinationCountry = 'US';
+        $this->customsData = [];
         $this->recovery = null;
         $this->existingExport = null;
         $this->answer = new ShipmentResult('1Z999AA10123456784', [
@@ -481,6 +497,51 @@ final class LabelIssuerTest extends TestCase
         return $export;
     }
 
+    /**
+     * A parcel that never leaves its country is not declared, so the catalogue is asked nothing about it.
+     */
+    public function testADomesticShipmentDeclaresNothingAndDemandsNothingOfTheCatalogue(): void
+    {
+        $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertCount(1, $this->requests);
+        self::assertFalse($this->requests[0]->crossesABorder());
+        self::assertSame([], $this->requests[0]->packages[0]->customsItems);
+    }
+
+    public function testAShipmentThatLeavesTheCountryIsDeclaredFromTheCatalogue(): void
+    {
+        $this->destinationCountry = 'CA';
+        $this->declare('MUG', '691200', 'PT');
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(CarrierShipmentExportInterface::STATE_ISSUED, $export->getState());
+        self::assertTrue($this->requests[0]->crossesABorder());
+        $items = $this->requests[0]->packages[0]->customsItems;
+        self::assertCount(1, $items);
+        self::assertSame(['691200', 'PT', 'Mug', 1, 1200], [
+            $items[0]->hsCode, $items[0]->countryOfOrigin, $items[0]->description,
+            $items[0]->quantity, $items[0]->unitValue,
+        ]);
+    }
+
+    /**
+     * The one that matters: a declaration that cannot be filled in is caught in the warehouse and not at the
+     * airport, and the message says which variant and what it is missing.
+     */
+    public function testAShipmentThatLeavesTheCountryWithAVariantThatCannotBeDeclaredIsNotSent(): void
+    {
+        $this->destinationCountry = 'CA';
+        $this->declare('MUG', '691200', null);
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(CarrierShipmentExportInterface::STATE_FAILED, $export->getState());
+        self::assertSame('The variant "MUG" is missing a country of origin.', $export->getFailureReason());
+        self::assertSame([], $this->requests, 'Nothing may reach the carrier.');
+    }
+
     public function testAChannelWithoutAShippingOriginIssuesNothing(): void
     {
         $this->origin = null;
@@ -509,6 +570,24 @@ final class LabelIssuerTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         $this->issuer()->issue($this->shipment('flat_rate'), 'warehouse@example.com');
+    }
+
+    /**
+     * The customs data of the catalogue, which only a shipment that leaves its country ever asks.
+     *
+     * @return RepositoryInterface<CarrierCustomsDataInterface>&Stub
+     */
+    private function customsDataRepository(): RepositoryInterface
+    {
+        /** @var RepositoryInterface<CarrierCustomsDataInterface>&Stub $repository */
+        $repository = $this->createStub(RepositoryInterface::class);
+        $repository->method('findOneBy')->willReturnCallback(function (array $criteria): ?CarrierCustomsDataInterface {
+            $variant = $criteria['variant'] ?? null;
+
+            return $variant instanceof ProductVariantInterface ? ($this->customsData[(string) $variant->getCode()] ?? null) : null;
+        });
+
+        return $repository;
     }
 
     /**
@@ -568,6 +647,7 @@ final class LabelIssuerTest extends TestCase
                 $destinationTypeResolver,
                 new AddressFactory(),
                 new LabelFormats([]),
+                new CustomsDataProvider($this->customsDataRepository()),
             ),
             new CredentialsProvider($credentialsRepository),
             new LabelStorage($this->storage),
@@ -660,7 +740,7 @@ final class LabelIssuerTest extends TestCase
         $address->setStreet('500 Pine St');
         $address->setCity('Seattle');
         $address->setPostcode('98101');
-        $address->setCountryCode('US');
+        $address->setCountryCode($this->destinationCountry);
         $address->setProvinceCode('US-WA');
         $address->setFirstName('Grace');
         $address->setLastName('Hopper');
@@ -722,7 +802,39 @@ final class LabelIssuerTest extends TestCase
         $package->setWeight($weight);
         $package->setWeightUnit('lb');
 
+        $item = new OrderItem();
+        $item->setVariant($this->variant());
+        $item->setUnitPrice(1200);
+        $package->addUnit(new OrderItemUnit($item));
+
         return $package;
+    }
+
+    private function variant(): ProductVariantInterface
+    {
+        $product = new Product();
+        $product->setCurrentLocale('en_US');
+        $product->setFallbackLocale('en_US');
+        $product->setCode('MUG_PRODUCT');
+        $product->setName('Enamel mug');
+
+        $variant = new ProductVariant();
+        $variant->setCurrentLocale('en_US');
+        $variant->setFallbackLocale('en_US');
+        $variant->setCode('MUG');
+        $variant->setName('Mug');
+        $variant->setProduct($product);
+
+        return $variant;
+    }
+
+    private function declare(string $variantCode, ?string $hsCode, ?string $countryOfOrigin): void
+    {
+        $customsData = new CarrierCustomsData();
+        $customsData->setHsCode($hsCode);
+        $customsData->setCountryOfOrigin($countryOfOrigin);
+
+        $this->customsData[$variantCode] = $customsData;
     }
 
     private function storedCredentials(): CarrierCredentialsInterface

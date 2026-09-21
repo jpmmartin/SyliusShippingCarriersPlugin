@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace JpmMartin\SyliusShippingCarriersPlugin\Label;
 
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\AddressFactory;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsItem;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
+use JpmMartin\SyliusShippingCarriersPlugin\Customs\CustomsDataProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Customs\Exception\MissingCustomsDataException;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationTypeResolverInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackageInterface;
@@ -39,6 +42,7 @@ final readonly class ShipmentRequestFactory
         private DestinationTypeResolverInterface $destinationTypeResolver,
         private AddressFactory $addressFactory,
         private LabelFormats $labelFormats,
+        private CustomsDataProvider $customsDataProvider,
     ) {
     }
 
@@ -80,22 +84,28 @@ final readonly class ShipmentRequestFactory
             throw new UnissuableShipmentException('The shipping method of the shipment says no carrier service to send it by.');
         }
 
+        // Nothing is declared for a parcel that never leaves its country, and nothing is demanded of the
+        // catalogue for it either.
+        $crossesABorder = $originAddress->countryCode !== $destination->countryCode;
+
         return new ShipmentRequest(
             $originAddress,
             $destination,
             $serviceCode,
-            $this->packages($shipment),
+            $this->packages($shipment, $crossesABorder ? (string) $order->getCurrencyCode() : null),
             $this->labelFormats->for($carrier),
             $ownReference,
         );
     }
 
     /**
+     * @param string|null $currencyCode What the order was paid in, or null when nothing has to be declared
+     *
      * @return non-empty-list<ShipmentPackage>
      *
      * @throws UnissuableShipmentException
      */
-    private function packages(ShipmentInterface $shipment): array
+    private function packages(ShipmentInterface $shipment, ?string $currencyCode): array
     {
         $packaging = $this->packagingRepository->findOneBy(['shipment' => $shipment]);
         if (!$packaging instanceof CarrierShipmentPackagingInterface) {
@@ -111,7 +121,10 @@ final readonly class ShipmentRequestFactory
 
         $packages = [];
         foreach ($packaging->getPackages() as $stored) {
-            $packages[] = new ShipmentPackage(self::package($stored));
+            $packages[] = new ShipmentPackage(
+                self::package($stored),
+                customsItems: null === $currencyCode ? [] : $this->customsItems($stored, $currencyCode),
+            );
         }
 
         if ([] === $packages) {
@@ -119,6 +132,23 @@ final readonly class ShipmentRequestFactory
         }
 
         return $packages;
+    }
+
+    /**
+     * What customs is told this package holds. A variant that cannot be declared stops the shipment here,
+     * before anything is asked of the carrier, and says which variant and what it is missing.
+     *
+     * @return list<CustomsItem>
+     *
+     * @throws UnissuableShipmentException
+     */
+    private function customsItems(CarrierShipmentPackageInterface $stored, string $currencyCode): array
+    {
+        try {
+            return $this->customsDataProvider->forPackage($stored, $currencyCode);
+        } catch (MissingCustomsDataException $exception) {
+            throw new UnissuableShipmentException($exception->getMessage(), 0, $exception);
+        }
     }
 
     /**

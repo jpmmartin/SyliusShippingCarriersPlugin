@@ -13,6 +13,12 @@
             <argument type="service" id="jpmmartin_carrier.resolver.destination_type" />
             <argument type="service" id="jpmmartin_carrier.carrier.address_factory" />
             <argument type="service" id="jpmmartin_carrier.carrier.label_formats" />
+            <argument type="service" id="jpmmartin_carrier.customs.data_provider" />
+        </service>
+
+        <!-- A variant that cannot be declared stops the shipment before anything is asked of the carrier. -->
+        <service id="jpmmartin_carrier.customs.data_provider" class="JpmMartin\SyliusShippingCarriersPlugin\Customs\CustomsDataProvider">
+            <argument type="service" id="jpmmartin_carrier.repository.customs_data" />
         </service>
 
         <service id="jpmmartin_carrier.label.storage" class="JpmMartin\SyliusShippingCarriersPlugin\Label\LabelStorage">
