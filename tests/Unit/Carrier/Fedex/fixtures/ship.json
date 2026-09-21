@@ -1,0 +1,24 @@
+{
+    "transactionId": "t-1",
+    "output": {
+        "transactionShipments": [
+            {
+                "masterTrackingNumber": "794953555571",
+                "serviceType": "FEDEX_GROUND",
+                "pieceResponses": [
+                    {
+                        "trackingNumber": "794953555571",
+                        "packageSequenceNumber": 1,
+                        "packageDocuments": [
+                            {
+                                "docType": "PDF",
+                                "encodedLabel": "JVBERi0xLjQgYSBGZWRFeCBsYWJlbA==",
+                                "trackingNumber": "794953555571"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

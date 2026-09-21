@@ -1,0 +1,7 @@
+{
+    "transactionId": "t-3",
+    "output": {
+        "cancelledShipment": false,
+        "message": "The shipment has already been picked up."
+    }
+}

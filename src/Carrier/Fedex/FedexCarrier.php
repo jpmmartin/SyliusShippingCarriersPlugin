@@ -9,8 +9,6 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierCredentialsException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierResponseException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\MinorUnits;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
@@ -21,14 +19,6 @@ use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateSet;
 use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingEvent;
 use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingInfo;
-use Saloon\Exceptions\Request\FatalRequestException;
-use Saloon\Exceptions\Request\RequestException;
-use Saloon\Exceptions\Request\ServerException;
-use Saloon\Exceptions\Request\Statuses\ForbiddenException;
-use Saloon\Exceptions\Request\Statuses\RequestTimeOutException;
-use Saloon\Exceptions\Request\Statuses\TooManyRequestsException;
-use Saloon\Exceptions\Request\Statuses\UnauthorizedException;
-use Saloon\RateLimitPlugin\Exceptions\RateLimitReachedException;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Dto\AccountNumber;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Dto\Address as FedexAddress;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Dto\Dimensions;
@@ -56,6 +46,11 @@ final class FedexCarrier implements CarrierInterface
     /** The rates of the merchant's account, what FedEx bills. */
     private const RATE_TYPE_ACCOUNT = 'ACCOUNT';
 
+    /** What is being asked of FedEx, for the message when it refuses. */
+    private const RATE_OPERATION = 'the rate request';
+
+    private const TRACKING_OPERATION = 'the tracking request';
+
     /** Packaging of the shipper's own, not a FedEx box. */
     private const PACKAGING_TYPE_YOUR_PACKAGING = 'YOUR_PACKAGING';
 
@@ -69,6 +64,7 @@ final class FedexCarrier implements CarrierInterface
     public function __construct(
         private readonly CredentialsProvider $credentialsProvider,
         private readonly FedexConnectorFactory $connectorFactory,
+        private readonly FedexErrorTranslator $errorTranslator = new FedexErrorTranslator(),
     ) {
     }
 
@@ -100,7 +96,7 @@ final class FedexCarrier implements CarrierInterface
 
             return $this->readRates($quote);
         } catch (\Throwable $exception) {
-            throw $this->translate($exception);
+            throw $this->errorTranslator->translate($exception, self::RATE_OPERATION);
         }
     }
 
@@ -121,7 +117,7 @@ final class FedexCarrier implements CarrierInterface
 
             return $this->readTracking($trackingNumber, $tracking);
         } catch (\Throwable $exception) {
-            throw $this->translate($exception);
+            throw $this->errorTranslator->translate($exception, self::TRACKING_OPERATION);
         }
     }
 
@@ -266,42 +262,5 @@ final class FedexCarrier implements CarrierInterface
         }
 
         return $rated[0] ?? null;
-    }
-
-    private function translate(\Throwable $exception): CarrierException
-    {
-        return match (true) {
-            $exception instanceof CarrierException => $exception,
-            $exception instanceof UnauthorizedException,
-            $exception instanceof ForbiddenException => new CarrierCredentialsException(sprintf('FedEx rejected the credentials: %s', $this->errors($exception)), 0, $exception),
-            // The SDK itself holds back token requests past FedEx's published limits, before sending them.
-            $exception instanceof RateLimitReachedException => new CarrierUnavailableException(sprintf('FedEx refused the request: %s', $exception->getMessage()), 0, $exception),
-            $exception instanceof TooManyRequestsException,
-            $exception instanceof RequestTimeOutException,
-            $exception instanceof ServerException => new CarrierUnavailableException(sprintf('FedEx answered with HTTP %d: %s', $exception->getStatus(), $this->errors($exception)), 0, $exception),
-            $exception instanceof RequestException => new CarrierRejectedRequestException(sprintf('FedEx rejected the rate request: %s', $this->errors($exception)), 0, $exception),
-            $exception instanceof FatalRequestException => new CarrierUnavailableException(sprintf('FedEx could not be reached: %s', $exception->getMessage()), 0, $exception),
-            default => new UnexpectedCarrierResponseException(sprintf('FedEx answered with something the plugin cannot read: %s', $exception->getMessage()), 0, $exception),
-        };
-    }
-
-    private function errors(RequestException $exception): string
-    {
-        try {
-            $errors = $exception->getResponse()->json('errors');
-        } catch (\Throwable) {
-            return $exception->getMessage();
-        }
-
-        if (!\is_array($errors) || [] === $errors) {
-            return $exception->getMessage();
-        }
-
-        return implode(' - ', array_map(
-            static fn (mixed $error): string => \is_array($error)
-                ? sprintf('%s: %s', \is_string($error['code'] ?? null) ? $error['code'] : '', \is_string($error['message'] ?? null) ? $error['message'] : '')
-                : '',
-            $errors,
-        ));
     }
 }

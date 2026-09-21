@@ -62,5 +62,11 @@
             <argument type="service" id="jpmmartin_carrier.carrier.fedex.connector_factory" />
             <tag name="jpmmartin_carrier.carrier" carrier="fedex" />
         </service>
+    <service id="jpmmartin_carrier.carrier.label.fedex" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexLabelCarrier">
+            <argument type="service" id="jpmmartin_carrier.carrier.credentials_provider" />
+            <argument type="service" id="jpmmartin_carrier.carrier.fedex.connector_factory" />
+            <argument type="service" id="jpmmartin_carrier.carrier.label_formats" />
+            <tag name="jpmmartin_carrier.label_carrier" carrier="fedex" />
+        </service>
     </services>
 </container>

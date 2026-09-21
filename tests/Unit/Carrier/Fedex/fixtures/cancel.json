@@ -1,0 +1,6 @@
+{
+    "transactionId": "t-2",
+    "output": {
+        "cancelledShipment": true
+    }
+}
