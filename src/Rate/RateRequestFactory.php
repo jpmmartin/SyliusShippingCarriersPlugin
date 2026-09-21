@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Rate;
 
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Address;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\AddressFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationTypeResolverInterface;
@@ -38,6 +38,7 @@ final class RateRequestFactory implements ResetInterface
         private readonly RepositoryInterface $originRepository,
         private readonly PackagingStrategyInterface $packagingStrategy,
         private readonly DestinationTypeResolverInterface $destinationTypeResolver,
+        private readonly AddressFactory $addressFactory,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -54,12 +55,11 @@ final class RateRequestFactory implements ResetInterface
         }
 
         // Checked first: without an address there is nothing to rate, so nothing is packed either.
-        $shippingAddress = $order->getShippingAddress();
-        $countryCode = self::filled($shippingAddress?->getCountryCode());
-        $postcode = self::filled($shippingAddress?->getPostcode());
-        $city = self::filled($shippingAddress?->getCity());
-        $street = self::filled($shippingAddress?->getStreet());
-        if (null === $countryCode || null === $postcode || null === $city || null === $street) {
+        $destination = $this->addressFactory->forDestination(
+            $order->getShippingAddress(),
+            DestinationType::RESIDENTIAL === $this->destinationTypeResolver->resolve($order),
+        );
+        if (null === $destination) {
             return null;
         }
 
@@ -75,7 +75,7 @@ final class RateRequestFactory implements ResetInterface
             return null;
         }
 
-        $originAddress = self::originAddress($origin);
+        $originAddress = $this->addressFactory->forOrigin($origin);
         if (null === $originAddress) {
             return null;
         }
@@ -85,15 +85,6 @@ final class RateRequestFactory implements ResetInterface
         } catch (UnpackableShipmentException) {
             return null;
         }
-
-        $destination = new Address(
-            $countryCode,
-            $postcode,
-            $city,
-            $street,
-            self::subdivision($shippingAddress?->getProvinceCode(), $countryCode),
-            DestinationType::RESIDENTIAL === $this->destinationTypeResolver->resolve($order),
-        );
 
         return new RateRequest($originAddress, $destination, $packages);
     }
@@ -113,44 +104,5 @@ final class RateRequestFactory implements ResetInterface
         $this->logger->error('The channel {channel} has no shipping origin, so no carrier shipping method is offered in it.', [
             'channel' => $channelCode,
         ]);
-    }
-
-    private static function originAddress(CarrierShippingOriginInterface $origin): ?Address
-    {
-        $countryCode = self::filled($origin->getCountryCode());
-        $postcode = self::filled($origin->getPostcode());
-        $city = self::filled($origin->getCity());
-        $street = self::filled($origin->getStreet());
-        if (null === $countryCode || null === $postcode || null === $city || null === $street) {
-            return null;
-        }
-
-        return new Address($countryCode, $postcode, $city, $street, self::subdivision($origin->getProvinceCode(), $countryCode));
-    }
-
-    /**
-     * Sylius codes a province with its country in front, `US-FL`, and carriers take the subdivision alone. The
-     * origin's province is typed by hand, so it may come either way.
-     */
-    private static function subdivision(?string $provinceCode, string $countryCode): ?string
-    {
-        $provinceCode = self::filled($provinceCode);
-        if (null === $provinceCode) {
-            return null;
-        }
-
-        $prefix = strtoupper($countryCode) . '-';
-        if (str_starts_with(strtoupper($provinceCode), $prefix)) {
-            $provinceCode = self::filled(substr($provinceCode, strlen($prefix)));
-        }
-
-        return $provinceCode;
-    }
-
-    private static function filled(?string $value): ?string
-    {
-        $value = null === $value ? '' : trim($value);
-
-        return '' === $value ? null : $value;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\Rate;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\AddressFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType;
@@ -424,7 +425,7 @@ final class RateProviderTest extends TestCase
         $exchangeRateRepository->method('findOneWithCurrencyPair')->willReturnCallback(fn (): ?ExchangeRateInterface => $this->exchangeRate);
 
         return new RateProvider(
-            new RateRequestFactory($originRepository, $packagingStrategy, $destinationTypeResolver, $this->logger),
+            new RateRequestFactory($originRepository, $packagingStrategy, $destinationTypeResolver, new AddressFactory(), $this->logger),
             new CredentialsProvider($credentialsRepository),
             new ServiceLocator(['ups' => fn (): RecordingCarrier => $this->ups]),
             $this->cache,

@@ -6,6 +6,8 @@
         xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
 >
     <services>
+        <service id="jpmmartin_carrier.carrier.address_factory" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\AddressFactory" />
+
         <service id="jpmmartin_carrier.carrier.credentials_provider" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider">
             <argument type="service" id="jpmmartin_carrier.repository.credentials" />
         </service>
@@ -62,7 +64,7 @@
             <argument type="service" id="jpmmartin_carrier.carrier.fedex.connector_factory" />
             <tag name="jpmmartin_carrier.carrier" carrier="fedex" />
         </service>
-    <service id="jpmmartin_carrier.carrier.label.fedex" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexLabelCarrier">
+        <service id="jpmmartin_carrier.carrier.label.fedex" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexLabelCarrier">
             <argument type="service" id="jpmmartin_carrier.carrier.credentials_provider" />
             <argument type="service" id="jpmmartin_carrier.carrier.fedex.connector_factory" />
             <argument type="service" id="jpmmartin_carrier.carrier.label_formats" />

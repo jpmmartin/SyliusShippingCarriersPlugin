@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\Rate;
 
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Address as CarrierAddress;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\AddressFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationTypeResolverInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
@@ -181,7 +182,7 @@ final class RateRequestFactoryTest extends TestCase
         $destinationTypeResolver = $this->createStub(DestinationTypeResolverInterface::class);
         $destinationTypeResolver->method('resolve')->willReturnCallback(fn (): string => $this->destinationType);
 
-        return new RateRequestFactory($originRepository, $this->packagingStrategy, $destinationTypeResolver, $this->logger);
+        return new RateRequestFactory($originRepository, $this->packagingStrategy, $destinationTypeResolver, new AddressFactory(), $this->logger);
     }
 
     private function shipment(): Shipment

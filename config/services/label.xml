@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container
+        xmlns="http://symfony.com/schema/dic/services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+        <!-- The packages come from the ones stored when the order was confirmed, never from packing it again. -->
+        <service id="jpmmartin_carrier.label.request_factory" class="JpmMartin\SyliusShippingCarriersPlugin\Label\ShipmentRequestFactory">
+            <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
+            <argument type="service" id="jpmmartin_carrier.repository.shipment_packaging" />
+            <argument type="service" id="jpmmartin_carrier.resolver.destination_type" />
+            <argument type="service" id="jpmmartin_carrier.carrier.address_factory" />
+            <argument type="service" id="jpmmartin_carrier.carrier.label_formats" />
+        </service>
+
+        <service id="jpmmartin_carrier.label.storage" class="JpmMartin\SyliusShippingCarriersPlugin\Label\LabelStorage">
+            <argument type="service" id="jpmmartin_carrier.storage.documents" />
+        </service>
+
+        <service id="jpmmartin_carrier.label.issuer" class="JpmMartin\SyliusShippingCarriersPlugin\Label\LabelIssuer">
+            <argument type="service" id="jpmmartin_carrier.shipping.shipment_carrier" />
+            <argument type="tagged_locator" tag="jpmmartin_carrier.label_carrier" index-by="carrier" />
+            <argument type="service" id="jpmmartin_carrier.label.request_factory" />
+            <argument type="service" id="jpmmartin_carrier.carrier.credentials_provider" />
+            <argument type="service" id="jpmmartin_carrier.label.storage" />
+            <argument type="service" id="jpmmartin_carrier.repository.shipment_export" />
+            <argument type="service" id="jpmmartin_carrier.factory.shipment_export" />
+            <argument type="service" id="jpmmartin_carrier.factory.shipment_label" />
+            <argument type="service" id="jpmmartin_carrier.manager.shipment_export" />
+            <argument type="service" id="clock" />
+            <argument type="service" id="logger" />
+        </service>
+    </services>
+</container>

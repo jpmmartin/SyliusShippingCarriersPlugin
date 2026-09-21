@@ -10,6 +10,7 @@
             <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
             <argument type="service" id="jpmmartin_carrier.packaging_strategy" />
             <argument type="service" id="jpmmartin_carrier.resolver.destination_type" />
+            <argument type="service" id="jpmmartin_carrier.carrier.address_factory" />
             <argument type="service" id="logger" />
             <!-- A channel without an origin is logged once per request. -->
             <tag name="kernel.reset" method="reset" />
