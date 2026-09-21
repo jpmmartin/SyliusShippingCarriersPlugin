@@ -29,6 +29,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackaging;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackagingInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AlreadyIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AmbiguousShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelIssuer;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelStorage;
@@ -411,6 +412,62 @@ final class LabelIssuerTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         $this->issuer()->confirmNotIssued($export, 'warehouse@example.com');
+    }
+
+    /**
+     * Overwriting a label that exists would lose the number the parcel is already travelling under, and leave
+     * the carrier billing for two shipments.
+     */
+    public function testAShipmentThatAlreadyHasItsLabelsIsNotIssuedAgain(): void
+    {
+        $issued = new CarrierShipmentExport();
+        $issued->setCarrier('ups');
+        $issued->setState(CarrierShipmentExportInterface::STATE_ISSUED);
+        $issued->setCarrierReference('1Z999AA10123456784');
+        $this->existingExport = $issued;
+
+        try {
+            $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+            self::fail('A shipment that already has its labels must not be issued again.');
+        } catch (AlreadyIssuedException $exception) {
+            self::assertStringContainsString('1Z999AA10123456784', $exception->getMessage());
+            self::assertStringContainsString('Cancel them before', $exception->getMessage());
+        }
+
+        self::assertSame([], $this->requests, 'Nothing may reach the carrier a second time.');
+        self::assertSame(CarrierShipmentExportInterface::STATE_ISSUED, $issued->getState());
+        self::assertSame('1Z999AA10123456784', $issued->getCarrierReference());
+    }
+
+    /**
+     * Once the labels are cancelled with the carrier there is nothing left to overwrite.
+     */
+    public function testACancelledShipmentIsIssuedAgain(): void
+    {
+        $voided = new CarrierShipmentExport();
+        $voided->setCarrier('ups');
+        $voided->setState(CarrierShipmentExportInterface::STATE_VOIDED);
+        $voided->setCarrierReference('1Z999AA10123456784');
+        $this->existingExport = $voided;
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(CarrierShipmentExportInterface::STATE_ISSUED, $export->getState());
+        self::assertCount(1, $this->requests);
+    }
+
+    public function testAShipmentWhoseIssuingFailedIsIssuedAgain(): void
+    {
+        $failed = new CarrierShipmentExport();
+        $failed->setCarrier('ups');
+        $failed->setState(CarrierShipmentExportInterface::STATE_FAILED);
+        $failed->setFailureReason('UPS rejected the shipment request: the postcode is not served.');
+        $this->existingExport = $failed;
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(CarrierShipmentExportInterface::STATE_ISSUED, $export->getState());
+        self::assertNull($export->getFailureReason());
     }
 
     private function exportWaitingToBeChecked(): CarrierShipmentExportInterface

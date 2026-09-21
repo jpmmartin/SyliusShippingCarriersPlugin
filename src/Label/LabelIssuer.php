@@ -14,6 +14,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabelInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AlreadyIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AmbiguousShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\UnissuableShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
@@ -63,6 +64,8 @@ final readonly class LabelIssuer
      * @throws \InvalidArgumentException When the shipment is not one of a carrier of this plugin. The admin
      *                                   never offers the action for one, so getting here is a mistake, not a
      *                                   failed issue
+     * @throws AlreadyIssuedException When the shipment already has its labels. Reissuing means cancelling
+     *                                them first
      * @throws AmbiguousShipmentException When nobody knows yet whether a previous attempt was issued. This is
      *                                   the refusal that stops the same shipment being paid for twice
      */
@@ -74,6 +77,16 @@ final readonly class LabelIssuer
         }
 
         $export = $this->export($shipment, $carrier);
+
+        // A label that exists is never overwritten in silence: the parcel may already be on its way under a
+        // number this would lose, and the carrier would bill for both. Cancelling it first is what frees it.
+        if (CarrierShipmentExportInterface::STATE_ISSUED === $export->getState()) {
+            throw new AlreadyIssuedException(sprintf(
+                'The shipment already has the labels %s issued as "%s". Cancel them before issuing new ones.',
+                $carrier,
+                (string) $export->getCarrierReference(),
+            ));
+        }
 
         // Refused here and not only in the admin: a shipment nobody knows the fate of is exactly the one that
         // gets paid for twice, and a batch, a command or another plugin must hit the same wall the operator does.
