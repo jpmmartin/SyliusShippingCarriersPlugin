@@ -72,13 +72,20 @@ final readonly class KeepTheRecalculatedCartListener
 
     private function keepTheRecalculatedCart(string $tokenValue): void
     {
+        // Asked of the cart as it is in memory: the refused handler changes no shipping method, and an order this
+        // plugin does not ship must not even have its entity manager emptied.
+        $cart = $this->orderRepository->findCartByTokenValue($tokenValue);
+        if (!$cart instanceof OrderInterface || !$this->isShippedByThisPlugin($cart)) {
+            return;
+        }
+
         // Sylius's transaction is undone, but whatever its handler changed is still in memory — the notes sent with
         // the refused confirmation, for one — and a flush would keep it. Starting over from what is stored keeps
         // only the recalculated cart.
         $this->orderManager->clear();
 
         $cart = $this->orderRepository->findCartByTokenValue($tokenValue);
-        if (!$cart instanceof OrderInterface || !$this->isShippedByThisPlugin($cart)) {
+        if (!$cart instanceof OrderInterface) {
             return;
         }
 

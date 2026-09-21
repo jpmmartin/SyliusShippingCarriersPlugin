@@ -64,7 +64,18 @@ final class KeepTheRecalculatedCartListenerTest extends TestCase
     {
         $this->listener()($this->refusal());
 
-        self::assertSame(['clear', 'find', 'process', 'flush'], $this->calls);
+        self::assertSame(['find', 'clear', 'find', 'process', 'flush'], $this->calls);
+    }
+
+    /**
+     * An order this plugin does not ship is left exactly as Sylius leaves it: its entity manager is not even
+     * emptied.
+     */
+    public function testACartThePluginDoesNotShipIsNotTouchedAtAll(): void
+    {
+        $this->listener(cart: $this->cartShippedBy('flat_rate'))($this->refusal());
+
+        self::assertSame(['find'], $this->calls);
     }
 
     public function testAnotherFailureIsNoneOfItsBusiness(): void
@@ -86,9 +97,9 @@ final class KeepTheRecalculatedCartListenerTest extends TestCase
         self::assertSame([], $this->calls);
     }
 
-    private function listener(bool $processorFails = false): KeepTheRecalculatedCartListener
+    private function listener(bool $processorFails = false, ?Order $cart = null): KeepTheRecalculatedCartListener
     {
-        $cart = $this->cartShippedByUps();
+        $cart ??= $this->cartShippedBy('ups_rate');
 
         $repository = $this->createStub(OrderRepositoryInterface::class);
         $repository->method('findCartByTokenValue')->willReturnCallback(function () use ($cart): Order {
@@ -133,10 +144,10 @@ final class KeepTheRecalculatedCartListenerTest extends TestCase
         return $request;
     }
 
-    private function cartShippedByUps(): Order
+    private function cartShippedBy(string $calculator): Order
     {
         $method = new ShippingMethod();
-        $method->setCalculator('ups_rate');
+        $method->setCalculator($calculator);
 
         $shipment = new Shipment();
         $shipment->setMethod($method);
