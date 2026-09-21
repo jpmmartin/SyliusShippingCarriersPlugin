@@ -7,7 +7,6 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Encryption;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Exception\EncryptionException;
 use ParagonIE\Halite\Alerts\CannotPerformOperation;
 use ParagonIE\Halite\Alerts\HaliteAlert;
-use ParagonIE\Halite\Alerts\InvalidKey;
 use ParagonIE\Halite\KeyFactory;
 use ParagonIE\Halite\Symmetric\Crypto;
 use ParagonIE\Halite\Symmetric\EncryptionKey;
@@ -50,14 +49,29 @@ final class Encrypter implements EncrypterInterface
 
     private function getKey(): EncryptionKey
     {
-        if (null === $this->key) {
-            try {
-                $this->key = KeyFactory::loadEncryptionKey($this->encryptionKeyPath);
-            } catch (CannotPerformOperation|InvalidKey $exception) {
-                throw EncryptionException::invalidKey($exception);
-            }
+        return $this->key ??= $this->loadKey();
+    }
+
+    /**
+     * Read by hand rather than with KeyFactory::loadEncryptionKey(), which hands the whole file to the hex decoder:
+     * a key file that ends in a line break — the usual result of pasting a key into a secret — is not hex to it,
+     * and it throws something no caller expects. Hex has no whitespace, so trimming it changes no valid key.
+     *
+     * Whatever else goes wrong reading it is an EncryptionException, which every caller already handles.
+     */
+    private function loadKey(): EncryptionKey
+    {
+        $contents = is_readable($this->encryptionKeyPath) ? file_get_contents($this->encryptionKeyPath) : false;
+        if (false === $contents) {
+            throw EncryptionException::invalidKey(new CannotPerformOperation(sprintf('Cannot read the key file "%s".', $this->encryptionKeyPath)));
         }
 
-        return $this->key;
+        try {
+            return KeyFactory::importEncryptionKey(new HiddenString(trim($contents)));
+        } catch (HaliteAlert|\RangeException|\SodiumException|\TypeError $exception) {
+            throw EncryptionException::invalidKey($exception);
+        } finally {
+            sodium_memzero($contents);
+        }
     }
 }

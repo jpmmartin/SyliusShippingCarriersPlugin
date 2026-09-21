@@ -112,6 +112,41 @@ final class UndecryptableCredentialsInTheCheckoutTest extends WebTestCase
     }
 
     /**
+     * The key file itself is not a key — garbage where the key should be. Reading it used to throw whatever the
+     * hex decoder threw, which nothing expected, and the checkout answered with a server error.
+     */
+    #[DataProvider('policies')]
+    public function testAKeyFileThatIsNoKeyDoesNotBreakTheCheckoutEither(string $policy): void
+    {
+        $this->upsGround->setConfiguration(['service' => '03', 'failure_policy' => $policy, 'flat_amount' => [self::CHANNEL => 1200]]);
+        $this->entityManager->flush();
+
+        // Stored straight to the table with a key of its own, so the store never gets to read a good key.
+        $encrypter = new Encrypter($this->otherKeyPath);
+        $this->entityManager->getConnection()->insert('jpmmartin_carrier_credentials', [
+            'carrier' => CarrierCredentialsInterface::CARRIER_UPS,
+            'environment' => CarrierCredentialsInterface::ENVIRONMENT_SANDBOX,
+            'pickup_type' => CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED,
+            'credentials' => json_encode([
+                CarrierCredentialsInterface::CLIENT_ID => $encrypter->encrypt('ups-client-id'),
+                CarrierCredentialsInterface::CLIENT_SECRET => $encrypter->encrypt('ups-client-secret'),
+            ], \JSON_THROW_ON_ERROR),
+        ]);
+        file_put_contents($this->keyPath, 'this is not a key');
+
+        $this->ups->rateService('ups', '03', 1540, 'USD');
+        $this->createCartInSession(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
+
+        $this->visit('/en_US/cart/');
+        $this->visit('/en_US/checkout/address');
+        $this->submitIfThereIsAForm($this->visit('/en_US/checkout/select-shipping'), 'sylius_shop_checkout_select_shipping');
+        $this->visit('/en_US/checkout/select-payment');
+        $this->submitIfThereIsAForm($this->visit('/en_US/checkout/complete'), 'sylius_checkout_complete');
+
+        self::assertSame(0, $this->ups->calls('ups'), 'UPS must not be asked with credentials the store cannot read.');
+    }
+
+    /**
      * @return iterable<string, array{string}>
      */
     public static function policies(): iterable

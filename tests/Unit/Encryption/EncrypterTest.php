@@ -8,6 +8,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Encrypter;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\EncrypterInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Exception\EncryptionException;
 use ParagonIE\Halite\KeyFactory;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class EncrypterTest extends TestCase
@@ -53,6 +54,54 @@ final class EncrypterTest extends TestCase
         $this->expectException(EncryptionException::class);
 
         (new Encrypter($this->createKey()))->decrypt($encrypted);
+    }
+
+    /**
+     * A key pasted into a secret usually picks up a line break at the end. It is the same key: hex has no
+     * whitespace, so the store must work with it rather than stop reading every credential it holds.
+     *
+     * @return iterable<string, array{string}>
+     */
+    public static function keysWithWhitespaceAround(): iterable
+    {
+        yield 'a line break at the end' => ["\n"];
+        yield 'a Windows line break at the end' => ["\r\n"];
+        yield 'spaces around it' => ['  '];
+    }
+
+    #[DataProvider('keysWithWhitespaceAround')]
+    public function testAKeyWithWhitespaceAroundItIsTheSameKey(string $whitespace): void
+    {
+        $keyPath = $this->createKey();
+        $encrypted = (new Encrypter($keyPath))->encrypt('the client secret');
+
+        file_put_contents($keyPath, $whitespace . trim((string) file_get_contents($keyPath)) . $whitespace);
+
+        self::assertSame('the client secret', (new Encrypter($keyPath))->decrypt($encrypted));
+    }
+
+    /**
+     * Anything that is not a key is an EncryptionException, which every caller handles, and never whatever the
+     * hex decoder happens to throw.
+     *
+     * @return iterable<string, array{string}>
+     */
+    public static function filesThatAreNoKey(): iterable
+    {
+        yield 'text that is not hex' => ['this is not a key'];
+        yield 'an empty file' => [''];
+        yield 'half a key' => ['3140040'];
+    }
+
+    #[DataProvider('filesThatAreNoKey')]
+    public function testAFileThatIsNoKeyIsAnEncryptionException(string $contents): void
+    {
+        $keyPath = $this->createKey();
+        file_put_contents($keyPath, $contents);
+
+        $this->expectException(EncryptionException::class);
+
+        (new Encrypter($keyPath))->decrypt('anything' . EncrypterInterface::ENCRYPTION_SUFFIX);
     }
 
     public function testAMissingKeyFileIsAnEncryptionException(): void
