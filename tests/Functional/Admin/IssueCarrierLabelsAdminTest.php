@@ -19,6 +19,7 @@ use Sylius\Component\Core\Model\ShippingMethod;
 use Sylius\Component\Shipping\Model\ShippingMethodInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\Session\Session;
 
 /**
  * A label costs money and goes out on the merchant's account, so issuing one is always something an
@@ -152,6 +153,63 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
 
         self::assertFalse($this->client->getResponse()->isSuccessful());
         self::assertNull($this->entityManager->getRepository(CarrierShipmentExport::class)->findOneBy(['shipment' => $shipment]));
+    }
+
+    /**
+     * The summary is the whole point of a batch: saying «done» would hide the shipments nobody printed.
+     *
+     * No carrier is reached here — there are no credentials stored, so every shipment fails before anything
+     * leaves the building — which is exactly the shape of the summary that matters.
+     */
+    public function testTheBatchSaysHowManyWentOutAndWhyEachOneDidNot(): void
+    {
+        $first = $this->createOrder('ups_rate')->getShipments()->first();
+        $second = $this->createOrder('ups_rate')->getShipments()->first();
+        self::assertInstanceOf(ShipmentInterface::class, $first);
+        self::assertInstanceOf(ShipmentInterface::class, $second);
+        $this->client->loginUser($this->createAdmin('batch-summary-admin'), 'admin');
+
+        $this->client->request('POST', '/admin/carrier-shipments/issue-labels', [
+            '_csrf_token' => $this->batchToken(),
+            'ids' => [$first->getId(), $second->getId()],
+        ]);
+
+        self::assertResponseRedirects();
+        $messages = $this->flashes()['error'] ?? [];
+        self::assertCount(3, $messages, 'The count, and then one line for each shipment that did not go out.');
+        self::assertSame('0 of 2 shipment(s) issued.', $messages[0]);
+        self::assertSame(sprintf('Shipment %s: No credentials are stored for the carrier "ups".', $first->getId()), $messages[1]);
+        self::assertSame(sprintf('Shipment %s: No credentials are stored for the carrier "ups".', $second->getId()), $messages[2]);
+    }
+
+    /**
+     * Read from the grid's own form, so the test goes in the way the operator does.
+     */
+    private function batchToken(): string
+    {
+        $crawler = $this->client->request('GET', '/admin/shipments/');
+
+        $token = $crawler
+            ->filter('form[action="/admin/carrier-shipments/issue-labels"] input[name="_csrf_token"]')
+            ->attr('value')
+        ;
+        self::assertIsString($token);
+
+        return $token;
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private function flashes(): array
+    {
+        $session = $this->client->getRequest()->getSession();
+        self::assertInstanceOf(Session::class, $session);
+
+        /** @var array<string, list<string>> $flashes */
+        $flashes = $session->getFlashBag()->all();
+
+        return $flashes;
     }
 
     private function createOrder(string $calculator): OrderInterface

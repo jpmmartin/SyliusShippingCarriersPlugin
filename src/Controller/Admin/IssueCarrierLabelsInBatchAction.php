@@ -22,7 +22,8 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 /**
  * Issues the labels of the shipments an administrator picked in the grid.
  *
- * One shipment failing never stops the others: each one is issued on its own and answers for itself.
+ * One shipment failing never stops the others: each one is issued on its own and answers for itself, and when
+ * it is over the operator is told how many went out and what happened to every one that did not.
  */
 final readonly class IssueCarrierLabelsInBatchAction
 {
@@ -69,6 +70,9 @@ final readonly class IssueCarrierLabelsInBatchAction
     }
 
     /**
+     * How many went out, and one line for each one that did not with the reason why. A batch that only says
+     * «done» hides the shipments nobody printed, and those are the ones somebody has to do something about.
+     *
      * @param list<BatchResult> $results
      *
      * @return list<array{string, string}>
@@ -76,11 +80,24 @@ final readonly class IssueCarrierLabelsInBatchAction
     private function summary(array $results): array
     {
         $issued = array_filter($results, static fn (BatchResult $result): bool => $result->wasIssued());
-
-        return [[
+        $messages = [[
             [] === $issued ? 'error' : 'success',
             sprintf('%d of %d shipment(s) issued.', \count($issued), \count($results)),
         ]];
+
+        foreach ($results as $result) {
+            if ($result->wasIssued()) {
+                continue;
+            }
+
+            // A shipment nobody knows the fate of is not a failure to fix: it is one to go and look at.
+            $messages[] = [
+                $result->needsCheck() ? 'warning' : 'error',
+                sprintf('Shipment %s: %s', (string) $result->shipment->getId(), (string) $result->reason()),
+            ];
+        }
+
+        return $messages;
     }
 
     /**
