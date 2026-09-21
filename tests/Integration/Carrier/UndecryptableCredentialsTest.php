@@ -16,7 +16,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 /**
  * Credentials saved with one key and read with another: the key was rotated, lost, or the database came from
  * another installation. The store cannot read what it stored, and for the cart and the checkout that has to be
- * the same as having no credentials — never a server error, and never the ciphertext sent to the carrier.
+ * the same as having no credentials — never a server error, and never the ciphertext sent to the carrier. All of
+ * it on Doctrine itself: a stand-in repository never lets the entity reach it, and that is where it broke.
  */
 final class UndecryptableCredentialsTest extends KernelTestCase
 {
@@ -77,9 +78,8 @@ final class UndecryptableCredentialsTest extends KernelTestCase
     }
 
     /**
-     * The failed load leaves the entity in memory with its values still encrypted, and Doctrine hands that one
-     * back to the next lookup without decrypting it again. That second lookup must not return the ciphertext as
-     * if it were a client id.
+     * The entity stays in memory still encrypted, and Doctrine hands that one back to the next lookup without
+     * loading it again. That second lookup must not return the ciphertext as if it were a client id.
      */
     public function testASecondLookupInTheSameRequestIsRefusedToo(): void
     {
@@ -94,6 +94,25 @@ final class UndecryptableCredentialsTest extends KernelTestCase
                 self::assertStringContainsString('cannot be decrypted', $exception->getMessage(), sprintf('The %s lookup.', $lookup));
             }
         }
+    }
+
+    /**
+     * The one the checkout was dying of: every flush of the request tries to decrypt the credentials in memory
+     * again, and the shipping step saves the order. Loaded once, unreadable credentials must not break whatever
+     * the request saves afterwards.
+     */
+    public function testSavingAnythingAfterwardsDoesNotBreakOnThem(): void
+    {
+        $this->storeCredentialsEncryptedWithAnotherKey();
+
+        try {
+            $this->credentialsProvider()->get(CarrierCredentialsInterface::CARRIER_UPS);
+        } catch (CarrierCredentialsException) {
+            // Refused, as the tests above say; what matters here is what comes after.
+        }
+
+        $this->entityManager->flush();
+        $this->addToAssertionCount(1);
     }
 
     /**

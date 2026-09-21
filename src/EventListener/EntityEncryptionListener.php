@@ -10,6 +10,7 @@ use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Event\PostLoadEventArgs;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\EncryptionAwareInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\EntityEncrypterInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Exception\EncryptionException;
 
 /**
  * Same shape as Sylius' PaymentBundle EntityEncryptionListener (`@experimental`, so not reused):
@@ -67,7 +68,15 @@ final readonly class EntityEncryptionListener
     /** @param T $entity */
     private function decrypt(EntityManagerInterface $entityManager, object $entity): void
     {
-        $this->entityEncrypter->decrypt($entity);
+        try {
+            $this->entityEncrypter->decrypt($entity);
+        } catch (EncryptionException) {
+            // What was stored cannot be read with this key: it was rotated, lost, or the database came from another
+            // installation. The entity is left as it was loaded, still encrypted, rather than breaking every
+            // request that loads or saves anything afterwards — this listener also runs after every flush. Whoever
+            // uses its values has to refuse ciphertext, and the carrier credentials do (CredentialsProvider).
+            return;
+        }
 
         // What Doctrine remembers as loaded is the encrypted data. Left like that, the decrypted
         // values would read as a change and every later flush would rewrite the row with a fresh

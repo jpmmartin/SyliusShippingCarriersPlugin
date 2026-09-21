@@ -88,41 +88,6 @@ final class CarrierFailureDoesNotBreakCheckoutTest extends WebTestCase
     }
 
     /**
-     * The key was rotated, lost, or the database came from another installation: the store cannot read the
-     * credentials it stored. For the buyer that is UPS being unavailable, never a server error — and UPS is not
-     * asked at all, because what would be sent as the client id is ciphertext.
-     */
-    #[DataProvider('policies')]
-    public function testTheCartAndTheCheckoutKeepWorkingWhenTheStoredCredentialsCannotBeDecrypted(string $policy): void
-    {
-        $this->upsGround->setConfiguration(['service' => '03', 'failure_policy' => $policy, 'flat_amount' => [self::CHANNEL => 1200]]);
-        $this->entityManager->flush();
-
-        $this->ups->rateService('ups', '03', 1540, 'USD');
-        $this->createCartInSession(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
-        $this->credentialsCannotBeDecrypted = true;
-        $this->startAsANewVisit();
-        $callsBefore = $this->ups->calls('ups');
-
-        $this->visit('sylius_shop_cart_summary');
-        $this->visit('sylius_shop_checkout_address');
-        $this->submitIfThereIsAForm($this->visit('sylius_shop_checkout_select_shipping'), 'sylius_shop_checkout_select_shipping');
-        $this->visit('sylius_shop_checkout_select_payment');
-        $this->submitIfThereIsAForm($this->visit('sylius_shop_checkout_complete'), 'sylius_checkout_complete');
-
-        self::assertSame($callsBefore, $this->ups->calls('ups'), 'UPS must not be asked with credentials the store cannot read.');
-    }
-
-    /**
-     * @return iterable<string, array{string}>
-     */
-    public static function policies(): iterable
-    {
-        yield 'the method hides' => ['hide'];
-        yield 'the method falls back on a flat amount' => ['flat'];
-    }
-
-    /**
      * @return iterable<string, array{FakeCarrierState::FAILURE_*, string}>
      */
     public static function failures(): iterable
