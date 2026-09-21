@@ -16,6 +16,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabelInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\UnissuableShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
+use League\Flysystem\FilesystemException;
 use Psr\Clock\ClockInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -120,30 +121,46 @@ final readonly class LabelIssuer
         ShipmentRequest $request,
         ShipmentResult $result,
     ): CarrierShipmentExportInterface {
-        foreach ($result->labels as $issuedLabel) {
-            $package = $request->packages[$issuedLabel->position] ?? null;
+        // Written where nothing serves them from, moved into place only once the database has taken the rows:
+        // a failure in between must leave neither a row without its file nor a file without its row.
+        $waiting = [];
 
-            $label = $this->labelFactory->createNew();
-            $label->setPosition($issuedLabel->position);
-            $label->setFormat($issuedLabel->format);
-            $label->setTrackingNumber($issuedLabel->trackingNumber);
-            $label->setDeclaredValue($package?->declaredValue);
-            $label->setDeclaredValueCurrency($package?->declaredValueCurrency);
-            $label->setPath($this->labelStorage->write($issuedLabel, (string) $shipment->getId()));
+        try {
+            foreach ($result->labels as $issuedLabel) {
+                $package = $request->packages[$issuedLabel->position] ?? null;
+                $path = $this->labelStorage->pathFor($issuedLabel, (string) $shipment->getId());
 
-            $export->addLabel($label);
+                $label = $this->labelFactory->createNew();
+                $label->setPosition($issuedLabel->position);
+                $label->setFormat($issuedLabel->format);
+                $label->setTrackingNumber($issuedLabel->trackingNumber);
+                $label->setDeclaredValue($package?->declaredValue);
+                $label->setDeclaredValueCurrency($package?->declaredValueCurrency);
+                $label->setPath($path);
+
+                $export->addLabel($label);
+                $waiting[$this->labelStorage->writeTemporary($issuedLabel)] = $path;
+            }
+
+            $export->setState(CarrierShipmentExportInterface::STATE_ISSUED);
+            $export->setCarrierReference($result->carrierReference);
+            $export->setIssuedAt($this->clock->now());
+            $export->setIssuedBy($issuedBy);
+            $export->setFailureReason(null);
+
+            // Nobody types a tracking number that the carrier has just given: the tracking of the shop reads this one.
+            $shipment->setTracking($result->carrierReference);
+
+            $this->save($export);
+        } catch (\Throwable $exception) {
+            foreach (array_keys($waiting) as $temporaryPath) {
+                $this->labelStorage->discard($temporaryPath);
+            }
+
+            throw $exception;
         }
 
-        $export->setState(CarrierShipmentExportInterface::STATE_ISSUED);
-        $export->setCarrierReference($result->carrierReference);
-        $export->setIssuedAt($this->clock->now());
-        $export->setIssuedBy($issuedBy);
-        $export->setFailureReason(null);
-
-        // Nobody types a tracking number that the carrier has just given: the tracking of the shop reads this one.
-        $shipment->setTracking($result->carrierReference);
-
-        $this->save($export);
+        $this->promote($waiting, $shipment, $carrier);
 
         $this->logger->info('The carrier {carrier} issued {labels} label(s) for the shipment {shipment}.', [
             'carrier' => $carrier,
@@ -191,6 +208,29 @@ final readonly class LabelIssuer
         ]);
 
         return $export;
+    }
+
+    /**
+     * The rows exist, so the files go where the rows say. A move that fails now leaves a label that cannot be
+     * downloaded, which is worth shouting about but is not worth pretending the shipment was never issued: it
+     * was, and it has been paid for.
+     *
+     * @param array<string, string> $waiting Temporary path to final path
+     */
+    private function promote(array $waiting, ShipmentInterface $shipment, string $carrier): void
+    {
+        foreach ($waiting as $temporaryPath => $path) {
+            try {
+                $this->labelStorage->promote($temporaryPath, $path);
+            } catch (FilesystemException $exception) {
+                $this->logger->error('The label {path} of the shipment {shipment} was issued by {carrier} but could not be stored: {reason}', [
+                    'path' => $path,
+                    'shipment' => $shipment->getId(),
+                    'carrier' => $carrier,
+                    'reason' => $exception->getMessage(),
+                ]);
+            }
+        }
     }
 
     private function save(CarrierShipmentExportInterface $export): void

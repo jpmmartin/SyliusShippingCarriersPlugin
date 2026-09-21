@@ -39,6 +39,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShippingChargeResolver;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\Local\LocalFilesystemAdapter;
+use League\Flysystem\StorageAttributes;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
@@ -84,6 +85,9 @@ final class LabelIssuerTest extends TestCase
 
     private ?CarrierShippingOriginInterface $origin = null;
 
+    /** What happens while the rows are being committed, so a test can look at the storage at that instant. */
+    private ?\Closure $whileCommitting = null;
+
     protected function setUp(): void
     {
         $this->logger = new RecordingLogger();
@@ -93,6 +97,7 @@ final class LabelIssuerTest extends TestCase
         $this->packaging = $this->storedPackaging();
         $this->credentials = $this->storedCredentials();
         $this->origin = $this->origin();
+        $this->whileCommitting = null;
         $this->answer = new ShipmentResult('1Z999AA10123456784', [
             new IssuedLabel(0, '1Z999AA10123456784', 'GIF', 'the first label'),
             new IssuedLabel(1, '1Z999AA10123456795', 'GIF', 'the second label'),
@@ -183,7 +188,7 @@ final class LabelIssuerTest extends TestCase
         self::assertSame('UPS rejected the shipment request: the postcode is not served.', $export->getFailureReason());
         self::assertCount(0, $export->getLabels());
         self::assertNull($shipment->getTracking());
-        self::assertSame([], $this->storage->listContents('', true)->toArray());
+        self::assertSame([], $this->storedFiles());
         self::assertSame(LogLevel::ERROR, $this->logger->records[0][0] ?? null);
     }
 
@@ -202,7 +207,7 @@ final class LabelIssuerTest extends TestCase
         self::assertSame('UPS could not be reached: the request timed out.', $export->getFailureReason());
         self::assertCount(0, $export->getLabels());
         self::assertNull($shipment->getTracking());
-        self::assertSame([], $this->storage->listContents('', true)->toArray());
+        self::assertSame([], $this->storedFiles());
     }
 
     public function testAnAnswerTheCarrierCannotBeUnderstoodByAlsoNeedsAChecking(): void
@@ -248,6 +253,48 @@ final class LabelIssuerTest extends TestCase
         self::assertSame([], $this->requests);
     }
 
+    /**
+     * A label is only where its row says it is once the row exists. Until then it waits where nothing serves it
+     * from, so a failure in between leaves neither a row without its file nor a file without its row.
+     */
+    public function testALabelIsOnlyPutInPlaceOnceItsRowHasBeenCommitted(): void
+    {
+        $seen = [];
+        $this->whileCommitting = function () use (&$seen): void {
+            $seen = $this->storedFiles();
+        };
+
+        $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertCount(2, $seen, 'Both labels wait where nothing serves them from until the rows exist.');
+        foreach ($seen as $path) {
+            self::assertStringStartsWith(LabelStorage::PENDING_DIRECTORY . '/', $path);
+        }
+
+        self::assertSame(
+            ['labels/42/1Z999AA10123456784-0.gif', 'labels/42/1Z999AA10123456795-1.gif'],
+            $this->storedFiles(),
+        );
+    }
+
+    /**
+     * The proof of the criterion that forbids half a state: neither the row nor the file may survive alone.
+     */
+    public function testAFailureWhileTheRowsAreCommittedLeavesNeitherRowNorFile(): void
+    {
+        $this->whileCommitting = static fn (): never => throw new \RuntimeException('The database went away.');
+        $shipment = $this->shipment();
+
+        try {
+            $this->issuer()->issue($shipment, 'warehouse@example.com');
+            self::fail('A failure while the rows are committed has to reach the caller.');
+        } catch (\RuntimeException $exception) {
+            self::assertSame('The database went away.', $exception->getMessage());
+        }
+
+        self::assertSame([], $this->storedFiles(), 'No label may be left anywhere.');
+    }
+
     public function testAChannelWithoutAShippingOriginIssuesNothing(): void
     {
         $this->origin = null;
@@ -276,6 +323,23 @@ final class LabelIssuerTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         $this->issuer()->issue($this->shipment('flat_rate'), 'warehouse@example.com');
+    }
+
+    /**
+     * The files in the storage, directories left out and in a stable order.
+     *
+     * @return list<string>
+     */
+    private function storedFiles(): array
+    {
+        /** @var list<string> $paths */
+        $paths = $this->storage->listContents('', true)
+            ->filter(static fn (StorageAttributes $attributes): bool => $attributes->isFile())
+            ->map(static fn (StorageAttributes $attributes): string => $attributes->path())
+            ->toArray();
+        sort($paths);
+
+        return $paths;
     }
 
     private function issuer(): LabelIssuer
@@ -324,10 +388,26 @@ final class LabelIssuerTest extends TestCase
             $exportRepository,
             $exportFactory,
             $labelFactory,
-            $this->createStub(ObjectManager::class),
+            $this->manager(),
             new MockClock('2026-09-21 10:00:00'),
             $this->logger,
         );
+    }
+
+    /**
+     * Its flush is the moment the rows become real, so a test can say what the storage must look like then, or
+     * make it fail there.
+     */
+    private function manager(): ObjectManager
+    {
+        $manager = $this->createMock(ObjectManager::class);
+        $manager->method('flush')->willReturnCallback(function (): void {
+            if (null !== $this->whileCommitting) {
+                ($this->whileCommitting)();
+            }
+        });
+
+        return $manager;
     }
 
     /**
