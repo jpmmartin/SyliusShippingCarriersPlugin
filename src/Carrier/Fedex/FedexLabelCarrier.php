@@ -131,6 +131,13 @@ final readonly class FedexLabelCarrier implements LabelCarrierInterface
                 trackingNumber: $carrierReference,
                 deletionControl: self::DELETE_ALL_PACKAGES,
             ));
+
+            // Reading the answer is inside the try as well: an unreadable body throws a JsonException, and
+            // that is FedEx being unintelligible, not the plugin being broken.
+            $cancellation = $response->dto();
+            if (!$cancellation instanceof ShpcResponseVoCancelShipment) {
+                throw new UnexpectedCarrierResponseException('FedEx answered the cancellation without a cancellation reply.');
+            }
         } catch (\Throwable $exception) {
             $translated = $this->errorTranslator->translate($exception, self::VOID_OPERATION);
 
@@ -141,11 +148,6 @@ final readonly class FedexLabelCarrier implements LabelCarrierInterface
             }
 
             throw $translated;
-        }
-
-        $cancellation = $response->dto();
-        if (!$cancellation instanceof ShpcResponseVoCancelShipment) {
-            throw new UnexpectedCarrierResponseException('FedEx answered the cancellation without a cancellation reply.');
         }
 
         if (true !== $cancellation->output?->cancelledShipment) {

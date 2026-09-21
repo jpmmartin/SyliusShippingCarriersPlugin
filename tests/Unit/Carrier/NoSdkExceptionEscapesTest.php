@@ -15,10 +15,18 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableE
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierResponseException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexConnectorFactory;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexLabelCarrier;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelCarrierInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentResult;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\VoidResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsAccessTokenCache;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsClientFactory;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsLabelCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Encrypter;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
@@ -36,6 +44,8 @@ use Saloon\Http\PendingRequest;
 use Saloon\RateLimitPlugin\Stores\MemoryStore;
 use ShipStream\FedEx\Api\AuthorizationV1\Requests\ApiAuthorization;
 use ShipStream\FedEx\Api\RatesAndTransitTimesV1\Requests\RateAndTransitTimes;
+use ShipStream\FedEx\Api\ShipV1\Requests\CancelShipment;
+use ShipStream\FedEx\Api\ShipV1\Requests\CreateShipment;
 use ShipStream\FedEx\Api\TrackV1\Requests\TrackByTrackingNumber;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -98,16 +108,15 @@ final class NoSdkExceptionEscapesTest extends TestCase
             };
         });
 
-        $carrier = new UpsCarrier(
-            $this->credentialsProvider(CarrierCredentialsInterface::CARRIER_UPS),
-            new UpsClientFactory(
-                CarrierHttpClientFactory::create($httpClient, 10.0),
-                new UpsAccessTokenCache(new ArrayAdapter(), new Encrypter($this->keyPath)),
-                new LockFactory(new InMemoryStore()),
-            ),
+        $credentialsProvider = $this->credentialsProvider(CarrierCredentialsInterface::CARRIER_UPS);
+        $clientFactory = new UpsClientFactory(
+            CarrierHttpClientFactory::create($httpClient, 10.0),
+            new UpsAccessTokenCache(new ArrayAdapter(), new Encrypter($this->keyPath)),
+            new LockFactory(new InMemoryStore()),
         );
 
-        $this->assertFailsWith($expected, $carrier);
+        $this->assertFailsWith($expected, new UpsCarrier($credentialsProvider, $clientFactory));
+        $this->assertLabelsFailWith($expected, new UpsLabelCarrier($credentialsProvider, $clientFactory, new LabelFormats([])), recovers: true);
     }
 
     /**
@@ -141,6 +150,24 @@ final class NoSdkExceptionEscapesTest extends TestCase
                 'unreadable JSON' => new SaloonMockResponse('{"output": {"completeTrackResults": [', 200, self::JSON),
                 default => static fn (): never => self::fail(sprintf('No tracking request was expected with %s.', $failure)),
             },
+            CreateShipment::class => match ($failure) {
+                'timeout' => (new SaloonMockResponse())->throw(static fn (PendingRequest $pendingRequest): FatalRequestException => new FatalRequestException(
+                    new ConnectException('cURL error 28: Operation timed out after 10000 milliseconds', $pendingRequest->createPsrRequest()),
+                    $pendingRequest,
+                )),
+                'server error' => new SaloonMockResponse('{"errors":[{"code":"INTERNAL.SERVER.ERROR","message":"We encountered an unexpected error."}]}', 500, self::JSON),
+                'unreadable JSON' => new SaloonMockResponse('{"output": {"transactionShipments": [', 200, self::JSON),
+                default => static fn (): never => self::fail(sprintf('No shipment request was expected with %s.', $failure)),
+            },
+            CancelShipment::class => match ($failure) {
+                'timeout' => (new SaloonMockResponse())->throw(static fn (PendingRequest $pendingRequest): FatalRequestException => new FatalRequestException(
+                    new ConnectException('cURL error 28: Operation timed out after 10000 milliseconds', $pendingRequest->createPsrRequest()),
+                    $pendingRequest,
+                )),
+                'server error' => new SaloonMockResponse('{"errors":[{"code":"INTERNAL.SERVER.ERROR","message":"We encountered an unexpected error."}]}', 500, self::JSON),
+                'unreadable JSON' => new SaloonMockResponse('{"output": {"cancelledShipment": ', 200, self::JSON),
+                default => static fn (): never => self::fail(sprintf('No cancellation was expected with %s.', $failure)),
+            },
             RateAndTransitTimes::class => match ($failure) {
                 // What Guzzle throws when a request times out.
                 'timeout' => (new SaloonMockResponse())->throw(static fn (PendingRequest $pendingRequest): FatalRequestException => new FatalRequestException(
@@ -153,12 +180,12 @@ final class NoSdkExceptionEscapesTest extends TestCase
             },
         ]);
 
-        $carrier = new FedexCarrier(
-            $this->credentialsProvider(CarrierCredentialsInterface::CARRIER_FEDEX),
-            new FedexConnectorFactory(new ArrayAdapter(), new Encrypter($this->keyPath), new LockFactory(new InMemoryStore()), 10.0),
-        );
+        $credentialsProvider = $this->credentialsProvider(CarrierCredentialsInterface::CARRIER_FEDEX);
+        $connectorFactory = new FedexConnectorFactory(new ArrayAdapter(), new Encrypter($this->keyPath), new LockFactory(new InMemoryStore()), 10.0);
 
-        $this->assertFailsWith($expected, $carrier);
+        $this->assertFailsWith($expected, new FedexCarrier($credentialsProvider, $connectorFactory));
+        // FedEx never asks anybody whether it issued a shipment: it has no operation that answers that.
+        $this->assertLabelsFailWith($expected, new FedexLabelCarrier($credentialsProvider, $connectorFactory, new LabelFormats([])), recovers: false);
     }
 
     /**
@@ -179,6 +206,39 @@ final class NoSdkExceptionEscapesTest extends TestCase
     {
         $this->assertOperationFailsWith($expected, fn (): RateSet => $carrier->rate($this->request()), 'Rating');
         $this->assertOperationFailsWith($expected, fn (): TrackingInfo => $carrier->track('1Z999AA10123456784'), 'Tracking');
+    }
+
+    /**
+     * Issuing and cancelling a label reach the carrier the same way rating does, and a failure of the carrier
+     * must not leave the adapter as whatever its SDK happens to throw.
+     *
+     * @param class-string<CarrierException> $expected
+     * @param bool $recovers Whether this carrier can be asked if it issued a shipment. FedEx cannot, so it
+     *                       answers null without calling anybody and has nothing to fail at
+     */
+    private function assertLabelsFailWith(string $expected, LabelCarrierInterface $carrier, bool $recovers): void
+    {
+        $this->assertOperationFailsWith($expected, fn (): ShipmentResult => $carrier->ship($this->shipmentRequest()), 'Issuing');
+        $this->assertOperationFailsWith($expected, fn (): VoidResult => $carrier->void('1Z999AA10123456784'), 'Cancelling');
+
+        if ($recovers) {
+            $this->assertOperationFailsWith($expected, fn (): ?ShipmentResult => $carrier->recover('1Z999AA10123456784'), 'Recovering');
+
+            return;
+        }
+
+        self::assertNull($carrier->recover('1Z999AA10123456784'));
+    }
+
+    private function shipmentRequest(): ShipmentRequest
+    {
+        return new ShipmentRequest(
+            new Address('US', '60601', 'Chicago', '1 Main St', 'IL', false, 'The store', 'Ada Lovelace', '13057800955'),
+            new Address('US', '98101', 'Seattle', '500 Pine St', 'WA', true, null, 'Grace Hopper', '12065550100'),
+            '03',
+            [new ShipmentPackage(new Package('Medium', 13.0, 11.0, 9.0, 'in', 5.5, 'lb', []))],
+            'PDF',
+        );
     }
 
     /**
