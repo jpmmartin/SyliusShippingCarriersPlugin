@@ -84,3 +84,21 @@ jpmmartin_carrier_admin_shipments_issue_labels:
     methods: [POST]
     defaults:
         _controller: jpmmartin_carrier.controller.admin.issue_labels_in_batch
+
+# Cancelling is told to the carrier, so it is as explicit as issuing and answers only to POST.
+jpmmartin_carrier_admin_shipment_void_labels:
+    path: /carrier-shipments/{id}/void-labels
+    methods: [POST]
+    requirements:
+        id: \d+
+    defaults:
+        _controller: jpmmartin_carrier.controller.admin.void_labels
+
+# A label is downloaded by its own record: a cancelled one is not a label any more.
+jpmmartin_carrier_admin_label_download:
+    path: /carrier-labels/{id}
+    methods: [GET]
+    requirements:
+        id: \d+
+    defaults:
+        _controller: jpmmartin_carrier.controller.admin.download_label

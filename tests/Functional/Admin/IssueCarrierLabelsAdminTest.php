@@ -6,17 +6,8 @@ namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Functional\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExport;
-use Sylius\Component\Addressing\Model\Zone;
-use Sylius\Component\Addressing\Model\ZoneInterface;
 use Sylius\Component\Core\Model\ChannelInterface;
-use Sylius\Component\Core\Model\Customer;
-use Sylius\Component\Core\Model\CustomerInterface;
-use Sylius\Component\Core\Model\Order;
-use Sylius\Component\Core\Model\OrderInterface;
-use Sylius\Component\Core\Model\Shipment;
 use Sylius\Component\Core\Model\ShipmentInterface;
-use Sylius\Component\Core\Model\ShippingMethod;
-use Sylius\Component\Shipping\Model\ShippingMethodInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -66,7 +57,7 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
 
     public function testTheActionIsOfferedForAShipmentOfACarrierOfThisPlugin(): void
     {
-        $order = $this->createOrder('ups_rate');
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
         $this->client->loginUser($this->createAdmin('issue-labels-admin'), 'admin');
 
         $this->client->request('GET', '/admin/orders/' . $order->getId());
@@ -80,7 +71,7 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
      */
     public function testTheActionIsNotOfferedForAShipmentOfAnotherShippingMethod(): void
     {
-        $order = $this->createOrder('flat_rate');
+        $order = $this->createCarrierOrder($this->channel, 'flat_rate');
         $this->client->loginUser($this->createAdmin('foreign-method-admin'), 'admin');
 
         $this->client->request('GET', '/admin/orders/' . $order->getId());
@@ -94,7 +85,7 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
      */
     public function testWithoutAnAdminSessionNothingIsIssued(): void
     {
-        $shipment = $this->createOrder('ups_rate')->getShipments()->first();
+        $shipment = $this->createCarrierOrder($this->channel, 'ups_rate')->getShipments()->first();
         self::assertInstanceOf(ShipmentInterface::class, $shipment);
 
         $this->client->request('POST', '/admin/carrier-shipments/' . $shipment->getId() . '/issue-labels');
@@ -108,7 +99,7 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
      */
     public function testWithoutTheAdminsOwnTokenNothingIsIssued(): void
     {
-        $shipment = $this->createOrder('ups_rate')->getShipments()->first();
+        $shipment = $this->createCarrierOrder($this->channel, 'ups_rate')->getShipments()->first();
         self::assertInstanceOf(ShipmentInterface::class, $shipment);
         $this->client->loginUser($this->createAdmin('no-token-admin'), 'admin');
 
@@ -123,7 +114,7 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
      */
     public function testTheBatchActionIsOfferedOnTheShipmentsGrid(): void
     {
-        $this->createOrder('ups_rate');
+        $this->createCarrierOrder($this->channel, 'ups_rate');
         $this->client->loginUser($this->createAdmin('batch-grid-admin'), 'admin');
 
         $this->client->request('GET', '/admin/shipments/');
@@ -134,7 +125,7 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
 
     public function testWithoutAnAdminSessionNothingIsIssuedInABatchEither(): void
     {
-        $shipment = $this->createOrder('ups_rate')->getShipments()->first();
+        $shipment = $this->createCarrierOrder($this->channel, 'ups_rate')->getShipments()->first();
         self::assertInstanceOf(ShipmentInterface::class, $shipment);
 
         $this->client->request('POST', '/admin/carrier-shipments/issue-labels', ['ids' => [$shipment->getId()]]);
@@ -145,7 +136,7 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
 
     public function testWithoutTheAdminsOwnTokenNothingIsIssuedInABatchEither(): void
     {
-        $shipment = $this->createOrder('ups_rate')->getShipments()->first();
+        $shipment = $this->createCarrierOrder($this->channel, 'ups_rate')->getShipments()->first();
         self::assertInstanceOf(ShipmentInterface::class, $shipment);
         $this->client->loginUser($this->createAdmin('batch-no-token-admin'), 'admin');
 
@@ -163,8 +154,8 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
      */
     public function testTheBatchSaysHowManyWentOutAndWhyEachOneDidNot(): void
     {
-        $first = $this->createOrder('ups_rate')->getShipments()->first();
-        $second = $this->createOrder('ups_rate')->getShipments()->first();
+        $first = $this->createCarrierOrder($this->channel, 'ups_rate')->getShipments()->first();
+        $second = $this->createCarrierOrder($this->channel, 'ups_rate')->getShipments()->first();
         self::assertInstanceOf(ShipmentInterface::class, $first);
         self::assertInstanceOf(ShipmentInterface::class, $second);
         $this->client->loginUser($this->createAdmin('batch-summary-admin'), 'admin');
@@ -210,64 +201,5 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
         $flashes = $session->getFlashBag()->all();
 
         return $flashes;
-    }
-
-    private function createOrder(string $calculator): OrderInterface
-    {
-        $order = new Order();
-        $order->setChannel($this->channel);
-        $order->setCurrencyCode('EUR');
-        $order->setLocaleCode('en_US');
-        // The admin refuses to show a cart: findOrderById leaves that state out.
-        $order->setState(OrderInterface::STATE_NEW);
-        $order->setCustomer($this->createCustomer());
-
-        $shipment = new Shipment();
-        // The shipments grid leaves carts out, the same way the admin order page does.
-        $shipment->setState(ShipmentInterface::STATE_READY);
-        $shipment->setMethod($this->createShippingMethod($calculator));
-        $order->addShipment($shipment);
-
-        $this->entityManager->persist($order);
-        $this->entityManager->persist($shipment);
-        $this->entityManager->flush();
-
-        return $order;
-    }
-
-    private function createCustomer(): CustomerInterface
-    {
-        $customer = new Customer();
-        $customer->setEmail(sprintf('buyer-%s@example.com', bin2hex(random_bytes(4))));
-        $customer->setFirstName('Grace');
-        $customer->setLastName('Hopper');
-
-        $this->entityManager->persist($customer);
-        $this->entityManager->flush();
-
-        return $customer;
-    }
-
-    private function createShippingMethod(string $calculator): ShippingMethodInterface
-    {
-        $zone = new Zone();
-        $zone->setCode('labels-zone-' . bin2hex(random_bytes(4)));
-        $zone->setName('Labels zone');
-        $zone->setType(ZoneInterface::TYPE_COUNTRY);
-
-        $method = new ShippingMethod();
-        $method->setCode('labels-method-' . bin2hex(random_bytes(4)));
-        $method->setCurrentLocale('en_US');
-        $method->setFallbackLocale('en_US');
-        $method->setName('Labels method');
-        $method->setCalculator($calculator);
-        $method->setConfiguration('flat_rate' === $calculator ? ['LABELS_WEB' => ['amount' => 500]] : ['service' => '03']);
-        $method->setZone($zone);
-
-        $this->entityManager->persist($zone);
-        $this->entityManager->persist($method);
-        $this->entityManager->flush();
-
-        return $method;
     }
 }

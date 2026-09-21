@@ -16,6 +16,8 @@ jpmmartin_carrier:
             issue: Issue the labels
             issue_batch: Issue the labels
             issued: Labels issued
+            download: Download the label
+            void: Cancel the labels
             needs_check: Check with the carrier
         tracking:
             title: Where your order is

@@ -15,8 +15,16 @@
             {{ 'jpmmartin_carrier.ui.labels.needs_check'|trans }}
         </span>
     {% else %}
-        <span class="badge bg-success" {{ sylius_test_html_attribute('jpmmartin-carrier-labels-issued') }}>
-            {{ 'jpmmartin_carrier.ui.labels.issued'|trans }}
-        </span>
+        {% for label in labels.downloadable() %}
+            <a href="{{ path('jpmmartin_carrier_admin_label_download', {'id': label.id}) }}" class="btn btn-icon" data-bs-toggle="tooltip" data-bs-title="{{ 'jpmmartin_carrier.ui.labels.download'|trans }}" {{ sylius_test_html_attribute('jpmmartin-carrier-label-download-link') }}>
+                {{ ux_icon('tabler:file-download') }}
+            </a>
+        {% endfor %}
+        <form method="post" action="{{ path('jpmmartin_carrier_admin_shipment_void_labels', {'id': shipment.id}) }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('jpmmartin_carrier_void_labels') }}">
+            <button type="submit" class="btn btn-icon" data-bs-toggle="tooltip" data-bs-title="{{ 'jpmmartin_carrier.ui.labels.void'|trans }}" {{ sylius_test_html_attribute('jpmmartin-carrier-void-labels-button') }}>
+                {{ ux_icon('tabler:tag-off') }}
+            </button>
+        </form>
     {% endif %}
 {% endif %}

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JpmMartin\SyliusShippingCarriersPlugin\Label;
 
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabelInterface;
 
 /**
  * Where a shipment of a carrier of this plugin stands: what has been asked of the carrier, and therefore what
@@ -41,6 +42,24 @@ final readonly class ShipmentLabels
     public function canBeIssued(): bool
     {
         return !$this->isIssued() && !$this->needsCheck();
+    }
+
+    /**
+     * The labels there is still a file for. A cancelled shipment has none to offer: what the carrier no longer
+     * recognises must not be handed to a warehouse.
+     *
+     * @return list<CarrierShipmentLabelInterface>
+     */
+    public function downloadable(): array
+    {
+        if (!$this->isIssued()) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $this->export?->getLabels()->toArray() ?? [],
+            static fn (CarrierShipmentLabelInterface $label): bool => !$label->isPurged() && null !== $label->getPath(),
+        ));
     }
 
     public function failureReason(): ?string

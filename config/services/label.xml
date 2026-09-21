@@ -59,6 +59,30 @@
             <argument type="service" id="router" />
         </service>
 
+        <service id="jpmmartin_carrier.label.voider" class="JpmMartin\SyliusShippingCarriersPlugin\Label\LabelVoider">
+            <argument type="tagged_locator" tag="jpmmartin_carrier.label_carrier" index-by="carrier" />
+            <argument type="service" id="jpmmartin_carrier.manager.shipment_export" />
+            <argument type="service" id="clock" />
+            <argument type="service" id="logger" />
+        </service>
+        <service id="JpmMartin\SyliusShippingCarriersPlugin\Label\LabelVoiderInterface" alias="jpmmartin_carrier.label.voider" />
+
+        <service id="jpmmartin_carrier.controller.admin.void_labels" class="JpmMartin\SyliusShippingCarriersPlugin\Controller\Admin\VoidCarrierLabelsAction" public="true">
+            <argument type="service" id="sylius.repository.shipment" />
+            <argument type="service" id="jpmmartin_carrier.repository.shipment_export" />
+            <argument type="service" id="jpmmartin_carrier.label.voider" />
+            <argument type="service" id="security.authorization_checker" />
+            <argument type="service" id="security.csrf.token_manager" />
+            <argument type="service" id="security.token_storage" />
+            <argument type="service" id="router" />
+        </service>
+
+        <!-- By the label's own record, not by a path: what may be downloaded depends on what happened to it. -->
+        <service id="jpmmartin_carrier.controller.admin.download_label" class="JpmMartin\SyliusShippingCarriersPlugin\Controller\Admin\DownloadCarrierLabelAction" public="true">
+            <argument type="service" id="jpmmartin_carrier.repository.shipment_label" />
+            <argument type="service" id="jpmmartin_carrier.controller.admin.download_document" />
+        </service>
+
         <service id="jpmmartin_carrier.twig.shipment_labels_runtime" class="JpmMartin\SyliusShippingCarriersPlugin\Twig\ShipmentLabelsRuntime">
             <argument type="service" id="jpmmartin_carrier.shipping.shipment_carrier" />
             <argument type="service" id="jpmmartin_carrier.repository.shipment_export" />
