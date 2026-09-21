@@ -11,6 +11,8 @@ use Doctrine\ORM\Event\PostLoadEventArgs;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\EncryptionAwareInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\EntityEncrypterInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Exception\EncryptionException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Same shape as Sylius' PaymentBundle EntityEncryptionListener (`@experimental`, so not reused):
@@ -27,6 +29,7 @@ final readonly class EntityEncryptionListener
     public function __construct(
         private EntityEncrypterInterface $entityEncrypter,
         private string $entityClass,
+        private LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -60,13 +63,20 @@ final readonly class EntityEncryptionListener
     public function postLoad(PostLoadEventArgs $args): void
     {
         $entity = $args->getObject();
-        if ($entity instanceof $this->entityClass) {
-            $this->decrypt($args->getObjectManager(), $entity);
+        if ($entity instanceof $this->entityClass && !$this->decrypt($args->getObjectManager(), $entity)) {
+            // Once per load, not after every flush that meets it again: that is where somebody has to look.
+            $this->logger->warning('A {class} was loaded that cannot be decrypted with the current encryption key, so it is left encrypted. Its values have to be entered again.', [
+                'class' => $this->entityClass,
+            ]);
         }
     }
 
-    /** @param T $entity */
-    private function decrypt(EntityManagerInterface $entityManager, object $entity): void
+    /**
+     * @param T $entity
+     *
+     * @return bool Whether it could be decrypted
+     */
+    private function decrypt(EntityManagerInterface $entityManager, object $entity): bool
     {
         try {
             $this->entityEncrypter->decrypt($entity);
@@ -75,7 +85,7 @@ final readonly class EntityEncryptionListener
             // installation. The entity is left as it was loaded, still encrypted, rather than breaking every
             // request that loads or saves anything afterwards — this listener also runs after every flush. Whoever
             // uses its values has to refuse ciphertext, and the carrier credentials do (CredentialsProvider).
-            return;
+            return false;
         }
 
         // What Doctrine remembers as loaded is the encrypted data. Left like that, the decrypted
@@ -86,5 +96,7 @@ final readonly class EntityEncryptionListener
         foreach ($metadata->getFieldNames() as $field) {
             $unitOfWork->setOriginalEntityProperty(spl_object_id($entity), $field, $metadata->getFieldValue($entity, $field));
         }
+
+        return true;
     }
 }

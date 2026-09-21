@@ -96,4 +96,5 @@ jpmmartin_carrier:
             client_id: Client ID
             client_secret: Client secret
             client_secret_help: Leave empty to keep the current secret.
+            unreadable: The stored value could not be read with this store's encryption key. Type it again.
             account_number: Account number

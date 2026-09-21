@@ -25,6 +25,7 @@
         <service id="jpmmartin_carrier.listener.credentials_encryption" class="JpmMartin\SyliusShippingCarriersPlugin\EventListener\EntityEncryptionListener">
             <argument type="service" id="jpmmartin_carrier.encrypter.credentials" />
             <argument>%jpmmartin_carrier.model.credentials.class%</argument>
+            <argument type="service" id="logger" />
             <tag name="doctrine.event_listener" event="onFlush" />
             <tag name="doctrine.event_listener" event="postFlush" />
             <tag name="doctrine.event_listener" event="postLoad" />

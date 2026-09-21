@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Form\Type;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Encryption\EncrypterInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use Sylius\Bundle\ResourceBundle\Form\Type\AbstractResourceType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -57,7 +58,8 @@ final class CarrierCredentialsType extends AbstractResourceType
 
     /**
      * The secret is never rendered back, so an edit that leaves it empty means "unchanged",
-     * not "remove it".
+     * not "remove it" — unless what is stored is a secret the store cannot read. Kept, it would leave
+     * the carrier unusable after a save that says it worked, so it has to be typed again.
      */
     private function keepTheStoredSecretWhenLeftEmpty(FormEvent $event): void
     {
@@ -69,7 +71,11 @@ final class CarrierCredentialsType extends AbstractResourceType
         }
 
         $storedSecret = $stored->getCredentials()[CarrierCredentialsDataType::CLIENT_SECRET] ?? null;
-        if (null === $storedSecret || '' !== ($submitted['credentials'][CarrierCredentialsDataType::CLIENT_SECRET] ?? '')) {
+        if (
+            null === $storedSecret ||
+            str_ends_with($storedSecret, EncrypterInterface::ENCRYPTION_SUFFIX) ||
+            '' !== ($submitted['credentials'][CarrierCredentialsDataType::CLIENT_SECRET] ?? '')
+        ) {
             return;
         }
 
