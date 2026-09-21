@@ -39,6 +39,7 @@
             <argument type="service" id="sylius.order_processing.order_processor" />
             <argument type="service" id="sylius.manager.order" />
             <argument type="service" id="jpmmartin_carrier.shipping.shipment_carrier" />
+            <argument type="service" id="logger" />
             <tag name="kernel.event_listener" event="kernel.exception" priority="0" />
         </service>
 

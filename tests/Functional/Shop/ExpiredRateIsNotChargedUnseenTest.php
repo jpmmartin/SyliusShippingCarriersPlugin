@@ -99,9 +99,16 @@ final class ExpiredRateIsNotChargedUnseenTest extends WebTestCase
         self::assertSame(OrderInterface::STATE_CART, $placed->getState(), 'An order whose total moved is not confirmed.');
         self::assertSame(self::RATE_AT_CONFIRMATION, $placed->getShippingTotal());
 
-        $this->client->request('GET', '/en_US/checkout/complete');
+        $crawler = $this->client->request('GET', '/en_US/checkout/complete');
         self::assertResponseIsSuccessful();
         self::assertStringContainsString('$17.20', (string) $this->client->getResponse()->getContent(), 'The buyer is shown the new total before confirming again.');
+
+        $this->client->submit($crawler->filter('form[name="sylius_checkout_complete"]')->form());
+        self::assertResponseRedirects();
+
+        $confirmed = $this->reload($order);
+        self::assertSame(OrderInterface::STATE_NEW, $confirmed->getState(), 'Confirming again goes through.');
+        self::assertSame(self::RATE_AT_CONFIRMATION, $confirmed->getShippingTotal(), 'It is charged the total the buyer was shown.');
     }
 
     public function testThroughTheApiTheOrderIsNotConfirmed(): void
@@ -148,13 +155,33 @@ final class ExpiredRateIsNotChargedUnseenTest extends WebTestCase
         self::assertSame(self::RATE_AT_CONFIRMATION, $placed->getShippingTotal(), 'It is charged the total the buyer was shown.');
     }
 
-    private function completeThroughTheApi(OrderInterface $order): void
+    /**
+     * Sylius's transaction is undone, but what its handler changed stays in memory. Only the recalculated cart
+     * may be kept: a refused confirmation must leave nothing else behind, such as the notes it carried.
+     */
+    public function testThroughTheApiNothingButTheNewTotalIsKeptFromTheRefusedConfirmation(): void
+    {
+        $this->ups->rateService('ups', '03', self::RATE_SHOWN, 'USD');
+        $order = $this->createCart(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
+
+        $this->ups->rateService('ups', '03', self::RATE_AT_CONFIRMATION, 'USD');
+        $this->forgetTheStoredRates();
+
+        $this->completeThroughTheApi($order, '{"notes": "Leave it with the neighbour"}');
+        self::assertResponseStatusCodeSame(409);
+
+        $stored = $this->reload($order);
+        self::assertSame(self::RATE_AT_CONFIRMATION, $stored->getShippingTotal());
+        self::assertNull($stored->getNotes(), 'The notes of a refused confirmation are not kept.');
+    }
+
+    private function completeThroughTheApi(OrderInterface $order, string $body = '{}'): void
     {
         $this->client->request(
             'PATCH',
             sprintf('/api/v2/shop/orders/%s/complete', (string) $order->getTokenValue()),
             server: ['CONTENT_TYPE' => 'application/merge-patch+json', 'HTTP_ACCEPT' => 'application/ld+json'],
-            content: '{}',
+            content: $body,
         );
     }
 
