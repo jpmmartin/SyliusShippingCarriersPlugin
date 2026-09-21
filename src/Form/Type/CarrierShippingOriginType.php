@@ -14,6 +14,8 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 
 final class CarrierShippingOriginType extends AbstractResourceType
 {
@@ -104,7 +106,42 @@ final class CarrierShippingOriginType extends AbstractResourceType
                 'required' => false,
                 'by_reference' => false,
             ])
+            ->addEventListener(FormEvents::PRE_SUBMIT, self::keepTheDefaultMaximumInTheChosenUnit(...))
         ;
+    }
+
+    /**
+     * The form is drawn with the maximum package weight of the unit the origin had — 150, in pounds, for a new
+     * one — and sends it back as it was drawn. Changing the unit without touching the maximum would otherwise
+     * store 150 in kilograms, more than twice what either carrier accepts. So a maximum sent back unchanged
+     * from the default of the old unit becomes the default of the new one. One that somebody typed is kept.
+     */
+    private static function keepTheDefaultMaximumInTheChosenUnit(FormEvent $event): void
+    {
+        $origin = $event->getForm()->getData();
+        $submitted = $event->getData();
+        if (!$origin instanceof CarrierShippingOriginInterface || !is_array($submitted)) {
+            return;
+        }
+
+        $unit = $submitted['weightUnit'] ?? null;
+        if (!is_string($unit) || $unit === $origin->getWeightUnit()) {
+            return;
+        }
+
+        $shown = $origin->getMaxPackageWeight();
+        $sent = $submitted['maxPackageWeight'] ?? null;
+        $defaults = CarrierShippingOriginInterface::DEFAULT_MAX_PACKAGE_WEIGHTS;
+        if (
+            $shown !== ($defaults[$origin->getWeightUnit()] ?? null) ||
+            !is_numeric($sent) || (float) $sent !== $shown ||
+            !isset($defaults[$unit])
+        ) {
+            return;
+        }
+
+        $submitted['maxPackageWeight'] = (string) $defaults[$unit];
+        $event->setData($submitted);
     }
 
     public function getBlockPrefix(): string

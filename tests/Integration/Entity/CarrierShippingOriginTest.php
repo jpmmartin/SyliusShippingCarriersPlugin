@@ -59,6 +59,45 @@ final class CarrierShippingOriginTest extends KernelTestCase
     }
 
     /**
+     * The one the default was getting wrong: 150 read as kilograms is more than twice what either carrier
+     * accepts. An origin in kilograms whose maximum nobody set gets the same limit in kilograms.
+     */
+    public function testAnOriginInKilogramsDefaultsToTheSameLimitInKilograms(): void
+    {
+        $origin = $this->createOrigin($this->createChannel('web-kilograms'));
+        $origin->setWeightUnit(CarrierShippingOriginInterface::WEIGHT_UNIT_KG);
+
+        $this->entityManager->persist($origin);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $stored = $this->entityManager->getRepository(CarrierShippingOrigin::class)->find((int) $origin->getId());
+        self::assertInstanceOf(CarrierShippingOriginInterface::class, $stored);
+        self::assertSame(CarrierShippingOriginInterface::DEFAULT_MAX_PACKAGE_WEIGHT_KG, $stored->getMaxPackageWeight());
+    }
+
+    public function testTheDefaultLimitGoesBackToPoundsWithTheUnit(): void
+    {
+        $origin = new CarrierShippingOrigin();
+        $origin->setWeightUnit(CarrierShippingOriginInterface::WEIGHT_UNIT_KG);
+        $origin->setWeightUnit(CarrierShippingOriginInterface::WEIGHT_UNIT_LB);
+
+        self::assertSame(CarrierShippingOriginInterface::DEFAULT_MAX_PACKAGE_WEIGHT_LB, $origin->getMaxPackageWeight());
+    }
+
+    /**
+     * A maximum somebody chose is theirs: changing the unit does not rewrite it.
+     */
+    public function testAMaximumSomebodyChoseIsKeptWhenTheUnitChanges(): void
+    {
+        $origin = new CarrierShippingOrigin();
+        $origin->setMaxPackageWeight(50.0);
+        $origin->setWeightUnit(CarrierShippingOriginInterface::WEIGHT_UNIT_KG);
+
+        self::assertSame(50.0, $origin->getMaxPackageWeight());
+    }
+
+    /**
      * Without a sender nothing prints: a carrier refuses a label with no name and no phone to return it to.
      */
     public function testItKeepsWhoTheParcelsAreSentBy(): void

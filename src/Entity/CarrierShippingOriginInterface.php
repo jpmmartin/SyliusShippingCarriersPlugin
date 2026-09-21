@@ -28,6 +28,17 @@ interface CarrierShippingOriginInterface extends ResourceInterface
 
     public const DEFAULT_MAX_PACKAGE_WEIGHT_LB = 150.0;
 
+    /**
+     * The same limit in each weight unit. A maximum left at its default is the carriers' limit rather than a
+     * number somebody chose, so it follows the unit: 150 lb and 68 kg are the one limit.
+     *
+     * @var array<string, float>
+     */
+    public const DEFAULT_MAX_PACKAGE_WEIGHTS = [
+        self::WEIGHT_UNIT_LB => self::DEFAULT_MAX_PACKAGE_WEIGHT_LB,
+        self::WEIGHT_UNIT_KG => self::DEFAULT_MAX_PACKAGE_WEIGHT_KG,
+    ];
+
     public function getChannel(): ?ChannelInterface;
 
     public function setChannel(?ChannelInterface $channel): void;

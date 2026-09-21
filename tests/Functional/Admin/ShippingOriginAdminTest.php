@@ -10,6 +10,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
 use Sylius\Component\Core\Model\ChannelInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Field\FormField;
 
 final class ShippingOriginAdminTest extends WebTestCase
 {
@@ -44,6 +45,64 @@ final class ShippingOriginAdminTest extends WebTestCase
         }
 
         parent::tearDown();
+    }
+
+    /**
+     * The form is drawn with 150, the limit in pounds. An administrator who picks kilograms and leaves that
+     * field alone means the carriers' limit, not 150 kg: that is more than twice what either one accepts.
+     */
+    public function testAnOriginInKilogramsLeftAtTheDrawnMaximumGetsTheLimitInKilograms(): void
+    {
+        $channel = $this->createChannel('web-admin-kilograms');
+        $this->createCountry('ES');
+
+        $crawler = $this->client->request('GET', '/admin/shipping-origins/new');
+        self::assertResponseIsSuccessful();
+        $form = $crawler->filter(sprintf('form[name="%s"]', self::FORM))->form();
+        $drawnMaximum = $form[self::FORM . '[maxPackageWeight]'];
+        self::assertInstanceOf(FormField::class, $drawnMaximum);
+        self::assertSame('150', $drawnMaximum->getValue(), 'The form is drawn with the limit in pounds.');
+
+        $this->client->submit($form, [
+            self::FORM . '[channel]' => 'web-admin-kilograms',
+            self::FORM . '[companyName]' => 'Swaypc',
+            self::FORM . '[contactName]' => 'Juan Pablo Moreno Martin',
+            self::FORM . '[phone]' => '13057800955',
+            self::FORM . '[street]' => 'Gran Via 1',
+            self::FORM . '[city]' => 'Madrid',
+            self::FORM . '[postcode]' => '28013',
+            self::FORM . '[countryCode]' => 'ES',
+            self::FORM . '[defaultDestinationType]' => 'residential',
+            self::FORM . '[weightUnit]' => 'kg',
+            self::FORM . '[dimensionUnit]' => 'cm',
+        ]);
+        self::assertResponseRedirects();
+
+        self::assertSame(68.0, $this->findOriginOf($channel)->getMaxPackageWeight());
+    }
+
+    public function testAMaximumTheAdministratorTypedIsKeptWhateverTheUnit(): void
+    {
+        $channel = $this->createChannel('web-admin-typed-maximum');
+        $this->createCountry('ES');
+
+        $this->submitCreateForm([
+            self::FORM . '[channel]' => 'web-admin-typed-maximum',
+            self::FORM . '[companyName]' => 'Swaypc',
+            self::FORM . '[contactName]' => 'Juan Pablo Moreno Martin',
+            self::FORM . '[phone]' => '13057800955',
+            self::FORM . '[street]' => 'Gran Via 1',
+            self::FORM . '[city]' => 'Madrid',
+            self::FORM . '[postcode]' => '28013',
+            self::FORM . '[countryCode]' => 'ES',
+            self::FORM . '[defaultDestinationType]' => 'residential',
+            self::FORM . '[weightUnit]' => 'kg',
+            self::FORM . '[dimensionUnit]' => 'cm',
+            self::FORM . '[maxPackageWeight]' => '30',
+        ]);
+        self::assertResponseRedirects();
+
+        self::assertSame(30.0, $this->findOriginOf($channel)->getMaxPackageWeight());
     }
 
     /**

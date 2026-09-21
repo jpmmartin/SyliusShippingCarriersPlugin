@@ -211,8 +211,17 @@ class CarrierShippingOrigin implements CarrierShippingOriginInterface
         return $this->weightUnit;
     }
 
+    /**
+     * A maximum package weight still at the default of the old unit moves to the default of the new one: it is
+     * the carriers' limit, and 150 read as kilograms is more than twice what either of them accepts. One that
+     * somebody typed is kept as it is.
+     */
     public function setWeightUnit(string $weightUnit): void
     {
+        if ($this->maxPackageWeight === (self::DEFAULT_MAX_PACKAGE_WEIGHTS[$this->weightUnit] ?? null)) {
+            $this->maxPackageWeight = self::DEFAULT_MAX_PACKAGE_WEIGHTS[$weightUnit] ?? $this->maxPackageWeight;
+        }
+
         $this->weightUnit = $weightUnit;
     }
 
