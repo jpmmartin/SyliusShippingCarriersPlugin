@@ -54,6 +54,11 @@ final class ExpiredRateIsNotChargedUnseenTest extends WebTestCase
         self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
 
         $this->entityManager = $entityManager;
+        // The test runs inside a transaction of its own, so Sylius's bus opens a nested one. Without savepoints,
+        // DBAL 3 marks the whole transaction for rollback when the nested one fails, and nothing saved after the
+        // refusal could be committed. In production the bus's transaction is the outer one and simply ends; a
+        // savepoint gives the test that same shape.
+        $this->entityManager->getConnection()->setNestTransactionsWithSavepoints(true);
         $this->entityManager->beginTransaction();
 
         $this->createStore();
@@ -107,15 +112,50 @@ final class ExpiredRateIsNotChargedUnseenTest extends WebTestCase
         $this->ups->rateService('ups', '03', self::RATE_AT_CONFIRMATION, 'USD');
         $this->forgetTheStoredRates();
 
+        $this->completeThroughTheApi($order);
+
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame(OrderInterface::STATE_CART, $this->reload($order)->getState(), 'An order whose total moved is not confirmed.');
+    }
+
+    /**
+     * The refusal undoes, with Sylius's transaction, the total it recalculated. Left like that the order kept
+     * showing the old total and every new attempt was refused again, with nothing to tell the buyer why. Now
+     * the next look at the order shows the new total, and confirming again goes through with it.
+     */
+    public function testThroughTheApiTheBuyerSeesTheNewTotalAndConfirmsWithIt(): void
+    {
+        $this->ups->rateService('ups', '03', self::RATE_SHOWN, 'USD');
+        $order = $this->createCart(OrderCheckoutStates::STATE_PAYMENT_SELECTED);
+
+        $this->ups->rateService('ups', '03', self::RATE_AT_CONFIRMATION, 'USD');
+        $this->forgetTheStoredRates();
+
+        $this->completeThroughTheApi($order);
+        self::assertResponseStatusCodeSame(409);
+
+        $this->client->request('GET', sprintf('/api/v2/shop/orders/%s', (string) $order->getTokenValue()), server: ['HTTP_ACCEPT' => 'application/ld+json']);
+        self::assertResponseIsSuccessful();
+        $shown = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($shown);
+        self::assertSame(self::RATE_AT_CONFIRMATION, $shown['shippingTotal'] ?? null, 'The buyer is shown the new total.');
+
+        $this->completeThroughTheApi($order);
+        self::assertResponseIsSuccessful();
+
+        $placed = $this->reload($order);
+        self::assertSame(OrderInterface::STATE_NEW, $placed->getState(), 'Confirming again goes through.');
+        self::assertSame(self::RATE_AT_CONFIRMATION, $placed->getShippingTotal(), 'It is charged the total the buyer was shown.');
+    }
+
+    private function completeThroughTheApi(OrderInterface $order): void
+    {
         $this->client->request(
             'PATCH',
             sprintf('/api/v2/shop/orders/%s/complete', (string) $order->getTokenValue()),
             server: ['CONTENT_TYPE' => 'application/merge-patch+json', 'HTTP_ACCEPT' => 'application/ld+json'],
             content: '{}',
         );
-
-        self::assertResponseStatusCodeSame(409);
-        self::assertSame(OrderInterface::STATE_CART, $this->reload($order)->getState(), 'An order whose total moved is not confirmed.');
     }
 
     /**

@@ -31,6 +31,17 @@
             <tag name="sylius.order_processor" priority="25" />
         </service>
 
+        <!-- Confirming through the API refuses an order whose total moved, and undoes the recalculated total with
+             it. After the refusal, the cart of a carrier of this plugin is saved recalculated, so the buyer sees the
+             new total and can confirm with it. Before API Platform turns the refusal into a 409 (priority -96). -->
+        <service id="jpmmartin_carrier.listener.keep_the_recalculated_cart" class="JpmMartin\SyliusShippingCarriersPlugin\EventListener\KeepTheRecalculatedCartListener">
+            <argument type="service" id="sylius.repository.order" />
+            <argument type="service" id="sylius.order_processing.order_processor" />
+            <argument type="service" id="sylius.manager.order" />
+            <argument type="service" id="jpmmartin_carrier.shipping.shipment_carrier" />
+            <tag name="kernel.event_listener" event="kernel.exception" priority="0" />
+        </service>
+
         <service id="jpmmartin_carrier.shipping_calculator.ups_rate" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator">
             <argument type="service" id="jpmmartin_carrier.shipping.charge_resolver" />
             <argument>ups</argument>
