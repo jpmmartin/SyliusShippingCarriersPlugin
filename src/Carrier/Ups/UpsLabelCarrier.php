@@ -20,6 +20,11 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use ShipStream\Ups\Api\Model\DimensionsUnitOfMeasurement;
+use ShipStream\Ups\Api\Model\LabelRecoveryRequest;
+use ShipStream\Ups\Api\Model\LabelRecoveryRequestRequest;
+use ShipStream\Ups\Api\Model\LABELRECOVERYRequestWrapper;
+use ShipStream\Ups\Api\Model\LabelRecoveryResponse;
+use ShipStream\Ups\Api\Model\LABELRECOVERYResponseWrapper;
 use ShipStream\Ups\Api\Model\LabelSpecificationLabelImageFormat;
 use ShipStream\Ups\Api\Model\LabelSpecificationLabelStockSize;
 use ShipStream\Ups\Api\Model\PackageDimensions;
@@ -46,6 +51,7 @@ use ShipStream\Ups\Api\Model\SHIPRequestWrapper;
 use ShipStream\Ups\Api\Model\SHIPResponseWrapper;
 use ShipStream\Ups\Api\Model\ShipToAddress;
 use ShipStream\Ups\Api\Model\ShipToPhone;
+use ShipStream\Ups\Api\Model\VOIDSHIPMENTResponseWrapper;
 
 /**
  * Issues UPS labels through shipstream/ups-rest-php-sdk. Every exception of the SDK, of the HTTP client or of
@@ -56,8 +62,21 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
     /** The Shipping API release the requests are written against, the one `Client::shipment()` documents. */
     private const SHIPPING_VERSION = 'v2403';
 
+    /** The Void Shipping API release, the one `Client::voidShipment()` documents. */
+    private const VOID_VERSION = 'v2403';
+
+    /** The Label Recovery API release, the one `Client::labelRecovery()` documents. */
+    private const LABEL_RECOVERY_VERSION = 'v1';
+
     /** What is being asked of UPS, for the message when it refuses. */
     private const SHIP_OPERATION = 'the shipment request';
+
+    private const VOID_OPERATION = 'the void request';
+
+    private const RECOVER_OPERATION = 'the label recovery';
+
+    /** «1 - Success» in the summary of a void. */
+    private const VOID_STATUS_SUCCESS = '1';
 
     /**
      * «nonvalidate»: UPS accepts the addresses as given instead of refusing anything it would rather correct.
@@ -115,12 +134,97 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
 
     public function void(string $carrierReference): VoidResult
     {
-        throw new \LogicException('Voiding a UPS shipment is not wired yet.');
+        $credentials = $this->credentialsProvider->get(CarrierCredentialsInterface::CARRIER_UPS);
+
+        try {
+            $response = $this->clientFactory->create($credentials)->voidShipment(self::VOID_VERSION, $carrierReference);
+        } catch (\Throwable $exception) {
+            $translated = $this->errorTranslator->translate($exception, self::VOID_OPERATION);
+
+            // UPS saying «no» is an answer, not a failure of the plugin: the label stays issued, and the
+            // warehouse has to be told that rather than left thinking the parcel was cancelled.
+            if ($translated instanceof CarrierRejectedRequestException) {
+                return VoidResult::refused($translated->getMessage());
+            }
+
+            throw $translated;
+        }
+
+        if (!$response instanceof VOIDSHIPMENTResponseWrapper || !$response->isInitialized('voidShipmentResponse')) {
+            throw new UnexpectedCarrierResponseException('UPS answered the void request with something that is not a void response.');
+        }
+
+        $voidResponse = $response->getVoidShipmentResponse();
+        $status = $voidResponse->isInitialized('summaryResult') ? $voidResponse->getSummaryResult()->getStatus() : null;
+        $code = null === $status ? '' : (string) $status->getCode();
+
+        if (self::VOID_STATUS_SUCCESS !== $code) {
+            return VoidResult::refused(sprintf(
+                'UPS did not void the shipment: %s',
+                null === $status || '' === (string) $status->getDescription() ? 'it gave no reason.' : (string) $status->getDescription(),
+            ));
+        }
+
+        return VoidResult::voided();
     }
 
     public function recover(string $carrierReference): ?ShipmentResult
     {
-        throw new \LogicException('Recovering a UPS shipment is not wired yet.');
+        $credentials = $this->credentialsProvider->get(CarrierCredentialsInterface::CARRIER_UPS);
+
+        try {
+            $response = $this->clientFactory->create($credentials)->labelRecovery(
+                self::LABEL_RECOVERY_VERSION,
+                (new LABELRECOVERYRequestWrapper())->setLabelRecoveryRequest(
+                    (new LabelRecoveryRequest())
+                        ->setRequest(new LabelRecoveryRequestRequest())
+                        ->setTrackingNumber($carrierReference),
+                ),
+            );
+        } catch (CarrierRejectedRequestException) {
+            // UPS knows no shipment by that number, which is the answer: it never issued it.
+            return null;
+        } catch (\Throwable $exception) {
+            $translated = $this->errorTranslator->translate($exception, self::RECOVER_OPERATION);
+            if ($translated instanceof CarrierRejectedRequestException) {
+                return null;
+            }
+
+            throw $translated;
+        }
+
+        if (!$response instanceof LABELRECOVERYResponseWrapper || !$response->isInitialized('labelRecoveryResponse')) {
+            throw new UnexpectedCarrierResponseException('UPS answered the label recovery with something that is not a recovery response.');
+        }
+
+        return $this->readRecovered($response->getLabelRecoveryResponse());
+    }
+
+    private function readRecovered(LabelRecoveryResponse $recovered): ?ShipmentResult
+    {
+        $reference = (string) $recovered->getShipmentIdentificationNumber();
+        $results = $recovered->isInitialized('labelResults') ? $recovered->getLabelResults() : [];
+        if ('' === $reference || [] === $results) {
+            return null;
+        }
+
+        $labels = [];
+        foreach (array_values($results) as $position => $result) {
+            $image = $result->isInitialized('labelImage') ? $result->getLabelImage() : null;
+            $contents = null === $image ? false : base64_decode((string) $image->getGraphicImage(), true);
+            if (false === $contents || '' === $contents) {
+                throw new UnexpectedCarrierResponseException('UPS recovered a shipment with a label that cannot be read.');
+            }
+
+            $labels[] = new IssuedLabel(
+                $position,
+                (string) $result->getTrackingNumber(),
+                null === $image || !$image->isInitialized('labelImageFormat') ? '' : (string) $image->getLabelImageFormat()->getCode(),
+                $contents,
+            );
+        }
+
+        return new ShipmentResult($reference, $labels);
     }
 
     private function buildRequest(ShipmentRequest $request, string $accountNumber): SHIPRequestWrapper

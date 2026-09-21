@@ -1,0 +1,33 @@
+{
+    "LabelRecoveryResponse": {
+        "Response": {
+            "ResponseStatus": {
+                "Code": "1",
+                "Description": "Success"
+            }
+        },
+        "ShipmentIdentificationNumber": "1Z999AA10123456784",
+        "LabelResults": [
+            {
+                "TrackingNumber": "1Z999AA10123456784",
+                "LabelImage": {
+                    "LabelImageFormat": {
+                        "Code": "GIF",
+                        "Description": "GIF"
+                    },
+                    "GraphicImage": "R0lGODlhIGEgcmVjb3ZlcmVkIFVQUyBsYWJlbA=="
+                }
+            },
+            {
+                "TrackingNumber": "1Z999AA10123456785",
+                "LabelImage": {
+                    "LabelImageFormat": {
+                        "Code": "GIF",
+                        "Description": "GIF"
+                    },
+                    "GraphicImage": "R0lGODlhIGEgcmVjb3ZlcmVkIFVQUyBsYWJlbA=="
+                }
+            }
+        ]
+    }
+}

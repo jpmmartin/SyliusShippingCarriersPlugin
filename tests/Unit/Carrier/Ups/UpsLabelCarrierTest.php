@@ -215,6 +215,77 @@ final class UpsLabelCarrierTest extends TestCase
         $carrier->ship($this->request());
     }
 
+    public function testAVoidUpsAcceptsIsAVoid(): void
+    {
+        $result = $this->carrier($this->json($this->fixture('void.json')))->void('1Z999AA10123456784');
+
+        self::assertTrue($result->voided);
+        self::assertNull($result->reason);
+    }
+
+    /**
+     * The label stays issued. Reading this as a success is what makes a warehouse ship a parcel the shop
+     * believes was cancelled.
+     */
+    public function testAVoidUpsRefusesSaysSoAndSaysWhy(): void
+    {
+        $result = $this->carrier($this->json($this->fixture('void-refused.json')))->void('1Z999AA10123456784');
+
+        self::assertFalse($result->voided);
+        self::assertStringContainsString('already been picked up', (string) $result->reason);
+    }
+
+    /**
+     * A refusal arrives as a rejected request, and is still an answer rather than a failure of the plugin.
+     */
+    public function testAVoidUpsRejectsOutrightIsAlsoARefusal(): void
+    {
+        $carrier = $this->carrier(new MockResponse($this->fixture('error.json'), [
+            'http_code' => 400,
+            'response_headers' => ['content-type' => 'application/json'],
+        ]));
+
+        $result = $carrier->void('1Z999AA10123456784');
+
+        self::assertFalse($result->voided);
+        self::assertNotNull($result->reason);
+    }
+
+    /**
+     * This is what makes the ambiguity resolvable without a person: UPS can be asked whether it did issue a
+     * shipment nobody got an answer for.
+     */
+    public function testAShipmentUpsDidIssueComesBackWithItsLabels(): void
+    {
+        $result = $this->carrier($this->json($this->fixture('label-recovery.json')))->recover('1Z999AA10123456784');
+
+        self::assertNotNull($result);
+        self::assertSame('1Z999AA10123456784', $result->carrierReference);
+        self::assertCount(2, $result->labels);
+        self::assertSame('GIF89a a recovered UPS label', $result->labels[0]->contents);
+        self::assertSame('1Z999AA10123456785', $result->labels[1]->trackingNumber);
+    }
+
+    /**
+     * Null is the answer «I never issued it», not a failure.
+     */
+    public function testAShipmentUpsNeverIssuedRecoversNothing(): void
+    {
+        $carrier = $this->carrier(new MockResponse($this->fixture('error.json'), [
+            'http_code' => 400,
+            'response_headers' => ['content-type' => 'application/json'],
+        ]));
+
+        self::assertNull($carrier->recover('1Z999AA10123456784'));
+    }
+
+    public function testARecoveryWithoutAnyLabelRecoversNothing(): void
+    {
+        $carrier = $this->carrier($this->json('{"LabelRecoveryResponse":{"ShipmentIdentificationNumber":"1Z999AA10123456784","LabelResults":[]}}'));
+
+        self::assertNull($carrier->recover('1Z999AA10123456784'));
+    }
+
     private function carrier(?MockResponse $shipResponse = null): UpsLabelCarrier
     {
         $credentials = new CarrierCredentials();
@@ -231,10 +302,11 @@ final class UpsLabelCarrierTest extends TestCase
                 return $this->json(strtr($this->fixture('token.json'), ['%issued_at%' => (string) (time() * 1000)]));
             }
 
+            // A void carries its number in the URL and no body at all, so an empty one is not an error.
             $body = $options['body'] ?? '';
             $this->requests[] = [
                 'url' => $url,
-                'body' => \is_string($body) ? (array) json_decode($body, true, flags: \JSON_THROW_ON_ERROR) : [],
+                'body' => \is_string($body) && '' !== $body ? (array) json_decode($body, true, flags: \JSON_THROW_ON_ERROR) : [],
             ];
 
             return $shipResponse;

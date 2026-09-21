@@ -1,0 +1,16 @@
+{
+    "VoidShipmentResponse": {
+        "Response": {
+            "ResponseStatus": {
+                "Code": "1",
+                "Description": "Success"
+            }
+        },
+        "SummaryResult": {
+            "Status": {
+                "Code": "0",
+                "Description": "The shipment has already been picked up."
+            }
+        }
+    }
+}
