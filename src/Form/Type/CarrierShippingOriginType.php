@@ -16,6 +16,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormInterface;
 
 final class CarrierShippingOriginType extends AbstractResourceType
 {
@@ -113,8 +114,12 @@ final class CarrierShippingOriginType extends AbstractResourceType
     /**
      * The form is drawn with the maximum package weight of the unit the origin had — 150, in pounds, for a new
      * one — and sends it back as it was drawn. Changing the unit without touching the maximum would otherwise
-     * store 150 in kilograms, more than twice what either carrier accepts. So a maximum sent back unchanged
-     * from the default of the old unit becomes the default of the new one. One that somebody typed is kept.
+     * store 150 in kilograms, more than twice what either carrier accepts. So a maximum sent back exactly as it
+     * was drawn, while it was the default of the old unit, becomes the default of the new one. One that
+     * somebody typed is kept.
+     *
+     * «Exactly as it was drawn» is compared as text, in whatever digits and separators the administrator's
+     * language draws it with: an Arabic admin sees ١٥٠, which is not a number to is_numeric().
      */
     private static function keepTheDefaultMaximumInTheChosenUnit(FormEvent $event): void
     {
@@ -129,19 +134,35 @@ final class CarrierShippingOriginType extends AbstractResourceType
             return;
         }
 
-        $shown = $origin->getMaxPackageWeight();
-        $sent = $submitted['maxPackageWeight'] ?? null;
         $defaults = CarrierShippingOriginInterface::DEFAULT_MAX_PACKAGE_WEIGHTS;
+        $maximum = $event->getForm()->get('maxPackageWeight');
         if (
-            $shown !== ($defaults[$origin->getWeightUnit()] ?? null) ||
-            !is_numeric($sent) || (float) $sent !== $shown ||
+            $origin->getMaxPackageWeight() !== ($defaults[$origin->getWeightUnit()] ?? null) ||
+            ($submitted['maxPackageWeight'] ?? null) !== $maximum->getViewData() ||
             !isset($defaults[$unit])
         ) {
             return;
         }
 
-        $submitted['maxPackageWeight'] = (string) $defaults[$unit];
+        $submitted['maxPackageWeight'] = self::drawn($maximum, $defaults[$unit]);
         $event->setData($submitted);
+    }
+
+    /**
+     * A value as the field would draw it, so it reads back the same in the administrator's language.
+     */
+    private static function drawn(FormInterface $field, float $value): mixed
+    {
+        $drawn = $value;
+        foreach ($field->getConfig()->getModelTransformers() as $transformer) {
+            $drawn = $transformer->transform($drawn);
+        }
+
+        foreach ($field->getConfig()->getViewTransformers() as $transformer) {
+            $drawn = $transformer->transform($drawn);
+        }
+
+        return $drawn;
     }
 
     public function getBlockPrefix(): string

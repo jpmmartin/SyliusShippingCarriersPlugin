@@ -81,6 +81,45 @@ final class ShippingOriginAdminTest extends WebTestCase
         self::assertSame(68.0, $this->findOriginOf($channel)->getMaxPackageWeight());
     }
 
+    /**
+     * An administrator whose language writes numbers with its own digits sees ١٥٠, not 150. Left alone in
+     * kilograms, it is still the carriers' limit and not 150 kg.
+     */
+    public function testAnAdministratorWhoseLanguageHasItsOwnDigitsGetsTheLimitInKilogramsToo(): void
+    {
+        $admin = $this->createAdmin('origin-admin-arabic');
+        $admin->setLocaleCode('ar');
+        $this->entityManager->flush();
+        $this->client->loginUser($admin, 'admin');
+
+        $channel = $this->createChannel('web-admin-arabic');
+        $this->createCountry('ES');
+
+        $crawler = $this->client->request('GET', '/admin/shipping-origins/new');
+        self::assertResponseIsSuccessful();
+        $form = $crawler->filter(sprintf('form[name="%s"]', self::FORM))->form();
+        $drawnMaximum = $form[self::FORM . '[maxPackageWeight]'];
+        self::assertInstanceOf(FormField::class, $drawnMaximum);
+        self::assertSame('١٥٠', $drawnMaximum->getValue(), 'The form is drawn with the limit in pounds, in Arabic digits.');
+
+        $this->client->submit($form, [
+            self::FORM . '[channel]' => 'web-admin-arabic',
+            self::FORM . '[companyName]' => 'Swaypc',
+            self::FORM . '[contactName]' => 'Juan Pablo Moreno Martin',
+            self::FORM . '[phone]' => '13057800955',
+            self::FORM . '[street]' => 'Gran Via 1',
+            self::FORM . '[city]' => 'Madrid',
+            self::FORM . '[postcode]' => '28013',
+            self::FORM . '[countryCode]' => 'ES',
+            self::FORM . '[defaultDestinationType]' => 'residential',
+            self::FORM . '[weightUnit]' => 'kg',
+            self::FORM . '[dimensionUnit]' => 'cm',
+        ]);
+        self::assertResponseRedirects();
+
+        self::assertSame(68.0, $this->findOriginOf($channel)->getMaxPackageWeight());
+    }
+
     public function testAMaximumTheAdministratorTypedIsKeptWhateverTheUnit(): void
     {
         $channel = $this->createChannel('web-admin-typed-maximum');
