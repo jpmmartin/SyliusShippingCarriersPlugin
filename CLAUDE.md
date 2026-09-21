@@ -127,10 +127,11 @@ with [OpenSpec](https://github.com/Fission-AI/OpenSpec) through its `/opsx:*` co
    wrong decomposition is still cheap to fix. Corrections go through `/opsx:update <NNN>-<slug>`.
 4. **Implement** — `/opsx:apply <NNN>-<slug>`. Execute one task at a time. After each task: run
    tests, check the box in `tasks.md`, and reference the task in the commit message (format: Rule 4).
-5. **Verify** — Before declaring anything done, walk through every requirement and scenario of the
-   change (or `## Criterios de aceptación` in `proposal.md` when the change declares
-   `skip_specs: true`) and confirm each one passes. This step is manual: `/opsx:verify` is not part
-   of this workflow.
+5. **Verify** — `/opsx:verify <NNN>-<slug>` before declaring anything done: it walks every requirement
+   and scenario of the change (or `## Criterios de aceptación` in `proposal.md` when the change
+   declares `skip_specs: true`) against what was built and reports what does not hold. Installed on
+   2026-09-21; before that the walk was done by hand, which is why the older changes carry their
+   own criterion→test table.
 6. **Archive** — `/opsx:archive <NNN>-<slug>` once every task is checked and step 5 passed. It merges
    the change's specs into `openspec/specs/` and moves the change to
    `openspec/changes/archive/YYYY-MM-DD-<NNN>-<slug>/`.
