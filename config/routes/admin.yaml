@@ -77,3 +77,10 @@ jpmmartin_carrier_admin_shipment_issue_labels:
         id: \d+
     defaults:
         _controller: jpmmartin_carrier.controller.admin.issue_labels
+
+# The same action for the shipments picked in the grid. POST only, and with the same token as the single one.
+jpmmartin_carrier_admin_shipments_issue_labels:
+    path: /carrier-shipments/issue-labels
+    methods: [POST]
+    defaults:
+        _controller: jpmmartin_carrier.controller.admin.issue_labels_in_batch

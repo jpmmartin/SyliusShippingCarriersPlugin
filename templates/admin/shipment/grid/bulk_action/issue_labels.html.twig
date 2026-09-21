@@ -1,0 +1,9 @@
+{# The checked rows reach this form through Sylius's own bulk script: `data-bulk-delete` is named after the
+   only action that used it, but all it does is copy the checked ids into the form it sits on. #}
+<form method="post" action="{{ path('jpmmartin_carrier_admin_shipments_issue_labels') }}" data-bulk-delete="index">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('jpmmartin_carrier_issue_labels') }}">
+    <button type="submit" class="btn" disabled data-check-all-action="index" {{ sylius_test_html_attribute('jpmmartin-carrier-issue-labels-in-batch-button') }}>
+        {{ ux_icon('tabler:tags') }}
+        {{ action.label|default('jpmmartin_carrier.ui.labels.issue_batch')|trans }}
+    </button>
+</form>

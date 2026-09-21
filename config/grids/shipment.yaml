@@ -1,0 +1,13 @@
+# Issuing in a batch is offered on Sylius's own shipment grid, which had no bulk action of its own. The grid
+# shows every shipment, so the action answers for the ones it cannot issue instead of hiding them.
+sylius_grid:
+    templates:
+        bulk_action:
+            jpmmartin_carrier_issue_labels: '@JpmMartinSyliusShippingCarriersPlugin/admin/shipment/grid/bulk_action/issue_labels.html.twig'
+    grids:
+        sylius_admin_shipment:
+            actions:
+                bulk:
+                    jpmmartin_carrier_issue_labels:
+                        type: jpmmartin_carrier_issue_labels
+                        label: jpmmartin_carrier.ui.labels.issue_batch

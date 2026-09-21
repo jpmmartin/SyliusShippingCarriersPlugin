@@ -30,6 +30,8 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
 
     private const ISSUE_BUTTON = 'data-test-jpmmartin-carrier-issue-labels-button';
 
+    private const BATCH_BUTTON = 'data-test-jpmmartin-carrier-issue-labels-in-batch-button';
+
     private KernelBrowser $client;
 
     private EntityManagerInterface $entityManager;
@@ -115,6 +117,43 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
         self::assertNull($this->entityManager->getRepository(CarrierShipmentExport::class)->findOneBy(['shipment' => $shipment]));
     }
 
+    /**
+     * A morning's worth of labels is printed from the grid, so the action is offered there too.
+     */
+    public function testTheBatchActionIsOfferedOnTheShipmentsGrid(): void
+    {
+        $this->createOrder('ups_rate');
+        $this->client->loginUser($this->createAdmin('batch-grid-admin'), 'admin');
+
+        $this->client->request('GET', '/admin/shipments/');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString(self::BATCH_BUTTON, (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testWithoutAnAdminSessionNothingIsIssuedInABatchEither(): void
+    {
+        $shipment = $this->createOrder('ups_rate')->getShipments()->first();
+        self::assertInstanceOf(ShipmentInterface::class, $shipment);
+
+        $this->client->request('POST', '/admin/carrier-shipments/issue-labels', ['ids' => [$shipment->getId()]]);
+
+        self::assertFalse($this->client->getResponse()->isSuccessful());
+        self::assertNull($this->entityManager->getRepository(CarrierShipmentExport::class)->findOneBy(['shipment' => $shipment]));
+    }
+
+    public function testWithoutTheAdminsOwnTokenNothingIsIssuedInABatchEither(): void
+    {
+        $shipment = $this->createOrder('ups_rate')->getShipments()->first();
+        self::assertInstanceOf(ShipmentInterface::class, $shipment);
+        $this->client->loginUser($this->createAdmin('batch-no-token-admin'), 'admin');
+
+        $this->client->request('POST', '/admin/carrier-shipments/issue-labels', ['ids' => [$shipment->getId()]]);
+
+        self::assertFalse($this->client->getResponse()->isSuccessful());
+        self::assertNull($this->entityManager->getRepository(CarrierShipmentExport::class)->findOneBy(['shipment' => $shipment]));
+    }
+
     private function createOrder(string $calculator): OrderInterface
     {
         $order = new Order();
@@ -126,6 +165,8 @@ final class IssueCarrierLabelsAdminTest extends WebTestCase
         $order->setCustomer($this->createCustomer());
 
         $shipment = new Shipment();
+        // The shipments grid leaves carts out, the same way the admin order page does.
+        $shipment->setState(ShipmentInterface::STATE_READY);
         $shipment->setMethod($this->createShippingMethod($calculator));
         $order->addShipment($shipment);
 
