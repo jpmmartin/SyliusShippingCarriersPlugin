@@ -14,6 +14,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabelInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AmbiguousShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\UnissuableShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
 use League\Flysystem\FilesystemException;
@@ -62,6 +63,8 @@ final readonly class LabelIssuer
      * @throws \InvalidArgumentException When the shipment is not one of a carrier of this plugin. The admin
      *                                   never offers the action for one, so getting here is a mistake, not a
      *                                   failed issue
+     * @throws AmbiguousShipmentException When nobody knows yet whether a previous attempt was issued. This is
+     *                                   the refusal that stops the same shipment being paid for twice
      */
     public function issue(ShipmentInterface $shipment, string $issuedBy): CarrierShipmentExportInterface
     {
@@ -72,19 +75,34 @@ final readonly class LabelIssuer
 
         $export = $this->export($shipment, $carrier);
 
-        try {
-            $credentials = $this->credentialsProvider->get($carrier);
-            $export->setEnvironment($credentials->getEnvironment());
-
-            $request = $this->requestFactory->create($shipment, $carrier);
-        } catch (CarrierCredentialsException | UnissuableShipmentException $exception) {
-            // Nothing was asked of the carrier, so nothing was issued and nothing was charged.
-            return $this->failed($export, $shipment, $carrier, $exception->getMessage());
+        // Refused here and not only in the admin: a shipment nobody knows the fate of is exactly the one that
+        // gets paid for twice, and a batch, a command or another plugin must hit the same wall the operator does.
+        if (CarrierShipmentExportInterface::STATE_NEEDS_CHECK === $export->getState()) {
+            throw new AmbiguousShipmentException(sprintf(
+                'Nobody knows whether %s issued the labels of this shipment, so it is not sent again until somebody says it was not: %s',
+                $carrier,
+                (string) $export->getFailureReason(),
+            ));
         }
 
         $labelCarrier = $this->labelCarriers->get($carrier);
         if (!$labelCarrier instanceof LabelCarrierInterface) {
             throw new \LogicException(sprintf('The carrier "%s" does not issue labels.', $carrier));
+        }
+
+        // A name of its own for this attempt, kept before anything is sent: after a request that goes
+        // unanswered it is the only thing left to ask the carrier about.
+        $ownReference = bin2hex(random_bytes(12));
+        $export->setOwnReference($ownReference);
+
+        try {
+            $credentials = $this->credentialsProvider->get($carrier);
+            $export->setEnvironment($credentials->getEnvironment());
+
+            $request = $this->requestFactory->create($shipment, $carrier, $ownReference);
+        } catch (CarrierCredentialsException | UnissuableShipmentException $exception) {
+            // Nothing was asked of the carrier, so nothing was issued and nothing was charged.
+            return $this->failed($export, $shipment, $carrier, $exception->getMessage());
         }
 
         try {
@@ -93,11 +111,68 @@ final readonly class LabelIssuer
             // The carrier answered, and the answer was no.
             return $this->failed($export, $shipment, $carrier, $exception->getMessage());
         } catch (CarrierException $exception) {
-            // No usable answer came back. Whether the carrier issued the labels is exactly what nobody knows.
-            return $this->needsCheck($export, $shipment, $carrier, $exception->getMessage());
+            // No usable answer came back. Whether the carrier issued the labels is exactly what nobody knows,
+            // so the carrier is asked straight away about the name the plugin gave it.
+            $recovered = $this->recover($labelCarrier, $ownReference, $shipment, $carrier);
+            if (null === $recovered) {
+                return $this->needsCheck($export, $shipment, $carrier, $exception->getMessage());
+            }
+
+            return $this->issued($export, $shipment, $carrier, $issuedBy, $request, $recovered);
         }
 
         return $this->issued($export, $shipment, $carrier, $issuedBy, $request, $result);
+    }
+
+    /**
+     * Says that a shipment nobody knew the fate of was never issued, so it can be sent again.
+     *
+     * It takes a person, because it is the one thing the plugin cannot find out on its own: the carrier did
+     * not answer, and this carrier cannot be asked. Whoever signs this has looked in the carrier's own portal.
+     *
+     * @param string $confirmedBy Who looked and said so
+     *
+     * @throws \InvalidArgumentException When the shipment was not waiting to be checked
+     */
+    public function confirmNotIssued(CarrierShipmentExportInterface $export, string $confirmedBy): void
+    {
+        if (CarrierShipmentExportInterface::STATE_NEEDS_CHECK !== $export->getState()) {
+            throw new \InvalidArgumentException('Only a shipment waiting to be checked is confirmed as never issued.');
+        }
+
+        $export->setState(CarrierShipmentExportInterface::STATE_FAILED);
+        $export->setFailureReason(sprintf('%s confirmed that the carrier never issued it: %s', $confirmedBy, (string) $export->getFailureReason()));
+        $this->save($export);
+
+        $this->logger->warning('{who} confirmed that {carrier} never issued the labels of the shipment {shipment}, so it may be sent again.', [
+            'who' => $confirmedBy,
+            'carrier' => (string) $export->getCarrier(),
+            'shipment' => $export->getShipment()?->getId(),
+        ]);
+    }
+
+    /**
+     * Asks the carrier whether it did issue what it never answered about. Null when it says no, when it
+     * cannot be asked at all — FedEx has no such operation — or when asking fails too: all three mean the
+     * same thing here, that a person has to look.
+     */
+    private function recover(
+        LabelCarrierInterface $labelCarrier,
+        string $ownReference,
+        ShipmentInterface $shipment,
+        string $carrier,
+    ): ?ShipmentResult {
+        try {
+            return $labelCarrier->recover($ownReference);
+        } catch (CarrierException $exception) {
+            $this->logger->error('The carrier {carrier} could not be asked whether it issued the labels of the shipment {shipment}: {reason}', [
+                'carrier' => $carrier,
+                'shipment' => $shipment->getId(),
+                'reason' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     private function export(ShipmentInterface $shipment, string $carrier): CarrierShipmentExportInterface

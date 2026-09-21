@@ -15,6 +15,9 @@ final readonly class ShipmentRequest
      * @param string $serviceCode The carrier's own code for the service the buyer was charged for
      * @param non-empty-list<ShipmentPackage> $packages One entry per package, in the order they were packed
      * @param string $labelFormat What to ask the carrier to print, for instance PDF or ZPL
+     * @param string $ownReference What the plugin calls this shipment. It is the only name it controls before
+     *                             the carrier answers, and therefore the only one it can ask about afterwards
+     *                             when no answer came back
      */
     public function __construct(
         public Address $origin,
@@ -22,6 +25,7 @@ final readonly class ShipmentRequest
         public string $serviceCode,
         public array $packages,
         public string $labelFormat,
+        public string $ownReference,
     ) {
     }
 

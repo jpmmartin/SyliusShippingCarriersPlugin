@@ -238,6 +238,7 @@ final class NoSdkExceptionEscapesTest extends TestCase
             '03',
             [new ShipmentPackage(new Package('Medium', 13.0, 11.0, 9.0, 'in', 5.5, 'lb', []))],
             'PDF',
+            'the shop reference',
         );
     }
 

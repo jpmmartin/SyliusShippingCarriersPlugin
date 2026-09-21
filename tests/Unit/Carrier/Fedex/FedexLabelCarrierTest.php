@@ -272,6 +272,7 @@ final class FedexLabelCarrierTest extends TestCase
             'FEDEX_GROUND',
             $items,
             'PDF',
+            'the shop reference',
         );
     }
 

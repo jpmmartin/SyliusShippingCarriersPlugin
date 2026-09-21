@@ -64,6 +64,14 @@ interface CarrierShipmentExportInterface extends ResourceInterface
 
     public function setCarrierReference(?string $carrierReference): void;
 
+    /**
+     * What the plugin called the last attempt, and sent the carrier as its own reference. It is what the
+     * carrier is asked about when it gave no answer.
+     */
+    public function getOwnReference(): ?string;
+
+    public function setOwnReference(?string $ownReference): void;
+
     public function getIssuedAt(): ?\DateTimeImmutable;
 
     public function setIssuedAt(?\DateTimeImmutable $issuedAt): void;

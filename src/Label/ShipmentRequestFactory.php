@@ -44,10 +44,11 @@ final readonly class ShipmentRequestFactory
 
     /**
      * @param string $carrier The carrier's code, such as `ups`
+     * @param string $ownReference What the plugin calls this attempt, to ask the carrier about later
      *
      * @throws UnissuableShipmentException When the shipment cannot be handed to the carrier
      */
-    public function create(ShipmentInterface $shipment, string $carrier): ShipmentRequest
+    public function create(ShipmentInterface $shipment, string $carrier, string $ownReference): ShipmentRequest
     {
         $order = $shipment->getOrder();
         if (!$order instanceof OrderInterface) {
@@ -85,6 +86,7 @@ final readonly class ShipmentRequestFactory
             $serviceCode,
             $this->packages($shipment),
             $this->labelFormats->for($carrier),
+            $ownReference,
         );
     }
 

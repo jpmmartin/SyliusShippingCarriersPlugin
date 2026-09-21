@@ -137,6 +137,30 @@ final class UpsLabelCarrierTest extends TestCase
      * The address was good enough to be rated and paid for. Refusing to print now would leave a paid order
      * nobody can ship.
      */
+    /**
+     * The name the plugin gives the shipment is the only one it controls before UPS answers, and therefore the
+     * only one left to ask about when UPS answers nothing. UPS's schema takes it in two places and each half
+     * refuses the other's case, so a domestic shipment carries it on every package.
+     */
+    public function testADomesticShipmentCarriesThePluginsOwnNameOnEveryPackage(): void
+    {
+        $this->carrier($this->json($this->fixture('shipment-two-packages.json')))->ship($this->request(packages: 2));
+
+        self::assertSame('the shop reference', $this->sent('Shipment.Package.0.ReferenceNumber.0.Value'));
+        self::assertSame('the shop reference', $this->sent('Shipment.Package.1.ReferenceNumber.0.Value'));
+        self::assertNull($this->sent('Shipment.ReferenceNumber'));
+    }
+
+    public function testAnInternationalShipmentCarriesThePluginsOwnNameOnTheShipment(): void
+    {
+        $destination = new Address('CA', 'M5H 2N2', 'Toronto', '100 Queen St W', 'ON', false, null, 'Grace Hopper', '14165550100');
+
+        $this->carrier()->ship($this->request(destination: $destination));
+
+        self::assertSame('the shop reference', $this->sent('Shipment.ReferenceNumber.0.Value'));
+        self::assertNull($this->sent('Shipment.Package.0.ReferenceNumber'));
+    }
+
     public function testUpsIsAskedNotToSecondGuessTheAddresses(): void
     {
         $this->carrier()->ship($this->request());
@@ -279,6 +303,30 @@ final class UpsLabelCarrierTest extends TestCase
         self::assertNull($carrier->recover('1Z999AA10123456784'));
     }
 
+    /**
+     * Asked about by the name the plugin gave it, never by a tracking number: a shipment nobody got an answer
+     * for has none, which is the whole of the problem.
+     */
+    public function testUpsIsAskedByTheNameThePluginGaveTheShipment(): void
+    {
+        $this->carrier($this->json($this->fixture('label-recovery.json')))->recover('the shop reference');
+
+        $sent = $this->requests[0]['body']['LabelRecoveryRequest'] ?? null;
+        self::assertIsArray($sent);
+        self::assertSame('the shop reference', $sent['ReferenceValues']['ReferenceNumber']['Value'] ?? null);
+        self::assertSame('A1B2C3', $sent['ReferenceValues']['ShipperNumber'] ?? null);
+        self::assertArrayNotHasKey('TrackingNumber', $sent);
+    }
+
+    public function testWithoutAnAccountNumberUpsIsNotAskedAboutAnything(): void
+    {
+        unset($this->credentials[CarrierCredentialsInterface::ACCOUNT_NUMBER]);
+
+        $this->expectException(CarrierCredentialsException::class);
+
+        $this->carrier()->recover('the shop reference');
+    }
+
     public function testARecoveryWithoutAnyLabelRecoversNothing(): void
     {
         $carrier = $this->carrier($this->json('{"LabelRecoveryResponse":{"ShipmentIdentificationNumber":"1Z999AA10123456784","LabelResults":[]}}'));
@@ -337,6 +385,7 @@ final class UpsLabelCarrierTest extends TestCase
             '03',
             $this->packages($packages, $package),
             'PDF',
+            'the shop reference',
         );
     }
 

@@ -168,7 +168,7 @@ final readonly class FedexLabelCarrier implements LabelCarrierInterface
      * whether a shipment exists, so the ambiguity of a shipment nobody got an answer for needs a person to
      * look in FedEx's own portal. Null is how that is said.
      */
-    public function recover(string $carrierReference): ?ShipmentResult
+    public function recover(string $ownReference): ?ShipmentResult
     {
         return null;
     }

@@ -30,10 +30,13 @@ interface LabelCarrierInterface
     /**
      * Asks the carrier whether it did issue a shipment nobody got an answer for.
      *
-     * Null is not a failure: it means this carrier cannot answer that question, so the ambiguity needs a
-     * person. UPS can answer it; FedEx has no equivalent operation.
+     * The question is asked with the reference the plugin put on the request, not with a tracking number: a
+     * shipment nobody got an answer for has no tracking number, which is the whole of the problem.
+     *
+     * Null is not a failure: it means this carrier cannot answer that question, or does not know the
+     * reference, so the ambiguity needs a person. UPS can answer it; FedEx has no equivalent operation.
      *
      * @throws CarrierException When the carrier could not be asked
      */
-    public function recover(string $carrierReference): ?ShipmentResult;
+    public function recover(string $ownReference): ?ShipmentResult;
 }

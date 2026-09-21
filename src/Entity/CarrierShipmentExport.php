@@ -47,6 +47,14 @@ class CarrierShipmentExport implements CarrierShipmentExportInterface
     #[ORM\Column(name: 'carrier_reference', type: 'string', nullable: true)]
     protected ?string $carrierReference = null;
 
+    /**
+     * What the plugin called the last attempt, which is what it sent the carrier as its own reference. It is
+     * the only name it controls before the carrier answers, so it is the only one left to ask about when no
+     * answer comes back.
+     */
+    #[ORM\Column(name: 'own_reference', type: 'string', length: 64, nullable: true)]
+    protected ?string $ownReference = null;
+
     #[ORM\Column(name: 'issued_at', type: 'datetime_immutable', nullable: true)]
     protected ?\DateTimeImmutable $issuedAt = null;
 
@@ -129,6 +137,16 @@ class CarrierShipmentExport implements CarrierShipmentExportInterface
     public function setCarrierReference(?string $carrierReference): void
     {
         $this->carrierReference = $carrierReference;
+    }
+
+    public function getOwnReference(): ?string
+    {
+        return $this->ownReference;
+    }
+
+    public function setOwnReference(?string $ownReference): void
+    {
+        $this->ownReference = $ownReference;
     }
 
     public function getIssuedAt(): ?\DateTimeImmutable

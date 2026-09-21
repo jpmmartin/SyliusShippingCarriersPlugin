@@ -29,6 +29,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackaging;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackagingInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AmbiguousShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelIssuer;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelStorage;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\ShipmentRequestFactory;
@@ -76,8 +77,16 @@ final class LabelIssuerTest extends TestCase
     /** The carrier's answer to ship(), or what it throws instead. */
     private ShipmentResult|\Throwable $answer;
 
+    /** What the carrier says when asked whether it issued what it never answered about. */
+    private ShipmentResult|\Throwable|null $recovery = null;
+
+    private ?CarrierShipmentExportInterface $existingExport = null;
+
     /** @var list<ShipmentRequest> */
     private array $requests = [];
+
+    /** @var list<string> The references the carrier was asked about. */
+    private array $recovered = [];
 
     private ?CarrierShipmentPackagingInterface $packaging = null;
 
@@ -94,10 +103,13 @@ final class LabelIssuerTest extends TestCase
         $this->storageDirectory = sys_get_temp_dir() . '/jpmmartin_carrier_labels_' . bin2hex(random_bytes(6));
         $this->storage = new Filesystem(new LocalFilesystemAdapter($this->storageDirectory));
         $this->requests = [];
+        $this->recovered = [];
         $this->packaging = $this->storedPackaging();
         $this->credentials = $this->storedCredentials();
         $this->origin = $this->origin();
         $this->whileCommitting = null;
+        $this->recovery = null;
+        $this->existingExport = null;
         $this->answer = new ShipmentResult('1Z999AA10123456784', [
             new IssuedLabel(0, '1Z999AA10123456784', 'GIF', 'the first label'),
             new IssuedLabel(1, '1Z999AA10123456795', 'GIF', 'the second label'),
@@ -295,6 +307,123 @@ final class LabelIssuerTest extends TestCase
         self::assertSame([], $this->storedFiles(), 'No label may be left anywhere.');
     }
 
+    public function testTheCarrierIsGivenANameOfThePluginsOwnThatIsKeptOnTheExport(): void
+    {
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertNotSame('', (string) $export->getOwnReference());
+        self::assertSame($export->getOwnReference(), $this->requests[0]->ownReference);
+    }
+
+    /**
+     * A second attempt must not be able to be mistaken for the first when the carrier is asked about it.
+     */
+    public function testEachAttemptIsGivenANameOfItsOwn(): void
+    {
+        $this->answer = new CarrierRejectedRequestException('UPS rejected the shipment request.');
+
+        $first = $this->issuer()->issue($this->shipment(), 'warehouse@example.com')->getOwnReference();
+        $second = $this->issuer()->issue($this->shipment(), 'warehouse@example.com')->getOwnReference();
+
+        self::assertNotSame($first, $second);
+    }
+
+    /**
+     * UPS can be asked whether it issued what it never answered about, so the ambiguity resolves itself.
+     */
+    public function testACarrierThatCanSayItDidIssueResolvesTheAmbiguityByItself(): void
+    {
+        $this->answer = new CarrierUnavailableException('UPS could not be reached: the request timed out.');
+        $this->recovery = new ShipmentResult('1Z999AA10123456784', [
+            new IssuedLabel(0, '1Z999AA10123456784', 'GIF', 'the first label'),
+            new IssuedLabel(1, '1Z999AA10123456795', 'GIF', 'the second label'),
+        ]);
+        $shipment = $this->shipment();
+
+        $export = $this->issuer()->issue($shipment, 'warehouse@example.com');
+
+        self::assertSame(CarrierShipmentExportInterface::STATE_ISSUED, $export->getState());
+        self::assertSame([$export->getOwnReference()], $this->recovered, 'It is asked about by the name the plugin gave it.');
+        self::assertCount(2, $export->getLabels());
+        self::assertSame('1Z999AA10123456784', $shipment->getTracking());
+    }
+
+    public function testACarrierThatCannotBeAskedLeavesTheAmbiguityForAPerson(): void
+    {
+        $this->answer = new CarrierUnavailableException('FedEx could not be reached: the request timed out.');
+        $this->recovery = null;
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(CarrierShipmentExportInterface::STATE_NEEDS_CHECK, $export->getState());
+        self::assertCount(1, $this->recovered);
+    }
+
+    public function testAskingWhetherItWasIssuedFailingLeavesTheAmbiguityForAPerson(): void
+    {
+        $this->answer = new CarrierUnavailableException('UPS could not be reached: the request timed out.');
+        $this->recovery = new CarrierUnavailableException('UPS could not be reached either.');
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(CarrierShipmentExportInterface::STATE_NEEDS_CHECK, $export->getState());
+        self::assertSame(LogLevel::ERROR, $this->logger->records[0][0] ?? null);
+    }
+
+    /**
+     * The test that stops a shipment being paid for twice. Nothing may send it again on its own, from the
+     * admin or from anywhere else, while nobody knows whether the carrier issued it.
+     */
+    public function testAShipmentNobodyKnowsTheFateOfIsNotSentAgain(): void
+    {
+        $this->existingExport = $this->exportWaitingToBeChecked();
+
+        $this->expectException(AmbiguousShipmentException::class);
+
+        try {
+            $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+        } finally {
+            self::assertSame([], $this->requests, 'Nothing may reach the carrier a second time.');
+        }
+    }
+
+    public function testOnceAPersonSaysItWasNeverIssuedItCanBeSentAgain(): void
+    {
+        $export = $this->exportWaitingToBeChecked();
+        $this->existingExport = $export;
+
+        $this->issuer()->confirmNotIssued($export, 'warehouse@example.com');
+
+        self::assertSame(CarrierShipmentExportInterface::STATE_FAILED, $export->getState());
+        self::assertStringContainsString('warehouse@example.com confirmed', (string) $export->getFailureReason());
+
+        $issued = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(CarrierShipmentExportInterface::STATE_ISSUED, $issued->getState());
+        self::assertCount(1, $this->requests);
+    }
+
+    public function testOnlyAShipmentWaitingToBeCheckedIsConfirmedAsNeverIssued(): void
+    {
+        $export = new CarrierShipmentExport();
+        $export->setState(CarrierShipmentExportInterface::STATE_ISSUED);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->issuer()->confirmNotIssued($export, 'warehouse@example.com');
+    }
+
+    private function exportWaitingToBeChecked(): CarrierShipmentExportInterface
+    {
+        $export = new CarrierShipmentExport();
+        $export->setCarrier('ups');
+        $export->setState(CarrierShipmentExportInterface::STATE_NEEDS_CHECK);
+        $export->setOwnReference('the first attempt');
+        $export->setFailureReason('UPS could not be reached: the request timed out.');
+
+        return $export;
+    }
+
     public function testAChannelWithoutAShippingOriginIssuesNothing(): void
     {
         $this->origin = null;
@@ -359,7 +488,7 @@ final class LabelIssuerTest extends TestCase
 
         /** @var RepositoryInterface<CarrierShipmentExportInterface>&Stub $exportRepository */
         $exportRepository = $this->createStub(RepositoryInterface::class);
-        $exportRepository->method('findOneBy')->willReturn(null);
+        $exportRepository->method('findOneBy')->willReturnCallback(fn (): ?CarrierShipmentExportInterface => $this->existingExport);
 
         /** @var RepositoryInterface<CarrierCredentialsInterface>&Stub $credentialsRepository */
         $credentialsRepository = $this->createStub(RepositoryInterface::class);
@@ -417,13 +546,18 @@ final class LabelIssuerTest extends TestCase
     {
         return new class(function (ShipmentRequest $request): void {
             $this->requests[] = $request;
-        }, $this->answer) implements LabelCarrierInterface {
+        }, $this->answer, $this->recovery, function (string $ownReference): void {
+            $this->recovered[] = $ownReference;
+        }) implements LabelCarrierInterface {
             /**
              * @param \Closure(ShipmentRequest): void $record
+             * @param \Closure(string): void $recordRecovery
              */
             public function __construct(
                 private readonly \Closure $record,
                 private readonly ShipmentResult|\Throwable $answer,
+                private readonly ShipmentResult|\Throwable|null $recovery,
+                private readonly \Closure $recordRecovery,
             ) {
             }
 
@@ -443,9 +577,15 @@ final class LabelIssuerTest extends TestCase
                 throw new \LogicException('Nothing is cancelled while a label is issued.');
             }
 
-            public function recover(string $carrierReference): ?ShipmentResult
+            public function recover(string $ownReference): ?ShipmentResult
             {
-                throw new \LogicException('Nothing is recovered while a label is issued.');
+                ($this->recordRecovery)($ownReference);
+
+                if ($this->recovery instanceof \Throwable) {
+                    throw $this->recovery;
+                }
+
+                return $this->recovery;
             }
         };
     }

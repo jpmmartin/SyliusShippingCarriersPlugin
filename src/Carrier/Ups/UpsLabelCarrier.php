@@ -21,6 +21,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use ShipStream\Ups\Api\Model\DimensionsUnitOfMeasurement;
 use ShipStream\Ups\Api\Model\LabelRecoveryRequest;
+use ShipStream\Ups\Api\Model\LabelRecoveryRequestReferenceValues;
 use ShipStream\Ups\Api\Model\LabelRecoveryRequestRequest;
 use ShipStream\Ups\Api\Model\LABELRECOVERYRequestWrapper;
 use ShipStream\Ups\Api\Model\LabelRecoveryResponse;
@@ -30,13 +31,16 @@ use ShipStream\Ups\Api\Model\LabelSpecificationLabelStockSize;
 use ShipStream\Ups\Api\Model\PackageDimensions;
 use ShipStream\Ups\Api\Model\PackagePackageWeight;
 use ShipStream\Ups\Api\Model\PackagePackaging;
+use ShipStream\Ups\Api\Model\PackageReferenceNumber;
 use ShipStream\Ups\Api\Model\PackageWeightUnitOfMeasurement;
 use ShipStream\Ups\Api\Model\PaymentInformationShipmentCharge;
+use ShipStream\Ups\Api\Model\ReferenceValuesReferenceNumber;
 use ShipStream\Ups\Api\Model\ShipFromAddress;
 use ShipStream\Ups\Api\Model\ShipFromPhone;
 use ShipStream\Ups\Api\Model\ShipmentChargeBillShipper;
 use ShipStream\Ups\Api\Model\ShipmentPackage as UpsShipmentPackage;
 use ShipStream\Ups\Api\Model\ShipmentPaymentInformation;
+use ShipStream\Ups\Api\Model\ShipmentReferenceNumber;
 use ShipStream\Ups\Api\Model\ShipmentRequest as UpsShipmentRequest;
 use ShipStream\Ups\Api\Model\ShipmentRequestLabelSpecification;
 use ShipStream\Ups\Api\Model\ShipmentRequestRequest;
@@ -90,6 +94,16 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
 
     /** «01 - Transportation», billed to the shipper's own account. */
     private const CHARGE_TYPE_TRANSPORTATION = '01';
+
+    /**
+     * Where UPS takes a reference of the shipper's own. Its schema splits it in two and each half refuses the
+     * other's case: `PackageReferenceNumber` says it is «valid if the origin/destination pair is US/US or
+     * PR/PR», and `ShipmentReferenceNumber` says it is valid when it is not. So the same reference goes on
+     * every package of a domestic shipment and on the shipment itself otherwise.
+     *
+     * @var list<string>
+     */
+    private const PACKAGE_REFERENCE_COUNTRIES = ['US', 'PR'];
 
     /** Four by six inches, the size of every label printer and of a sheet folded in half. */
     private const LABEL_STOCK_HEIGHT = '6';
@@ -168,9 +182,11 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
         return VoidResult::voided();
     }
 
-    public function recover(string $carrierReference): ?ShipmentResult
+    public function recover(string $ownReference): ?ShipmentResult
     {
         $credentials = $this->credentialsProvider->get(CarrierCredentialsInterface::CARRIER_UPS);
+        $accountNumber = $credentials->getCredentials()[CarrierCredentialsInterface::ACCOUNT_NUMBER]
+            ?? throw new CarrierCredentialsException('UPS is not asked about a shipment without an account number.');
 
         try {
             $response = $this->clientFactory->create($credentials)->labelRecovery(
@@ -178,11 +194,15 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
                 (new LABELRECOVERYRequestWrapper())->setLabelRecoveryRequest(
                     (new LabelRecoveryRequest())
                         ->setRequest(new LabelRecoveryRequestRequest())
-                        ->setTrackingNumber($carrierReference),
+                        ->setReferenceValues(
+                            (new LabelRecoveryRequestReferenceValues())
+                                ->setReferenceNumber((new ReferenceValuesReferenceNumber())->setValue($ownReference))
+                                ->setShipperNumber($accountNumber),
+                        ),
                 ),
             );
         } catch (CarrierRejectedRequestException) {
-            // UPS knows no shipment by that number, which is the answer: it never issued it.
+            // UPS knows no shipment by that reference, which is the answer: it never issued it.
             return null;
         } catch (\Throwable $exception) {
             $translated = $this->errorTranslator->translate($exception, self::RECOVER_OPERATION);
@@ -263,8 +283,20 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
                 ]),
             )
             ->setService((new ShipmentService())->setCode($request->serviceCode))
-            ->setPackage(array_map($this->package(...), $request->packages))
+            ->setPackage(array_map(
+                fn (ShipmentPackage $package): UpsShipmentPackage => $this->package(
+                    $package,
+                    self::takesAPackageReference($request) ? $request->ownReference : null,
+                ),
+                $request->packages,
+            ))
         ;
+
+        // Nothing else the plugin sends survives a request that goes unanswered, so this is what it will ask
+        // UPS about if no answer comes back.
+        if (!self::takesAPackageReference($request)) {
+            $shipment->setReferenceNumber([(new ShipmentReferenceNumber())->setValue($request->ownReference)]);
+        }
 
         return (new SHIPRequestWrapper())->setShipmentRequest(
             (new UpsShipmentRequest())
@@ -311,7 +343,10 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
         return $upsAddress;
     }
 
-    private function package(ShipmentPackage $shipmentPackage): UpsShipmentPackage
+    /**
+     * @param string|null $ownReference The plugin's reference, on every package, when UPS takes it there
+     */
+    private function package(ShipmentPackage $shipmentPackage, ?string $ownReference): UpsShipmentPackage
     {
         $package = $shipmentPackage->package;
 
@@ -319,7 +354,7 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
         $sides = [$package->length, $package->width, $package->height];
         rsort($sides);
 
-        return (new UpsShipmentPackage())
+        $upsPackage = (new UpsShipmentPackage())
             ->setPackaging((new PackagePackaging())->setCode(self::PACKAGING_TYPE_PACKAGE))
             ->setDimensions(
                 (new PackageDimensions())
@@ -340,6 +375,24 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
                     ->setWeight($this->roundUp($package->weight, 1)),
             )
         ;
+
+        if (null !== $ownReference) {
+            $upsPackage->setReferenceNumber([(new PackageReferenceNumber())->setValue($ownReference)]);
+        }
+
+        return $upsPackage;
+    }
+
+    /**
+     * Whether this shipment is one of the two cases in which UPS takes the reference on the package rather
+     * than on the shipment.
+     */
+    private static function takesAPackageReference(ShipmentRequest $request): bool
+    {
+        $countryCode = strtoupper($request->origin->countryCode);
+
+        return $countryCode === strtoupper($request->destination->countryCode) &&
+            \in_array($countryCode, self::PACKAGE_REFERENCE_COUNTRIES, true);
     }
 
     /**
