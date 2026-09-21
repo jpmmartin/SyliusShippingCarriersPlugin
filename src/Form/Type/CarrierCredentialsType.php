@@ -57,9 +57,14 @@ final class CarrierCredentialsType extends AbstractResourceType
     }
 
     /**
-     * The secret is never rendered back, so an edit that leaves it empty means "unchanged",
-     * not "remove it" — unless what is stored is a secret the store cannot read. Kept, it would leave
-     * the carrier unusable after a save that says it worked, so it has to be typed again.
+     * A field left empty on an edit means "unchanged", not "remove it", in two cases.
+     *
+     * The secret is never drawn, so leaving it empty keeps the stored one.
+     *
+     * And a value the store cannot read — the key changed, is missing, or the database came from another
+     * installation — is drawn empty, so leaving it empty cannot mean the administrator wanted it gone: it is sent
+     * back as it is stored, and the validation refuses it as unreadable. Otherwise an optional value such as the
+     * UPS account number would be lost without a word, and with it the negotiated rates and the labels.
      */
     private function keepTheStoredSecretWhenLeftEmpty(FormEvent $event): void
     {
@@ -70,16 +75,17 @@ final class CarrierCredentialsType extends AbstractResourceType
             return;
         }
 
-        $storedSecret = $stored->getCredentials()[CarrierCredentialsDataType::CLIENT_SECRET] ?? null;
-        if (
-            null === $storedSecret ||
-            str_ends_with($storedSecret, EncrypterInterface::ENCRYPTION_SUFFIX) ||
-            '' !== ($submitted['credentials'][CarrierCredentialsDataType::CLIENT_SECRET] ?? '')
-        ) {
-            return;
+        foreach ($stored->getCredentials() as $name => $storedValue) {
+            if ('' !== ($submitted['credentials'][$name] ?? '')) {
+                continue;
+            }
+
+            $unreadable = str_ends_with($storedValue, EncrypterInterface::ENCRYPTION_SUFFIX);
+            if ($unreadable || CarrierCredentialsDataType::CLIENT_SECRET === $name) {
+                $submitted['credentials'][$name] = $storedValue;
+            }
         }
 
-        $submitted['credentials'][CarrierCredentialsDataType::CLIENT_SECRET] = $storedSecret;
         $event->setData($submitted);
     }
 }

@@ -12,6 +12,8 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 
 /**
  * The values stored in CarrierCredentials::$credentials.
@@ -72,6 +74,20 @@ final class CarrierCredentialsDataType extends AbstractType
         }
 
         $event->setData($values);
+    }
+
+    /**
+     * Whatever the form holds, ciphertext is never drawn: not when it opens, and not when it comes back with an
+     * error after an unreadable value was sent back as it was stored.
+     */
+    public function finishView(FormView $view, FormInterface $form, array $options): void
+    {
+        foreach ($view->children as $child) {
+            $value = $child->vars['value'] ?? null;
+            if (\is_string($value) && str_ends_with($value, EncrypterInterface::ENCRYPTION_SUFFIX)) {
+                $child->vars['value'] = '';
+            }
+        }
     }
 
     public function getBlockPrefix(): string

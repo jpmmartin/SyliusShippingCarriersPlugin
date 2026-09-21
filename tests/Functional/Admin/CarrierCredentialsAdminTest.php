@@ -154,6 +154,18 @@ final class CarrierCredentialsAdminTest extends WebTestCase
         // Saving without typing anything again is refused, and nothing changes.
         $this->client->submit($crawler->filter(sprintf('form[name="%s"]', self::FORM))->form());
         self::assertFalse($this->client->getResponse()->isRedirect(), 'A save that retypes nothing does not pass for a repair.');
+        $this->assertRefusedAsUnreadable();
+        self::assertSame($unreadable, $this->storedCredentialsColumn($id));
+
+        // Nor does leaving the account number alone: optional for UPS, but left empty it would be lost without
+        // a word, and with it the negotiated rates and the labels.
+        $crawler = $this->client->request('GET', sprintf('/admin/carrier-credentials/%d/edit', $id));
+        $this->client->submit($crawler->filter(sprintf('form[name="%s"]', self::FORM))->form([
+            self::FORM . '[credentials][client_id]' => 'client-id-2',
+            self::FORM . '[credentials][client_secret]' => 'secret-2',
+        ]));
+        self::assertFalse($this->client->getResponse()->isRedirect(), 'An unreadable account number is not dropped by leaving it empty.');
+        $this->assertRefusedAsUnreadable();
         self::assertSame($unreadable, $this->storedCredentialsColumn($id));
 
         // Nor does retyping the client id alone: an empty secret keeps the stored one only when it can be read.
@@ -162,6 +174,7 @@ final class CarrierCredentialsAdminTest extends WebTestCase
             self::FORM . '[credentials][client_id]' => 'client-id-2',
         ]));
         self::assertFalse($this->client->getResponse()->isRedirect(), 'An unreadable secret is not kept by leaving it empty.');
+        $this->assertRefusedAsUnreadable();
         self::assertSame($unreadable, $this->storedCredentialsColumn($id));
 
         // Typed again, they are stored with this store's key and can be used.
@@ -177,6 +190,16 @@ final class CarrierCredentialsAdminTest extends WebTestCase
         self::assertInstanceOf(CredentialsProvider::class, $credentialsProvider);
         $this->entityManager->clear();
         self::assertSame('client-id-2', $credentialsProvider->get('ups')->getCredentials()['client_id'] ?? null);
+    }
+
+    /**
+     * The form comes back saying why, and still without a single character of ciphertext in it.
+     */
+    private function assertRefusedAsUnreadable(): void
+    {
+        $content = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString('could not be read with this store', $content);
+        self::assertStringNotContainsString(EncrypterInterface::ENCRYPTION_SUFFIX, $content, 'No ciphertext is drawn when the form comes back.');
     }
 
     private function storedCredentialsColumn(mixed $id): string
