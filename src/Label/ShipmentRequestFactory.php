@@ -10,6 +10,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Customs\CustomsDataProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Customs\DeclaredValueCalculator;
 use JpmMartin\SyliusShippingCarriersPlugin\Customs\Exception\MissingCustomsDataException;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationTypeResolverInterface;
@@ -43,6 +44,7 @@ final readonly class ShipmentRequestFactory
         private AddressFactory $addressFactory,
         private LabelFormats $labelFormats,
         private CustomsDataProvider $customsDataProvider,
+        private DeclaredValueCalculator $declaredValueCalculator,
     ) {
     }
 
@@ -123,7 +125,9 @@ final readonly class ShipmentRequestFactory
         foreach ($packaging->getPackages() as $stored) {
             $packages[] = new ShipmentPackage(
                 self::package($stored),
-                customsItems: null === $currencyCode ? [] : $this->customsItems($stored, $currencyCode),
+                null === $currencyCode ? null : $this->declaredValueCalculator->forPackage($stored),
+                $currencyCode,
+                null === $currencyCode ? [] : $this->customsItems($stored, $currencyCode),
             );
         }
 

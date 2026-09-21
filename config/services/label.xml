@@ -14,7 +14,11 @@
             <argument type="service" id="jpmmartin_carrier.carrier.address_factory" />
             <argument type="service" id="jpmmartin_carrier.carrier.label_formats" />
             <argument type="service" id="jpmmartin_carrier.customs.data_provider" />
+            <argument type="service" id="jpmmartin_carrier.customs.declared_value_calculator" />
         </service>
+
+        <!-- What was paid for what is inside, not what the catalogue asks for it. -->
+        <service id="jpmmartin_carrier.customs.declared_value_calculator" class="JpmMartin\SyliusShippingCarriersPlugin\Customs\DeclaredValueCalculator" />
 
         <!-- A variant that cannot be declared stops the shipment before anything is asked of the carrier. -->
         <service id="jpmmartin_carrier.customs.data_provider" class="JpmMartin\SyliusShippingCarriersPlugin\Customs\CustomsDataProvider">

@@ -17,6 +17,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\VoidResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Customs\CustomsDataProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Customs\DeclaredValueCalculator;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationTypeResolverInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
@@ -527,6 +528,36 @@ final class LabelIssuerTest extends TestCase
     }
 
     /**
+     * What the parcel was worth has to survive the shipment, so it is kept on the label and not only sent.
+     */
+    public function testWhatAParcelWasDeclaredToBeWorthIsKeptWithTheShipment(): void
+    {
+        $this->destinationCountry = 'CA';
+        $this->declare('MUG', '691200', 'PT');
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(1200, $this->requests[0]->packages[0]->declaredValue);
+        self::assertSame('USD', $this->requests[0]->packages[0]->declaredValueCurrency);
+
+        $labels = array_values($export->getLabels()->toArray());
+        self::assertSame(1200, $labels[0]->getDeclaredValue());
+        self::assertSame('USD', $labels[0]->getDeclaredValueCurrency());
+    }
+
+    /**
+     * A parcel that never leaves its country is not declared, so it is not valued for customs either.
+     */
+    public function testADomesticParcelIsNotGivenADeclaredValue(): void
+    {
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertNull($this->requests[0]->packages[0]->declaredValue);
+        $labels = array_values($export->getLabels()->toArray());
+        self::assertNull($labels[0]->getDeclaredValue());
+    }
+
+    /**
      * The one that matters: a declaration that cannot be filled in is caught in the warehouse and not at the
      * airport, and the message says which variant and what it is missing.
      */
@@ -648,6 +679,7 @@ final class LabelIssuerTest extends TestCase
                 new AddressFactory(),
                 new LabelFormats([]),
                 new CustomsDataProvider($this->customsDataRepository()),
+                new DeclaredValueCalculator(),
             ),
             new CredentialsProvider($credentialsRepository),
             new LabelStorage($this->storage),
@@ -748,6 +780,7 @@ final class LabelIssuerTest extends TestCase
 
         $order = new Order();
         $order->setChannel($channel);
+        $order->setCurrencyCode('USD');
         $order->setShippingAddress($address);
 
         $shipment = new Shipment();
