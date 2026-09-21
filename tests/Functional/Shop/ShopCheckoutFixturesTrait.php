@@ -6,6 +6,7 @@ namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Functional\Shop;
 
 use Doctrine\ORM\EntityManagerInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Exception\EncryptionException;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
@@ -56,6 +57,12 @@ trait ShopCheckoutFixturesTrait
     private ChannelInterface $channel;
 
     private ShippingMethodInterface $upsGround;
+
+    /**
+     * Flipped by a test to have the stored credentials fail to decrypt, the way Doctrine fails when they were
+     * encrypted with another key. The provider is set once, before the first request, so it reads this switch.
+     */
+    private bool $credentialsCannotBeDecrypted = false;
 
     /**
      * @param bool $withCarrierMethod False leaves the store as it was before the plugin arrived: its only shipping
@@ -280,7 +287,9 @@ trait ShopCheckoutFixturesTrait
 
         /** @var RepositoryInterface<CarrierCredentialsInterface>&Stub $repository */
         $repository = $this->createStub(RepositoryInterface::class);
-        $repository->method('findOneBy')->willReturn($credentials);
+        $repository->method('findOneBy')->willReturnCallback(fn (): CarrierCredentialsInterface => $this->credentialsCannotBeDecrypted
+            ? throw EncryptionException::cannotDecrypt(new \RuntimeException('The ciphertext does not match the key.'))
+            : $credentials);
 
         self::getContainer()->set('jpmmartin_carrier.carrier.credentials_provider', new CredentialsProvider($repository));
     }
