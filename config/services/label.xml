@@ -83,9 +83,15 @@
             <argument type="service" id="jpmmartin_carrier.controller.admin.download_document" />
         </service>
 
+        <!-- Ninety days in UPS against twelve hours in FedEx: the screen has to say which one this is. -->
+        <service id="jpmmartin_carrier.label.void_window" class="JpmMartin\SyliusShippingCarriersPlugin\Label\VoidWindow">
+            <argument type="service" id="clock" />
+        </service>
+
         <service id="jpmmartin_carrier.twig.shipment_labels_runtime" class="JpmMartin\SyliusShippingCarriersPlugin\Twig\ShipmentLabelsRuntime">
             <argument type="service" id="jpmmartin_carrier.shipping.shipment_carrier" />
             <argument type="service" id="jpmmartin_carrier.repository.shipment_export" />
+            <argument type="service" id="jpmmartin_carrier.label.void_window" />
             <tag name="twig.runtime" />
         </service>
 

@@ -27,6 +27,10 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
 
     private const DOWNLOAD_LINK = 'data-test-jpmmartin-carrier-label-download-link';
 
+    private const VOID_WINDOW = 'data-test-jpmmartin-carrier-void-window';
+
+    private const VOID_TOO_LATE = 'data-test-jpmmartin-carrier-void-too-late';
+
     private const VOID_REFUSED = 'data-test-jpmmartin-carrier-void-refused';
 
     private const LABEL_PATH = 'labels/void-test/1Z999AA10123456784-0.gif';
@@ -137,6 +141,48 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertStringNotContainsString(self::VOID_REFUSED, (string) $this->client->getResponse()->getContent());
+    }
+
+    /**
+     * Ninety days in UPS against twelve hours in FedEx. The screen has to say which one this shipment is on.
+     */
+    public function testAShipmentIssuedTodayShowsHowLongIsLeftToCancelIt(): void
+    {
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
+        $label = $this->export($order->getShipments()->first(), CarrierShipmentExportInterface::STATE_ISSUED);
+        $this->issuedAt($label, new \DateTimeImmutable('-1 day'));
+        $this->client->loginUser($this->createAdmin('void-window-admin'), 'admin');
+
+        $this->client->request('GET', '/admin/orders/' . $order->getId());
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString(self::VOID_WINDOW, $content);
+        self::assertStringNotContainsString(self::VOID_TOO_LATE, $content);
+    }
+
+    public function testAShipmentPastItsWindowSaysItIsTooLate(): void
+    {
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
+        $label = $this->export($order->getShipments()->first(), CarrierShipmentExportInterface::STATE_ISSUED);
+        $this->issuedAt($label, new \DateTimeImmutable('-100 days'));
+        $this->client->loginUser($this->createAdmin('void-window-closed-admin'), 'admin');
+
+        $this->client->request('GET', '/admin/orders/' . $order->getId());
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString(self::VOID_TOO_LATE, $content);
+        self::assertStringNotContainsString(self::VOID_WINDOW, $content);
+    }
+
+    private function issuedAt(CarrierShipmentLabel $label, \DateTimeImmutable $issuedAt): void
+    {
+        $export = $label->getExport();
+        self::assertInstanceOf(CarrierShipmentExportInterface::class, $export);
+
+        $export->setIssuedAt($issuedAt);
+        $this->entityManager->flush();
     }
 
     public function testAnIssuedLabelIsDownloadedByAnAuthorisedAdministrator(): void

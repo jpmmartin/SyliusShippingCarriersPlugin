@@ -16,10 +16,12 @@ final readonly class ShipmentLabels
     /**
      * @param string $carrier The carrier's code, such as `ups`
      * @param CarrierShipmentExportInterface|null $export Null when nothing has been asked of the carrier yet
+     * @param VoidWindowState|null $voidWindow How long is left to cancel it, when there are labels to cancel
      */
     public function __construct(
         public string $carrier,
         public ?CarrierShipmentExportInterface $export = null,
+        public ?VoidWindowState $voidWindow = null,
     ) {
     }
 

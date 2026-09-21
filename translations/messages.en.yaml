@@ -19,6 +19,8 @@ jpmmartin_carrier:
             download: Download the label
             void: Cancel the labels
             void_refused: The carrier refused to cancel
+            void_until: 'The carrier cancels this shipment until %date%'
+            void_window_closed: Too late for the carrier to cancel it
             needs_check: Check with the carrier
         tracking:
             title: Where your order is

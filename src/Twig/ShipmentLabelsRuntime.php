@@ -6,6 +6,7 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Twig;
 
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\ShipmentLabels;
+use JpmMartin\SyliusShippingCarriersPlugin\Label\VoidWindow;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
@@ -22,6 +23,7 @@ final readonly class ShipmentLabelsRuntime implements RuntimeExtensionInterface
     public function __construct(
         private ShipmentCarrier $shipmentCarrier,
         private RepositoryInterface $exportRepository,
+        private VoidWindow $voidWindow,
     ) {
     }
 
@@ -37,7 +39,13 @@ final readonly class ShipmentLabelsRuntime implements RuntimeExtensionInterface
         }
 
         $export = $this->exportRepository->findOneBy(['shipment' => $shipment]);
+        $export = $export instanceof CarrierShipmentExportInterface ? $export : null;
+        $issuedAt = CarrierShipmentExportInterface::STATE_ISSUED === $export?->getState() ? $export->getIssuedAt() : null;
 
-        return new ShipmentLabels($carrier, $export instanceof CarrierShipmentExportInterface ? $export : null);
+        return new ShipmentLabels(
+            $carrier,
+            $export,
+            null === $issuedAt ? null : $this->voidWindow->of($carrier, $issuedAt),
+        );
     }
 }

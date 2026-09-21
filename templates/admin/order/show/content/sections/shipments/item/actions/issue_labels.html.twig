@@ -27,6 +27,19 @@
                 {{ 'jpmmartin_carrier.ui.labels.void_refused'|trans }}
             </span>
         {% endif %}
+        {% if labels.voidWindow is not null %}
+            {# Ninety days in UPS against twelve hours in FedEx. An operator used to one finds out too late on
+               the other unless it is written down. #}
+            {% if labels.voidWindow.isOpen() %}
+                <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-title="{{ 'jpmmartin_carrier.ui.labels.void_until'|trans({'%date%': labels.voidWindow.selfServiceUntil|date('Y-m-d H:i')}) }}" {{ sylius_test_html_attribute('jpmmartin-carrier-void-window') }}>
+                    {{ labels.voidWindow.selfServiceUntil|date('Y-m-d H:i') }}
+                </span>
+            {% else %}
+                <span class="badge bg-warning" {{ sylius_test_html_attribute('jpmmartin-carrier-void-too-late') }}>
+                    {{ 'jpmmartin_carrier.ui.labels.void_window_closed'|trans }}
+                </span>
+            {% endif %}
+        {% endif %}
         <form method="post" action="{{ path('jpmmartin_carrier_admin_shipment_void_labels', {'id': shipment.id}) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('jpmmartin_carrier_void_labels') }}">
             <button type="submit" class="btn btn-icon" data-bs-toggle="tooltip" data-bs-title="{{ 'jpmmartin_carrier.ui.labels.void'|trans }}" {{ sylius_test_html_attribute('jpmmartin-carrier-void-labels-button') }}>
