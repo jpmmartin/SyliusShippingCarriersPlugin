@@ -101,6 +101,12 @@ final readonly class CarrierContext implements Context
         $this->fakeCarrierState->issueLabelsAs(self::carrierCode($carrierName), $reference, $format);
     }
 
+    #[Given('/^(UPS|FedEx) refuses to cancel the labels because "([^"]+)"$/')]
+    public function theCarrierRefusesToCancelTheLabels(string $carrierName, string $reason): void
+    {
+        $this->fakeCarrierState->refuseToVoid(self::carrierCode($carrierName), $reason);
+    }
+
     #[Given('/^(UPS|FedEx) (does not answer in time|answers with a server error|answers with something unreadable|rejects the store\'s credentials)$/')]
     public function theCarrierFails(string $carrierName, string $failure): void
     {

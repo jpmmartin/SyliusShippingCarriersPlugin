@@ -7,6 +7,7 @@ namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Carrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierCredentialsException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierResponseException;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsDocument;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\IssuedLabel;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelCarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
@@ -49,12 +50,23 @@ final readonly class FakeLabelCarrier implements LabelCarrierInterface
             );
         }
 
-        return new ShipmentResult($shipment['reference'], $labels);
+        // A shipment that crosses a border asks for its invoice in the same request, so it comes back in the
+        // same answer. A domestic one asks for nothing and gets nothing.
+        $customsDocument = null === $request->customsInvoice
+            ? null
+            : new CustomsDocument('PDF', sprintf('the invoice of %s', $shipment['reference']));
+
+        return new ShipmentResult($shipment['reference'], $labels, $customsDocument);
     }
 
     public function void(string $carrierReference): VoidResult
     {
         $this->failAsTold();
+
+        $refusal = $this->state->voidRefusal($this->carrier);
+        if (null !== $refusal) {
+            return VoidResult::refused($refusal);
+        }
 
         $this->state->recordVoid($this->carrier, $carrierReference);
 

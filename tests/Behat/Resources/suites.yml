@@ -1,6 +1,7 @@
 # One file of suites per capability of the plugin, each running the features tagged with it.
 imports:
     - suites/carrier_services.yml
+    - suites/customs.yml
     - suites/rate_failure_policy.yml
     - suites/shipment_packaging.yml
     - suites/shipping_origin.yml

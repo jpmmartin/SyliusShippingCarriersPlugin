@@ -1,0 +1,38 @@
+default:
+    suites:
+        ui_customs:
+            contexts:
+                - sylius.behat.context.hook.doctrine_orm
+                - sylius.behat.context.hook.session
+                - jpmmartin_carrier.behat.context.hook.carrier
+                - jpmmartin_carrier.behat.context.hook.database
+
+                - sylius.behat.context.transform.address
+                - sylius.behat.context.transform.channel
+                - sylius.behat.context.transform.country
+                - sylius.behat.context.transform.customer
+                - sylius.behat.context.transform.lexical
+                - sylius.behat.context.transform.order
+                - sylius.behat.context.transform.payment
+                - sylius.behat.context.transform.product
+                - sylius.behat.context.transform.shared_storage
+                - sylius.behat.context.transform.shipping_method
+                - sylius.behat.context.transform.user
+
+                - sylius.behat.context.setup.admin_security
+                - sylius.behat.context.setup.channel
+                - sylius.behat.context.setup.customer
+                - sylius.behat.context.setup.geographical
+                - sylius.behat.context.setup.order
+                - sylius.behat.context.setup.payment
+                - sylius.behat.context.setup.product
+                - sylius.behat.context.setup.shop_security
+                - sylius.behat.context.setup.user
+                - jpmmartin_carrier.behat.context.setup.carrier
+                - jpmmartin_carrier.behat.context.setup.customs
+                - jpmmartin_carrier.behat.context.setup.shipping_origin
+
+                - jpmmartin_carrier.behat.context.ui.admin.managing_carrier_labels
+                - sylius.behat.context.ui.admin.notification
+            filters:
+                tags: "@customs&&@ui"

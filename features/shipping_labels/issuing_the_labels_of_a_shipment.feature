@@ -27,3 +27,10 @@ Feature: Issuing the labels of a shipment
         Then its shipment should have 1 label to download
         And I should not be offered to issue them again
         And UPS should have been asked to issue them once
+
+    Scenario: A parcel that never leaves the country is not declared to anybody
+        Given UPS issues the labels as "1Z999AA10123456784" in "GIF"
+        When I want to ship the order "#00000666"
+        And I issue the labels of its shipment
+        Then its shipment should have 1 label to download
+        And its shipment should have no customs document to download

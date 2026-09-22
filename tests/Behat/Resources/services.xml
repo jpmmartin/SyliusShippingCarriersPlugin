@@ -72,6 +72,12 @@
             <argument>%sylius.behat.clock.date_file%</argument>
         </service>
 
+        <service id="jpmmartin_carrier.behat.context.setup.customs" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Setup\CustomsContext">
+            <argument type="service" id="jpmmartin_carrier.factory.customs_data" />
+            <argument type="service" id="jpmmartin_carrier.repository.customs_data" />
+            <argument type="service" id="sylius.converter.country_name" />
+        </service>
+
         <service id="jpmmartin_carrier.behat.context.setup.tracking" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Setup\TrackingContext">
             <argument type="service" id="sylius.behat.shared_storage" />
             <argument type="service" id="sylius.repository.order" />
