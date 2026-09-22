@@ -212,6 +212,8 @@ final readonly class LabelIssuer implements LabelIssuerInterface
         // Written where nothing serves them from, moved into place only once the database has taken the rows:
         // a failure in between must leave neither a row without its file nor a file without its row.
         $waiting = [];
+        // The customs document of an attempt that was cancelled: the export is about to point at the new one.
+        $previousCustomsDocument = $export->getCustomsDocumentPath();
 
         try {
             foreach ($result->labels as $issuedLabel) {
@@ -228,6 +230,16 @@ final readonly class LabelIssuer implements LabelIssuerInterface
 
                 $export->addLabel($label);
                 $waiting[$this->labelStorage->writeTemporary($issuedLabel)] = $path;
+            }
+
+            $export->setCustomsDocumentPath(null);
+            $export->setCustomsDocumentFormat(null);
+            $export->setCustomsDocumentPurgedAt(null);
+            if (null !== $result->customsDocument) {
+                $path = $this->labelStorage->pathForCustomsDocument($result->customsDocument, (string) $shipment->getId(), $result->carrierReference);
+                $export->setCustomsDocumentPath($path);
+                $export->setCustomsDocumentFormat($result->customsDocument->format);
+                $waiting[$this->labelStorage->writeTemporary($result->customsDocument)] = $path;
             }
 
             $export->setState(CarrierShipmentExportInterface::STATE_ISSUED);
@@ -249,6 +261,17 @@ final readonly class LabelIssuer implements LabelIssuerInterface
         }
 
         $this->promote($waiting, $shipment, $carrier);
+        $this->forget($previousCustomsDocument, $export, $shipment);
+
+        // The labels are paid for and kept all the same: a shipment is not un-issued because the paperwork
+        // is missing. But whoever hands it over has to know there is none to print.
+        if (null !== $request->customsInvoice && null === $result->customsDocument) {
+            $this->logger->warning('The carrier {carrier} issued the shipment {shipment}, which crosses a border, without any customs document.', [
+                'carrier' => $carrier,
+                'shipment' => $shipment->getId(),
+                'reference' => $result->carrierReference,
+            ]);
+        }
 
         $this->logger->info('The carrier {carrier} issued {labels} label(s) for the shipment {shipment}.', [
             'carrier' => $carrier,
@@ -311,13 +334,34 @@ final readonly class LabelIssuer implements LabelIssuerInterface
             try {
                 $this->labelStorage->promote($temporaryPath, $path);
             } catch (FilesystemException $exception) {
-                $this->logger->error('The label {path} of the shipment {shipment} was issued by {carrier} but could not be stored: {reason}', [
+                $this->logger->error('The file {path} of the shipment {shipment} was issued by {carrier} but could not be stored: {reason}', [
                     'path' => $path,
                     'shipment' => $shipment->getId(),
                     'carrier' => $carrier,
                     'reason' => $exception->getMessage(),
                 ]);
             }
+        }
+    }
+
+    /**
+     * Deletes the customs document of a cancelled attempt once the export points at another one. Nothing names
+     * it any more, and a file that nothing names is a copy of the buyer's address kept for no one.
+     */
+    private function forget(?string $previousPath, CarrierShipmentExportInterface $export, ShipmentInterface $shipment): void
+    {
+        if (null === $previousPath || $previousPath === $export->getCustomsDocumentPath()) {
+            return;
+        }
+
+        try {
+            $this->labelStorage->delete($previousPath);
+        } catch (FilesystemException $exception) {
+            $this->logger->error('The customs document {path} of a cancelled attempt at the shipment {shipment} could not be deleted: {reason}', [
+                'path' => $previousPath,
+                'shipment' => $shipment->getId(),
+                'reason' => $exception->getMessage(),
+            ]);
         }
     }
 

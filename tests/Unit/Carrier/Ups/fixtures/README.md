@@ -11,3 +11,5 @@ schema, not that it reads what UPS actually sends.
 - `error.json`: the error body UPS sends with a 4xx status.
 - `token.json`: a granted OAuth access token.
 - `track.json`: a tracking response for a delivered package with two activities.
+- `shipment-international.json`: a `ShipmentResponse` for a shipment that crosses a border, with the forms UPS
+  printed in `ShipmentResults.Form` (schema `ShipmentResults_Form`), one PDF for all of them.

@@ -64,6 +64,17 @@ final readonly class ShipmentLabels
         ));
     }
 
+    /**
+     * Whether the shipment has customs paperwork there is still a file for. Like its labels, the paperwork of a
+     * cancelled shipment is not offered.
+     */
+    public function hasCustomsDocument(): bool
+    {
+        return $this->isIssued() &&
+            null !== $this->export?->getCustomsDocumentPath() &&
+            null === $this->export->getCustomsDocumentPurgedAt();
+    }
+
     public function failureReason(): ?string
     {
         return $this->export?->getFailureReason();

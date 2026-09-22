@@ -92,6 +92,19 @@ interface CarrierShipmentExportInterface extends ResourceInterface
 
     public function setFailureReason(?string $failureReason): void;
 
+    /** Where the customs document of the shipment is kept. Null when it has none, or no longer has it. */
+    public function getCustomsDocumentPath(): ?string;
+
+    public function setCustomsDocumentPath(?string $customsDocumentPath): void;
+
+    public function getCustomsDocumentFormat(): ?string;
+
+    public function setCustomsDocumentFormat(?string $customsDocumentFormat): void;
+
+    public function getCustomsDocumentPurgedAt(): ?\DateTimeImmutable;
+
+    public function setCustomsDocumentPurgedAt(?\DateTimeImmutable $customsDocumentPurgedAt): void;
+
     /** @return Collection<int, CarrierShipmentLabelInterface> One per package. */
     public function getLabels(): Collection;
 

@@ -15,6 +15,7 @@
             <argument type="service" id="jpmmartin_carrier.carrier.label_formats" />
             <argument type="service" id="jpmmartin_carrier.customs.data_provider" />
             <argument type="service" id="jpmmartin_carrier.customs.declared_value_calculator" />
+            <argument type="service" id="clock" />
         </service>
 
         <!-- What was paid for what is inside, not what the catalogue asks for it. -->
@@ -90,6 +91,11 @@
         <!-- By the label's own record, not by a path: what may be downloaded depends on what happened to it. -->
         <service id="jpmmartin_carrier.controller.admin.download_label" class="JpmMartin\SyliusShippingCarriersPlugin\Controller\Admin\DownloadCarrierLabelAction" public="true">
             <argument type="service" id="jpmmartin_carrier.repository.shipment_label" />
+            <argument type="service" id="jpmmartin_carrier.controller.admin.download_document" />
+        </service>
+
+        <service id="jpmmartin_carrier.controller.admin.download_customs_document" class="JpmMartin\SyliusShippingCarriersPlugin\Controller\Admin\DownloadCarrierCustomsDocumentAction" public="true">
+            <argument type="service" id="jpmmartin_carrier.repository.shipment_export" />
             <argument type="service" id="jpmmartin_carrier.controller.admin.download_document" />
         </service>
 

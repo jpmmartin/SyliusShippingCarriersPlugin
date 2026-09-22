@@ -9,6 +9,9 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierCredentialsException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierResponseException;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsDocument;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsInvoice;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsItem;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\IssuedLabel;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelCarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
@@ -19,7 +22,10 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\VoidResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
+use ShipStream\Ups\Api\Model\ContactsSoldTo;
 use ShipStream\Ups\Api\Model\DimensionsUnitOfMeasurement;
+use ShipStream\Ups\Api\Model\InternationalFormsContacts;
+use ShipStream\Ups\Api\Model\InternationalFormsProduct;
 use ShipStream\Ups\Api\Model\LabelRecoveryRequest;
 use ShipStream\Ups\Api\Model\LabelRecoveryRequestReferenceValues;
 use ShipStream\Ups\Api\Model\LabelRecoveryRequestRequest;
@@ -34,10 +40,12 @@ use ShipStream\Ups\Api\Model\PackagePackaging;
 use ShipStream\Ups\Api\Model\PackageReferenceNumber;
 use ShipStream\Ups\Api\Model\PackageWeightUnitOfMeasurement;
 use ShipStream\Ups\Api\Model\PaymentInformationShipmentCharge;
+use ShipStream\Ups\Api\Model\ProductUnit;
 use ShipStream\Ups\Api\Model\ReferenceValuesReferenceNumber;
 use ShipStream\Ups\Api\Model\ShipFromAddress;
 use ShipStream\Ups\Api\Model\ShipFromPhone;
 use ShipStream\Ups\Api\Model\ShipmentChargeBillShipper;
+use ShipStream\Ups\Api\Model\ShipmentInvoiceLineTotal;
 use ShipStream\Ups\Api\Model\ShipmentPackage as UpsShipmentPackage;
 use ShipStream\Ups\Api\Model\ShipmentPaymentInformation;
 use ShipStream\Ups\Api\Model\ShipmentReferenceNumber;
@@ -45,8 +53,11 @@ use ShipStream\Ups\Api\Model\ShipmentRequest as UpsShipmentRequest;
 use ShipStream\Ups\Api\Model\ShipmentRequestLabelSpecification;
 use ShipStream\Ups\Api\Model\ShipmentRequestRequest;
 use ShipStream\Ups\Api\Model\ShipmentRequestShipment;
+use ShipStream\Ups\Api\Model\ShipmentResponseShipmentResults;
 use ShipStream\Ups\Api\Model\ShipmentService;
+use ShipStream\Ups\Api\Model\ShipmentServiceOptionsInternationalForms;
 use ShipStream\Ups\Api\Model\ShipmentShipFrom;
+use ShipStream\Ups\Api\Model\ShipmentShipmentServiceOptions;
 use ShipStream\Ups\Api\Model\ShipmentShipper;
 use ShipStream\Ups\Api\Model\ShipmentShipTo;
 use ShipStream\Ups\Api\Model\ShipperAddress;
@@ -55,6 +66,9 @@ use ShipStream\Ups\Api\Model\SHIPRequestWrapper;
 use ShipStream\Ups\Api\Model\SHIPResponseWrapper;
 use ShipStream\Ups\Api\Model\ShipToAddress;
 use ShipStream\Ups\Api\Model\ShipToPhone;
+use ShipStream\Ups\Api\Model\SoldToAddress;
+use ShipStream\Ups\Api\Model\SoldToPhone;
+use ShipStream\Ups\Api\Model\UnitUnitOfMeasurement;
 use ShipStream\Ups\Api\Model\VOIDSHIPMENTResponseWrapper;
 
 /**
@@ -95,6 +109,53 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
     /** «01 - Transportation», billed to the shipper's own account. */
     private const CHARGE_TYPE_TRANSPORTATION = '01';
 
+    /** «02 - Duties and Taxes», sent only when the store pays them. */
+    private const CHARGE_TYPE_DUTIES_AND_TAXES = '02';
+
+    /** «01 - Invoice», the commercial invoice customs reads. */
+    private const FORM_TYPE_INVOICE = '01';
+
+    private const REASON_FOR_EXPORT_SALE = 'SALE';
+
+    /**
+     * Who pays the duties, as UPS prints it on the invoice. Its schema lists DDU and DDP, not DAP.
+     *
+     * @var array<string, string>
+     */
+    private const TERMS_OF_SHIPMENT = [
+        CarrierCredentialsInterface::DUTIES_PAYER_RECIPIENT => 'DDU',
+        CarrierCredentialsInterface::DUTIES_PAYER_SHIPPER => 'DDP',
+    ];
+
+    /** Pieces: every line of the invoice is counted in units sold. */
+    private const PRODUCT_UNIT_OF_MEASUREMENT = 'PCS';
+
+    /** How long each of the at most three lines of a product's description may be. */
+    private const PRODUCT_DESCRIPTION_LINE_LENGTH = 35;
+
+    private const PRODUCT_DESCRIPTION_LINES = 3;
+
+    private const PART_NUMBER_LENGTH = 35;
+
+    /**
+     * UPS wants the invoice total on the shipment itself, and only there, when it leaves the United States for
+     * Puerto Rico or Canada.
+     *
+     * @var list<string>
+     */
+    private const INVOICE_LINE_TOTAL_DESTINATIONS_FROM_US = ['PR', 'CA'];
+
+    /**
+     * The members of the European Union. Between two of them UPS treats a shipment as a «Qualified Domestic
+     * Shipment», for which a duties and taxes charge is not valid.
+     *
+     * @var list<string>
+     */
+    private const EUROPEAN_UNION = [
+        'AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU',
+        'IE', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK',
+    ];
+
     /**
      * Where UPS takes a reference of the shipper's own. Its schema splits it in two and each half refuses the
      * other's case: `PackageReferenceNumber` says it is «valid if the origin/destination pair is US/US or
@@ -133,7 +194,7 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
         try {
             $response = $this->clientFactory->create($credentials)->shipment(
                 self::SHIPPING_VERSION,
-                $this->buildRequest($request, $accountNumber),
+                $this->buildRequest($request, $accountNumber, $credentials->getDutiesPayer()),
             );
         } catch (\Throwable $exception) {
             throw $this->errorTranslator->translate($exception, self::SHIP_OPERATION);
@@ -247,8 +308,25 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
         return new ShipmentResult($reference, $labels);
     }
 
-    private function buildRequest(ShipmentRequest $request, string $accountNumber): SHIPRequestWrapper
+    private function buildRequest(ShipmentRequest $request, string $accountNumber, string $dutiesPayer): SHIPRequestWrapper
     {
+        $charges = [
+            (new PaymentInformationShipmentCharge())
+                ->setType(self::CHARGE_TYPE_TRANSPORTATION)
+                ->setBillShipper((new ShipmentChargeBillShipper())->setAccountNumber($accountNumber)),
+        ];
+
+        // Left out when the recipient pays: billing the recipient takes a UPS account of the recipient's own,
+        // which a buyer does not have.
+        if (null !== $request->customsInvoice &&
+            CarrierCredentialsInterface::DUTIES_PAYER_SHIPPER === $dutiesPayer &&
+            !self::isQualifiedDomestic($request)
+        ) {
+            $charges[] = (new PaymentInformationShipmentCharge())
+                ->setType(self::CHARGE_TYPE_DUTIES_AND_TAXES)
+                ->setBillShipper((new ShipmentChargeBillShipper())->setAccountNumber($accountNumber));
+        }
+
         $shipper = (new ShipmentShipper())
             ->setName((string) $request->origin->name())
             ->setAttentionName((string) $request->origin->contactName)
@@ -275,13 +353,7 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
                     ->setPhone($this->phone(new ShipToPhone(), $request->destination))
                     ->setAddress($this->address(new ShipToAddress(), $request->destination)),
             )
-            ->setPaymentInformation(
-                (new ShipmentPaymentInformation())->setShipmentCharge([
-                    (new PaymentInformationShipmentCharge())
-                        ->setType(self::CHARGE_TYPE_TRANSPORTATION)
-                        ->setBillShipper((new ShipmentChargeBillShipper())->setAccountNumber($accountNumber)),
-                ]),
-            )
+            ->setPaymentInformation((new ShipmentPaymentInformation())->setShipmentCharge($charges))
             ->setService((new ShipmentService())->setCode($request->serviceCode))
             ->setPackage(array_map(
                 fn (ShipmentPackage $package): UpsShipmentPackage => $this->package(
@@ -296,6 +368,25 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
         // UPS about if no answer comes back.
         if (!self::takesAPackageReference($request)) {
             $shipment->setReferenceNumber([(new ShipmentReferenceNumber())->setValue($request->ownReference)]);
+        }
+
+        // The invoice is asked for in the same request, so it comes back with the labels.
+        if (null !== $request->customsInvoice) {
+            $shipment->setShipmentServiceOptions(
+                (new ShipmentShipmentServiceOptions())->setInternationalForms(
+                    $this->invoice($request, $request->customsInvoice, $dutiesPayer),
+                ),
+            );
+
+            if ('US' === strtoupper($request->origin->countryCode) &&
+                \in_array(strtoupper($request->destination->countryCode), self::INVOICE_LINE_TOTAL_DESTINATIONS_FROM_US, true)
+            ) {
+                $shipment->setInvoiceLineTotal(
+                    (new ShipmentInvoiceLineTotal())
+                        ->setCurrencyCode($request->customsInvoice->currencyCode)
+                        ->setMonetaryValue(self::amount($request->customsInvoice->total())),
+                );
+            }
         }
 
         return (new SHIPRequestWrapper())->setShipmentRequest(
@@ -314,6 +405,74 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
                         ),
                 ),
         );
+    }
+
+    private function invoice(ShipmentRequest $request, CustomsInvoice $invoice, string $dutiesPayer): ShipmentServiceOptionsInternationalForms
+    {
+        $destination = $request->destination;
+        $soldToAddress = (new SoldToAddress())
+            ->setAddressLine([$destination->street])
+            ->setCity($destination->city)
+            ->setPostalCode($destination->postcode)
+            ->setCountryCode($destination->countryCode);
+        if (null !== $destination->provinceCode) {
+            $soldToAddress->setStateProvinceCode($destination->provinceCode);
+        }
+
+        return (new ShipmentServiceOptionsInternationalForms())
+            ->setFormType([self::FORM_TYPE_INVOICE])
+            ->setInvoiceNumber($invoice->number)
+            ->setInvoiceDate($invoice->date->format('Ymd'))
+            ->setReasonForExport(self::REASON_FOR_EXPORT_SALE)
+            ->setCurrencyCode($invoice->currencyCode)
+            ->setTermsOfShipment(self::TERMS_OF_SHIPMENT[$dutiesPayer] ?? self::TERMS_OF_SHIPMENT[CarrierCredentialsInterface::DUTIES_PAYER_RECIPIENT])
+            // UPS requires whom it was sold to on an invoice: the buyer, who is also who receives it.
+            ->setContacts((new InternationalFormsContacts())->setSoldTo(
+                (new ContactsSoldTo())
+                    ->setName((string) $destination->name())
+                    ->setAttentionName((string) $destination->contactName)
+                    ->setPhone((new SoldToPhone())->setNumber((string) $destination->phone))
+                    ->setAddress($soldToAddress),
+            ))
+            ->setProduct(array_map(self::product(...), $invoice->lines));
+    }
+
+    private static function product(CustomsItem $line): InternationalFormsProduct
+    {
+        $description = mb_str_split($line->description, self::PRODUCT_DESCRIPTION_LINE_LENGTH);
+
+        return (new InternationalFormsProduct())
+            ->setDescription(\array_slice([] === $description ? [$line->code] : $description, 0, self::PRODUCT_DESCRIPTION_LINES))
+            ->setUnit(
+                (new ProductUnit())
+                    ->setNumber((string) $line->quantity)
+                    ->setValue(self::amount($line->unitValue))
+                    ->setUnitOfMeasurement((new UnitUnitOfMeasurement())->setCode(self::PRODUCT_UNIT_OF_MEASUREMENT)),
+            )
+            ->setCommodityCode($line->hsCode)
+            ->setPartNumber(mb_substr($line->code, 0, self::PART_NUMBER_LENGTH))
+            ->setOriginCountryCode($line->countryOfOrigin);
+    }
+
+    /**
+     * Whether UPS treats the shipment as domestic even though it crosses a border: from the United States to
+     * Puerto Rico or back, or between two members of the European Union.
+     */
+    private static function isQualifiedDomestic(ShipmentRequest $request): bool
+    {
+        $pair = [strtoupper($request->origin->countryCode), strtoupper($request->destination->countryCode)];
+        sort($pair);
+
+        return ['PR', 'US'] === $pair ||
+            (\in_array($pair[0], self::EUROPEAN_UNION, true) && \in_array($pair[1], self::EUROPEAN_UNION, true));
+    }
+
+    /**
+     * An amount in hundredths, as UPS reads money: units, a point and two decimals.
+     */
+    private static function amount(int $hundredths): string
+    {
+        return number_format($hundredths / 100, 2, '.', '');
     }
 
     /**
@@ -469,6 +628,25 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
             );
         }
 
-        return new ShipmentResult($reference, $labels);
+        return new ShipmentResult($reference, $labels, null === $request->customsInvoice || null === $results ? null : $this->readForms($results));
+    }
+
+    /**
+     * Every form UPS printed for the shipment comes back as a single file. None, or one that cannot be read, is
+     * no document at all: the labels are issued and paid for all the same.
+     */
+    private function readForms(ShipmentResponseShipmentResults $results): ?CustomsDocument
+    {
+        $form = $results->isInitialized('form') ? $results->getForm() : null;
+        $image = null !== $form && $form->isInitialized('image') ? $form->getImage() : null;
+        $contents = null === $image || !$image->isInitialized('graphicImage') ? false : base64_decode((string) $image->getGraphicImage(), true);
+        if (null === $image || false === $contents || '' === $contents) {
+            return null;
+        }
+
+        return new CustomsDocument(
+            $image->isInitialized('imageFormat') ? (string) $image->getImageFormat()->getCode() : '',
+            $contents,
+        );
     }
 }

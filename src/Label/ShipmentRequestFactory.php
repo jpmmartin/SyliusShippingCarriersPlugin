@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JpmMartin\SyliusShippingCarriersPlugin\Label;
 
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\AddressFactory;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsInvoice;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsItem;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
@@ -20,6 +21,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\UnissuableShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator;
+use Psr\Clock\ClockInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
@@ -45,6 +47,7 @@ final readonly class ShipmentRequestFactory
         private LabelFormats $labelFormats,
         private CustomsDataProvider $customsDataProvider,
         private DeclaredValueCalculator $declaredValueCalculator,
+        private ClockInterface $clock,
     ) {
     }
 
@@ -89,14 +92,49 @@ final readonly class ShipmentRequestFactory
         // Nothing is declared for a parcel that never leaves its country, and nothing is demanded of the
         // catalogue for it either.
         $crossesABorder = $originAddress->countryCode !== $destination->countryCode;
+        $packages = $this->packages($shipment, $crossesABorder ? (string) $order->getCurrencyCode() : null);
 
         return new ShipmentRequest(
             $originAddress,
             $destination,
             $serviceCode,
-            $this->packages($shipment, $crossesABorder ? (string) $order->getCurrencyCode() : null),
+            $packages,
             $this->labelFormats->for($carrier),
             $ownReference,
+            $crossesABorder ? $this->invoice($order, $packages) : null,
+        );
+    }
+
+    /**
+     * The invoice customs reads, with one line per variant and price paid across every package: customs is told
+     * what the shipment carries, not how it was packed.
+     *
+     * @param non-empty-list<ShipmentPackage> $packages
+     *
+     * @throws UnissuableShipmentException When there is nothing to declare
+     */
+    private function invoice(OrderInterface $order, array $packages): CustomsInvoice
+    {
+        /** @var array<string, CustomsItem> $lines */
+        $lines = [];
+        foreach ($packages as $package) {
+            foreach ($package->customsItems as $item) {
+                $key = sprintf('%s|%d', $item->code, $item->unitValue);
+                $lines[$key] = isset($lines[$key])
+                    ? new CustomsItem($item->hsCode, $item->countryOfOrigin, $item->description, $lines[$key]->quantity + $item->quantity, $item->unitValue, $item->currencyCode, $item->code)
+                    : $item;
+            }
+        }
+
+        if ([] === $lines) {
+            throw new UnissuableShipmentException('The shipment crosses a border but carries nothing customs can be told about.');
+        }
+
+        return new CustomsInvoice(
+            (string) ($order->getNumber() ?? $order->getId()),
+            $this->clock->now(),
+            (string) $order->getCurrencyCode(),
+            array_values($lines),
         );
     }
 

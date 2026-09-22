@@ -74,6 +74,19 @@ class CarrierShipmentExport implements CarrierShipmentExportInterface
     #[ORM\Column(name: 'failure_reason', type: 'text', nullable: true)]
     protected ?string $failureReason = null;
 
+    /**
+     * One for the whole shipment, not one per label: it declares what the shipment carries. Null for a shipment
+     * that never left its country, and emptied when the file is purged, like the path of a label.
+     */
+    #[ORM\Column(name: 'customs_document_path', type: 'string', nullable: true)]
+    protected ?string $customsDocumentPath = null;
+
+    #[ORM\Column(name: 'customs_document_format', type: 'string', length: 16, nullable: true)]
+    protected ?string $customsDocumentFormat = null;
+
+    #[ORM\Column(name: 'customs_document_purged_at', type: 'datetime_immutable', nullable: true)]
+    protected ?\DateTimeImmutable $customsDocumentPurgedAt = null;
+
     /** @var Collection<int, CarrierShipmentLabelInterface> */
     #[ORM\OneToMany(targetEntity: CarrierShipmentLabel::class, mappedBy: 'export', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
@@ -197,6 +210,36 @@ class CarrierShipmentExport implements CarrierShipmentExportInterface
     public function setFailureReason(?string $failureReason): void
     {
         $this->failureReason = $failureReason;
+    }
+
+    public function getCustomsDocumentPath(): ?string
+    {
+        return $this->customsDocumentPath;
+    }
+
+    public function setCustomsDocumentPath(?string $customsDocumentPath): void
+    {
+        $this->customsDocumentPath = $customsDocumentPath;
+    }
+
+    public function getCustomsDocumentFormat(): ?string
+    {
+        return $this->customsDocumentFormat;
+    }
+
+    public function setCustomsDocumentFormat(?string $customsDocumentFormat): void
+    {
+        $this->customsDocumentFormat = $customsDocumentFormat;
+    }
+
+    public function getCustomsDocumentPurgedAt(): ?\DateTimeImmutable
+    {
+        return $this->customsDocumentPurgedAt;
+    }
+
+    public function setCustomsDocumentPurgedAt(?\DateTimeImmutable $customsDocumentPurgedAt): void
+    {
+        $this->customsDocumentPurgedAt = $customsDocumentPurgedAt;
     }
 
     public function getLabels(): Collection

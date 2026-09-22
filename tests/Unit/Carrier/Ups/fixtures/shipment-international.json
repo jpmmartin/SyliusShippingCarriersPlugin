@@ -1,0 +1,38 @@
+{
+    "ShipmentResponse": {
+        "Response": {
+            "ResponseStatus": {
+                "Code": "1",
+                "Description": "Success"
+            }
+        },
+        "ShipmentResults": {
+            "ShipmentIdentificationNumber": "1Z999AA10123456784",
+            "PackageResults": [
+                {
+                    "TrackingNumber": "1Z999AA10123456784",
+                    "ShippingLabel": {
+                        "ImageFormat": {
+                            "Code": "GIF",
+                            "Description": "GIF"
+                        },
+                        "GraphicImage": "R0lGODlhIGEgVVBTIGxhYmVs"
+                    }
+                }
+            ],
+            "Form": {
+                "Code": "01",
+                "Description": "All Requested International Forms",
+                "Image": {
+                    "ImageFormat": {
+                        "Code": "PDF",
+                        "Description": "PDF"
+                    },
+                    "GraphicImage": "JVBERi0xLjQgYSBVUFMgaW52b2ljZQ=="
+                },
+                "FormGroupId": "ABCDEF0123456789",
+                "FormGroupIdName": "Invoice"
+            }
+        }
+    }
+}

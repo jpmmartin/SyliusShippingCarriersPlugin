@@ -10,3 +10,5 @@ them proves the mapping follows the documented schema, not that it reads what Fe
 - `error.json`: the error body FedEx sends with a 4xx status.
 - `token.json`: a granted OAuth access token.
 - `track.json`: a tracking response for a delivered shipment with two scans.
+- `ship-international.json`: a shipment that crosses a border, written from `resources/models/ship/v1.json`
+  (`TransactionShipmentOutputVO`), with the commercial invoice among its `shipmentDocuments`, after a document of another kind.

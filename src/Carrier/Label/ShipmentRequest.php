@@ -18,6 +18,8 @@ final readonly class ShipmentRequest
      * @param string $ownReference What the plugin calls this shipment. It is the only name it controls before
      *                             the carrier answers, and therefore the only one it can ask about afterwards
      *                             when no answer came back
+     * @param CustomsInvoice|null $customsInvoice What the carrier prints the commercial invoice from. Null when
+     *                                            nothing crosses a border
      */
     public function __construct(
         public Address $origin,
@@ -26,6 +28,7 @@ final readonly class ShipmentRequest
         public array $packages,
         public string $labelFormat,
         public string $ownReference,
+        public ?CustomsInvoice $customsInvoice = null,
     ) {
     }
 

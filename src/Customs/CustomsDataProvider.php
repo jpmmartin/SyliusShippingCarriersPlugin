@@ -75,6 +75,7 @@ final readonly class CustomsDataProvider
                 $quantity,
                 $unitValue,
                 $currencyCode,
+                (string) $variant->getCode(),
             );
         }
 

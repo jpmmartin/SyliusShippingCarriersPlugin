@@ -10,6 +10,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierResponseException;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsDocument;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\IssuedLabel;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelCarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
@@ -487,6 +488,14 @@ final class LabelIssuerTest extends TestCase
         self::assertNull($export->getFailureReason());
     }
 
+    private function answerWithACustomsDocument(): ShipmentResult
+    {
+        return new ShipmentResult('1Z999AA10123456784', [
+            new IssuedLabel(0, '1Z999AA10123456784', 'GIF', 'the first label'),
+            new IssuedLabel(1, '1Z999AA10123456795', 'GIF', 'the second label'),
+        ], new CustomsDocument('PDF', 'the commercial invoice'));
+    }
+
     private function exportWaitingToBeChecked(): CarrierShipmentExportInterface
     {
         $export = new CarrierShipmentExport();
@@ -525,6 +534,142 @@ final class LabelIssuerTest extends TestCase
             $items[0]->hsCode, $items[0]->countryOfOrigin, $items[0]->description,
             $items[0]->quantity, $items[0]->unitValue,
         ]);
+    }
+
+    /**
+     * The invoice says what the shipment carries, not how it was packed: the same variant at the same price in two
+     * packages is one line of two.
+     */
+    public function testAShipmentThatLeavesTheCountryAsksForItsInvoiceWithEverythingItCarries(): void
+    {
+        $this->destinationCountry = 'CA';
+        $this->declare('MUG', '691200', 'PT');
+
+        $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        $invoice = $this->requests[0]->customsInvoice;
+        self::assertNotNull($invoice);
+        self::assertSame('000000042', $invoice->number);
+        self::assertEquals(new \DateTimeImmutable('2026-09-21 10:00:00'), $invoice->date);
+        self::assertSame('USD', $invoice->currencyCode);
+        self::assertCount(1, $invoice->lines);
+        self::assertSame(['MUG', '691200', 'PT', 2, 1200], [
+            $invoice->lines[0]->code, $invoice->lines[0]->hsCode, $invoice->lines[0]->countryOfOrigin,
+            $invoice->lines[0]->quantity, $invoice->lines[0]->unitValue,
+        ]);
+        self::assertSame(2400, $invoice->total());
+    }
+
+    public function testADomesticShipmentAsksForNoInvoice(): void
+    {
+        $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertNull($this->requests[0]->customsInvoice);
+    }
+
+    /**
+     * The customs document is kept like a label: in the private storage, and in place only once its row exists.
+     */
+    public function testTheCustomsDocumentIsKeptWithTheLabelsUnderTheSameRules(): void
+    {
+        $this->destinationCountry = 'CA';
+        $this->declare('MUG', '691200', 'PT');
+        $this->answer = $this->answerWithACustomsDocument();
+        $seen = [];
+        $this->whileCommitting = function () use (&$seen): void {
+            $seen = $this->storedFiles();
+        };
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertCount(3, $seen, 'The labels and the customs document wait until the row exists.');
+        foreach ($seen as $path) {
+            self::assertStringStartsWith(LabelStorage::PENDING_DIRECTORY . '/', $path);
+        }
+
+        self::assertSame('labels/42/customs-1Z999AA10123456784.pdf', $export->getCustomsDocumentPath());
+        self::assertSame('PDF', $export->getCustomsDocumentFormat());
+        self::assertSame('the commercial invoice', $this->storage->read('labels/42/customs-1Z999AA10123456784.pdf'));
+        self::assertSame(
+            ['labels/42/1Z999AA10123456784-0.gif', 'labels/42/1Z999AA10123456795-1.gif', 'labels/42/customs-1Z999AA10123456784.pdf'],
+            $this->storedFiles(),
+        );
+    }
+
+    public function testAFailureWhileTheRowsAreCommittedLeavesNoCustomsDocumentEither(): void
+    {
+        $this->destinationCountry = 'CA';
+        $this->declare('MUG', '691200', 'PT');
+        $this->answer = $this->answerWithACustomsDocument();
+        $this->whileCommitting = static fn (): never => throw new \RuntimeException('The database went away.');
+
+        try {
+            $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+            self::fail('A failure while the rows are committed has to reach the caller.');
+        } catch (\RuntimeException) {
+        }
+
+        self::assertSame([], $this->storedFiles());
+    }
+
+    /**
+     * The labels are paid for, so the shipment is issued all the same; but whoever hands it over has to find
+     * out there is no paperwork to print.
+     */
+    public function testAShipmentThatLeavesTheCountryWithoutItsDocumentIsIssuedAndSaysSo(): void
+    {
+        $this->destinationCountry = 'CA';
+        $this->declare('MUG', '691200', 'PT');
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(CarrierShipmentExportInterface::STATE_ISSUED, $export->getState());
+        self::assertNull($export->getCustomsDocumentPath());
+        self::assertContains(
+            [LogLevel::WARNING, 'The carrier {carrier} issued the shipment {shipment}, which crosses a border, without any customs document.'],
+            array_map(static fn (array $record): array => [$record[0], $record[1]], $this->logger->records),
+        );
+    }
+
+    /**
+     * The paperwork of a cancelled attempt names a parcel the carrier no longer has, and once the export points
+     * at the new one nothing names the old file at all.
+     */
+    public function testIssuingAgainAfterACancellationReplacesTheCustomsDocument(): void
+    {
+        $this->destinationCountry = 'CA';
+        $this->declare('MUG', '691200', 'PT');
+        $this->storage->write('labels/42/customs-1ZOLD.pdf', 'the old invoice');
+        $voided = new CarrierShipmentExport();
+        $voided->setCarrier('ups');
+        $voided->setState(CarrierShipmentExportInterface::STATE_VOIDED);
+        $voided->setCarrierReference('1ZOLD');
+        $voided->setCustomsDocumentPath('labels/42/customs-1ZOLD.pdf');
+        $voided->setCustomsDocumentFormat('PDF');
+        $this->existingExport = $voided;
+        $this->answer = $this->answerWithACustomsDocument();
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame('labels/42/customs-1Z999AA10123456784.pdf', $export->getCustomsDocumentPath());
+        self::assertFalse($this->storage->fileExists('labels/42/customs-1ZOLD.pdf'));
+    }
+
+    public function testIssuingAgainWithoutADocumentForgetsTheOldOne(): void
+    {
+        $this->storage->write('labels/42/customs-1ZOLD.pdf', 'the old invoice');
+        $voided = new CarrierShipmentExport();
+        $voided->setCarrier('ups');
+        $voided->setState(CarrierShipmentExportInterface::STATE_VOIDED);
+        $voided->setCustomsDocumentPath('labels/42/customs-1ZOLD.pdf');
+        $voided->setCustomsDocumentFormat('PDF');
+        $this->existingExport = $voided;
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertNull($export->getCustomsDocumentPath());
+        self::assertNull($export->getCustomsDocumentFormat());
+        self::assertFalse($this->storage->fileExists('labels/42/customs-1ZOLD.pdf'));
     }
 
     /**
@@ -680,6 +825,7 @@ final class LabelIssuerTest extends TestCase
                 new LabelFormats([]),
                 new CustomsDataProvider($this->customsDataRepository()),
                 new DeclaredValueCalculator(),
+                new MockClock('2026-09-21 10:00:00'),
             ),
             new CredentialsProvider($credentialsRepository),
             new LabelStorage($this->storage),
@@ -779,6 +925,7 @@ final class LabelIssuerTest extends TestCase
         $address->setPhoneNumber('12065550100');
 
         $order = new Order();
+        $order->setNumber('000000042');
         $order->setChannel($channel);
         $order->setCurrencyCode('USD');
         $order->setShippingAddress($address);

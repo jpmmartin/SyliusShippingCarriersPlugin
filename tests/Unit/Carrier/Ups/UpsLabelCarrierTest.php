@@ -10,6 +10,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierCredentialsException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierResponseException;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsInvoice;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsItem;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
@@ -21,6 +23,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use ParagonIE\Halite\KeyFactory;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
@@ -47,6 +50,8 @@ final class UpsLabelCarrierTest extends TestCase
 
     /** @var array<string, string> */
     private array $formats = [];
+
+    private string $dutiesPayer = CarrierCredentialsInterface::DUTIES_PAYER_RECIPIENT;
 
     private string $keyPath;
 
@@ -159,6 +164,136 @@ final class UpsLabelCarrierTest extends TestCase
 
         self::assertSame('the shop reference', $this->sent('Shipment.ReferenceNumber.0.Value'));
         self::assertNull($this->sent('Shipment.Package.0.ReferenceNumber'));
+    }
+
+    public function testAShipmentThatLeavesTheCountryAsksForItsInvoiceInTheSameRequest(): void
+    {
+        $toronto = new Address('CA', 'M5H 2N2', 'Toronto', '100 Queen St W', 'ON', false, null, 'Grace Hopper', '14165550100');
+
+        $this->carrier()->ship($this->request(destination: $toronto, invoice: $this->invoice()));
+
+        $forms = 'Shipment.ShipmentServiceOptions.InternationalForms';
+        self::assertSame(['01'], $this->sent($forms . '.FormType'));
+        self::assertSame('000000042', $this->sent($forms . '.InvoiceNumber'));
+        self::assertSame('20260921', $this->sent($forms . '.InvoiceDate'));
+        self::assertSame('SALE', $this->sent($forms . '.ReasonForExport'));
+        self::assertSame('USD', $this->sent($forms . '.CurrencyCode'));
+        self::assertSame('Grace Hopper', $this->sent($forms . '.Contacts.SoldTo.AttentionName'));
+        self::assertSame('14165550100', $this->sent($forms . '.Contacts.SoldTo.Phone.Number'));
+        self::assertSame(['100 Queen St W'], $this->sent($forms . '.Contacts.SoldTo.Address.AddressLine'));
+        self::assertSame('CA', $this->sent($forms . '.Contacts.SoldTo.Address.CountryCode'));
+
+        self::assertSame(['Enamel mug'], $this->sent($forms . '.Product.0.Description'));
+        self::assertSame('2', $this->sent($forms . '.Product.0.Unit.Number'));
+        self::assertSame('12.00', $this->sent($forms . '.Product.0.Unit.Value'));
+        self::assertSame('PCS', $this->sent($forms . '.Product.0.Unit.UnitOfMeasurement.Code'));
+        self::assertSame('691200', $this->sent($forms . '.Product.0.CommodityCode'));
+        self::assertSame('MUG', $this->sent($forms . '.Product.0.PartNumber'));
+        self::assertSame('PT', $this->sent($forms . '.Product.0.OriginCountryCode'));
+
+        // UPS takes a description in at most three lines of thirty-five characters.
+        $description = $this->sent($forms . '.Product.1.Description');
+        self::assertIsArray($description);
+        self::assertCount(3, $description);
+        foreach ($description as $line) {
+            self::assertIsString($line);
+            self::assertLessThanOrEqual(35, mb_strlen($line));
+        }
+        self::assertSame('A leather messenger bag with a padd', $description[0]);
+    }
+
+    public function testTheInvoiceComesBackWithTheLabels(): void
+    {
+        $result = $this->carrier($this->json($this->fixture('shipment-international.json')))
+            ->ship($this->request(destination: $this->address('CA'), invoice: $this->invoice()));
+
+        self::assertCount(1, $result->labels);
+        self::assertNotNull($result->customsDocument);
+        self::assertSame('PDF', $result->customsDocument->format);
+        self::assertSame('%PDF-1.4 a UPS invoice', $result->customsDocument->contents);
+    }
+
+    public function testADomesticShipmentAsksForNoInvoiceAndKeepsNone(): void
+    {
+        $result = $this->carrier($this->json($this->fixture('shipment-international.json')))->ship($this->request());
+
+        self::assertNull($this->sent('Shipment.ShipmentServiceOptions'));
+        self::assertNull($result->customsDocument);
+    }
+
+    /**
+     * The labels are issued and paid for whether or not the forms came back with them.
+     */
+    public function testAnInternationalAnswerWithoutFormsHasNoDocument(): void
+    {
+        $result = $this->carrier()->ship($this->request(destination: $this->address('CA'), invoice: $this->invoice()));
+
+        self::assertCount(1, $result->labels);
+        self::assertNull($result->customsDocument);
+    }
+
+    /**
+     * Billing the recipient takes a UPS account of the recipient's own, which a buyer does not have: the duties
+     * charge is simply not sent.
+     */
+    public function testWhenTheRecipientPaysTheDutiesNoChargeIsBilledForThem(): void
+    {
+        $this->carrier()->ship($this->request(destination: $this->address('GB'), invoice: $this->invoice()));
+
+        self::assertCount(1, (array) $this->sent('Shipment.PaymentInformation.ShipmentCharge'));
+        self::assertSame('DDU', $this->sent('Shipment.ShipmentServiceOptions.InternationalForms.TermsOfShipment'));
+    }
+
+    public function testWhenTheStorePaysTheDutiesTheyAreBilledToItsAccount(): void
+    {
+        $this->dutiesPayer = CarrierCredentialsInterface::DUTIES_PAYER_SHIPPER;
+
+        $this->carrier()->ship($this->request(destination: $this->address('GB'), invoice: $this->invoice()));
+
+        self::assertCount(2, (array) $this->sent('Shipment.PaymentInformation.ShipmentCharge'));
+        self::assertSame('02', $this->sent('Shipment.PaymentInformation.ShipmentCharge.1.Type'));
+        self::assertSame('A1B2C3', $this->sent('Shipment.PaymentInformation.ShipmentCharge.1.BillShipper.AccountNumber'));
+        self::assertSame('DDP', $this->sent('Shipment.ShipmentServiceOptions.InternationalForms.TermsOfShipment'));
+    }
+
+    /**
+     * UPS says a duties and taxes charge is not valid on what it treats as a domestic shipment.
+     */
+    #[DataProvider('qualifiedDomesticShipments')]
+    public function testDutiesAreNeverChargedWhereUpsTreatsTheShipmentAsDomestic(string $from, string $to): void
+    {
+        $this->dutiesPayer = CarrierCredentialsInterface::DUTIES_PAYER_SHIPPER;
+
+        $this->carrier()->ship($this->request(destination: $this->address($to), invoice: $this->invoice(), origin: $this->address($from)));
+
+        self::assertCount(1, (array) $this->sent('Shipment.PaymentInformation.ShipmentCharge'));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function qualifiedDomesticShipments(): iterable
+    {
+        yield 'from the United States to Puerto Rico' => ['US', 'PR'];
+        yield 'from Puerto Rico to the United States' => ['PR', 'US'];
+        yield 'between two members of the European Union' => ['DE', 'FR'];
+    }
+
+    /**
+     * UPS wants the total on the shipment itself from the United States to Canada or Puerto Rico, and refuses it
+     * anywhere else.
+     */
+    public function testTheInvoiceTotalGoesOnTheShipmentOnlyFromTheUnitedStatesToCanadaOrPuertoRico(): void
+    {
+        $this->carrier()->ship($this->request(destination: $this->address('CA'), invoice: $this->invoice()));
+
+        self::assertSame('USD', $this->sent('Shipment.InvoiceLineTotal.CurrencyCode'));
+        self::assertSame('59.50', $this->sent('Shipment.InvoiceLineTotal.MonetaryValue'));
+
+        $this->requests = [];
+        $this->carrier()->ship($this->request(destination: $this->address('GB'), invoice: $this->invoice()));
+
+        self::assertNull($this->sent('Shipment.InvoiceLineTotal'));
     }
 
     public function testUpsIsAskedNotToSecondGuessTheAddresses(): void
@@ -341,6 +476,7 @@ final class UpsLabelCarrierTest extends TestCase
         $credentials->setEnvironment(CarrierCredentialsInterface::ENVIRONMENT_SANDBOX);
         $credentials->setPickupType(CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED);
         $credentials->setCredentials($this->credentials);
+        $credentials->setDutiesPayer($this->dutiesPayer);
 
         $shipResponse ??= $this->json($this->fixture('shipment.json'));
 
@@ -375,18 +511,40 @@ final class UpsLabelCarrierTest extends TestCase
         );
     }
 
-    private function request(int $packages = 1, ?Package $package = null, ?Address $destination = null): ShipmentRequest
-    {
+    private function request(
+        int $packages = 1,
+        ?Package $package = null,
+        ?Address $destination = null,
+        ?CustomsInvoice $invoice = null,
+        ?Address $origin = null,
+    ): ShipmentRequest {
         $package ??= new Package('Medium', 13.0, 11.0, 9.0, 'in', 5.5, 'lb', []);
 
         return new ShipmentRequest(
-            new Address('US', '60601', 'Chicago', '1 Main St', 'IL', false, 'The store', 'Ada Lovelace', '13057800955'),
+            $origin ?? new Address('US', '60601', 'Chicago', '1 Main St', 'IL', false, 'The store', 'Ada Lovelace', '13057800955'),
             $destination ?? new Address('US', '98101', 'Seattle', '500 Pine St', 'WA', true, null, 'Grace Hopper', '12065550100'),
             '03',
             $this->packages($packages, $package),
             'PDF',
             'the shop reference',
+            $invoice,
         );
+    }
+
+    /**
+     * Two lines, one of them with a description too long for a single line of UPS's form.
+     */
+    private function invoice(): CustomsInvoice
+    {
+        return new CustomsInvoice('000000042', new \DateTimeImmutable('2026-09-21 10:00:00'), 'USD', [
+            new CustomsItem('691200', 'PT', 'Enamel mug', 2, 1200, 'USD', 'MUG'),
+            new CustomsItem('420222', 'CN', 'A leather messenger bag with a padded laptop sleeve and two outer pockets', 1, 3550, 'USD', 'BAG'),
+        ]);
+    }
+
+    private function address(string $countryCode): Address
+    {
+        return new Address($countryCode, '10001', 'Somewhere', '1 High St', null, false, null, 'Grace Hopper', '14165550100');
     }
 
     /**

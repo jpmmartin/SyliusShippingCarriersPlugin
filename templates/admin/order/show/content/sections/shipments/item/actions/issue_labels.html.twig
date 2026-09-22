@@ -20,6 +20,11 @@
                 {{ ux_icon('tabler:file-download') }}
             </a>
         {% endfor %}
+        {% if labels.hasCustomsDocument() %}
+            <a href="{{ path('jpmmartin_carrier_admin_customs_document_download', {'id': labels.export.id}) }}" class="btn btn-icon" data-bs-toggle="tooltip" data-bs-title="{{ 'jpmmartin_carrier.ui.labels.download_customs_document'|trans }}" {{ sylius_test_html_attribute('jpmmartin-carrier-customs-document-download-link') }}>
+                {{ ux_icon('tabler:file-invoice') }}
+            </a>
+        {% endif %}
         {% if labels.failureReason() is not null %}
             {# The carrier refused to cancel these labels. They are still issued and still being billed, so it
                stays on the screen and not only in the message that flashed by. #}

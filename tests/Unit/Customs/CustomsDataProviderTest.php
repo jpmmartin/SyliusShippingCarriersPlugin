@@ -46,13 +46,13 @@ final class CustomsDataProviderTest extends TestCase
         $items = $this->provider()->forPackage($package, 'EUR');
 
         self::assertCount(2, $items);
-        self::assertSame(['691200', 'PT', 'Mug', 2, 1200, 'EUR'], [
+        self::assertSame(['691200', 'PT', 'Mug', 2, 1200, 'EUR', 'MUG'], [
             $items[0]->hsCode, $items[0]->countryOfOrigin, $items[0]->description,
-            $items[0]->quantity, $items[0]->unitValue, $items[0]->currencyCode,
+            $items[0]->quantity, $items[0]->unitValue, $items[0]->currencyCode, $items[0]->code,
         ]);
-        self::assertSame(['650590', 'ES', 'Cap', 1, 2500], [
+        self::assertSame(['650590', 'ES', 'Cap', 1, 2500, 'CAP'], [
             $items[1]->hsCode, $items[1]->countryOfOrigin, $items[1]->description,
-            $items[1]->quantity, $items[1]->unitValue,
+            $items[1]->quantity, $items[1]->unitValue, $items[1]->code,
         ]);
     }
 

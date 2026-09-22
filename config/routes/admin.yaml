@@ -102,3 +102,12 @@ jpmmartin_carrier_admin_label_download:
         id: \d+
     defaults:
         _controller: jpmmartin_carrier.controller.admin.download_label
+
+# The customs document is one per shipment, so it is downloaded by the export's record.
+jpmmartin_carrier_admin_customs_document_download:
+    path: /carrier-customs-documents/{id}
+    methods: [GET]
+    requirements:
+        id: \d+
+    defaults:
+        _controller: jpmmartin_carrier.controller.admin.download_customs_document

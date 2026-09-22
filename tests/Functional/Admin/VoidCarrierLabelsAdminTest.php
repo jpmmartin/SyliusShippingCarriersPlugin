@@ -37,6 +37,12 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
 
     private const LABEL_CONTENTS = 'GIF89a a UPS label';
 
+    private const CUSTOMS_LINK = 'data-test-jpmmartin-carrier-customs-document-download-link';
+
+    private const CUSTOMS_PATH = 'labels/void-test/customs-1Z999AA10123456784.pdf';
+
+    private const CUSTOMS_CONTENTS = '%PDF-1.4 a commercial invoice';
+
     use AdminFixturesTrait;
 
     private KernelBrowser $client;
@@ -60,12 +66,15 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
 
         $this->channel = $this->createChannel('VOID_WEB');
         $this->storage()->write(self::LABEL_PATH, self::LABEL_CONTENTS);
+        $this->storage()->write(self::CUSTOMS_PATH, self::CUSTOMS_CONTENTS);
     }
 
     protected function tearDown(): void
     {
-        if ($this->storage()->fileExists(self::LABEL_PATH)) {
-            $this->storage()->delete(self::LABEL_PATH);
+        foreach ([self::LABEL_PATH, self::CUSTOMS_PATH] as $path) {
+            if ($this->storage()->fileExists($path)) {
+                $this->storage()->delete($path);
+            }
         }
 
         if ($this->entityManager->getConnection()->isTransactionActive()) {
@@ -220,6 +229,66 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
         self::assertStringNotContainsString(self::LABEL_CONTENTS, (string) $this->client->getResponse()->getContent());
     }
 
+    /**
+     * The customs document is handed over under the rules of a label: offered with them, served to an
+     * authorised administrator only, and no longer once the shipment is cancelled.
+     */
+    public function testTheCustomsDocumentIsOfferedWithTheLabelsAndDownloadedByAnAuthorisedAdministrator(): void
+    {
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
+        $export = $this->export($order->getShipments()->first(), CarrierShipmentExportInterface::STATE_ISSUED, true)->getExport();
+        self::assertInstanceOf(CarrierShipmentExportInterface::class, $export);
+        $this->client->loginUser($this->createAdmin('customs-document-admin'), 'admin');
+
+        $this->client->request('GET', '/admin/orders/' . $order->getId());
+        self::assertStringContainsString(self::CUSTOMS_LINK, (string) $this->client->getResponse()->getContent());
+
+        $this->client->request('GET', '/admin/carrier-customs-documents/' . $export->getId());
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(self::CUSTOMS_CONTENTS, $this->client->getResponse()->getContent());
+    }
+
+    public function testWithoutAnAdminSessionNoCustomsDocumentIsServed(): void
+    {
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
+        $export = $this->export($order->getShipments()->first(), CarrierShipmentExportInterface::STATE_ISSUED, true)->getExport();
+        self::assertInstanceOf(CarrierShipmentExportInterface::class, $export);
+
+        $this->client->request('GET', '/admin/carrier-customs-documents/' . $export->getId());
+
+        self::assertFalse($this->client->getResponse()->isSuccessful());
+        self::assertStringNotContainsString(self::CUSTOMS_CONTENTS, (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testTheCustomsDocumentOfACancelledShipmentIsNeitherOfferedNorServed(): void
+    {
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
+        $export = $this->export($order->getShipments()->first(), CarrierShipmentExportInterface::STATE_VOIDED, true)->getExport();
+        self::assertInstanceOf(CarrierShipmentExportInterface::class, $export);
+        $this->client->loginUser($this->createAdmin('cancelled-customs-admin'), 'admin');
+
+        $this->client->request('GET', '/admin/orders/' . $order->getId());
+        self::assertStringNotContainsString(self::CUSTOMS_LINK, (string) $this->client->getResponse()->getContent());
+
+        $this->client->request('GET', '/admin/carrier-customs-documents/' . $export->getId());
+
+        self::assertResponseStatusCodeSame(404);
+        self::assertStringNotContainsString(self::CUSTOMS_CONTENTS, (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testAShipmentWithoutACustomsDocumentOffersNone(): void
+    {
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
+        $this->export($order->getShipments()->first(), CarrierShipmentExportInterface::STATE_ISSUED);
+        $this->client->loginUser($this->createAdmin('domestic-admin'), 'admin');
+
+        $this->client->request('GET', '/admin/orders/' . $order->getId());
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString(self::CUSTOMS_LINK, (string) $this->client->getResponse()->getContent());
+    }
+
     public function testWithoutTheAdminsOwnTokenNothingIsCancelled(): void
     {
         $order = $this->createCarrierOrder($this->channel, 'ups_rate');
@@ -239,7 +308,7 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
     /**
      * @param CarrierShipmentExportInterface::STATE_* $state
      */
-    private function export(mixed $shipment, string $state): CarrierShipmentLabel
+    private function export(mixed $shipment, string $state, bool $withCustomsDocument = false): CarrierShipmentLabel
     {
         self::assertInstanceOf(ShipmentInterface::class, $shipment);
 
@@ -248,6 +317,10 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
         $export->setCarrier('ups');
         $export->setState($state);
         $export->setCarrierReference('1Z999AA10123456784');
+        if ($withCustomsDocument) {
+            $export->setCustomsDocumentPath(self::CUSTOMS_PATH);
+            $export->setCustomsDocumentFormat('PDF');
+        }
 
         $label = new CarrierShipmentLabel();
         $label->setPosition(0);

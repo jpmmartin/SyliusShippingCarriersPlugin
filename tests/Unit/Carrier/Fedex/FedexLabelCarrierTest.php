@@ -11,6 +11,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequ
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierResponseException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexConnectorFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexLabelCarrier;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsInvoice;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsItem;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
@@ -52,6 +54,8 @@ final class FedexLabelCarrierTest extends TestCase
     private array $formats = [];
 
     private string $keyPath;
+
+    private string $dutiesPayer = CarrierCredentialsInterface::DUTIES_PAYER_RECIPIENT;
 
     protected function setUp(): void
     {
@@ -135,6 +139,94 @@ final class FedexLabelCarrierTest extends TestCase
         self::assertSame('IN', $this->sent('requestedShipment.requestedPackageLineItems.0.dimensions.units'));
         self::assertSame(5.6, $this->sent('requestedShipment.requestedPackageLineItems.0.weight.value'));
         self::assertSame('LB', $this->sent('requestedShipment.requestedPackageLineItems.0.weight.units'));
+    }
+
+    public function testAShipmentThatLeavesTheCountryIsDeclaredAndAsksForItsInvoiceInTheSameRequest(): void
+    {
+        $this->mockFedex($this->json($this->fixture('ship-international.json')));
+
+        $this->carrier()->ship($this->internationalRequest());
+
+        $customs = 'requestedShipment.customsClearanceDetail';
+        self::assertSame('Enamel mug', $this->sent($customs . '.commodities.0.description'));
+        self::assertSame(2, $this->sent($customs . '.commodities.0.quantity'));
+        self::assertSame('EA', $this->sent($customs . '.commodities.0.quantityUnits'));
+        self::assertEquals(12.0, $this->sent($customs . '.commodities.0.unitPrice.amount'));
+        self::assertSame('USD', $this->sent($customs . '.commodities.0.unitPrice.currency'));
+        self::assertEquals(24.0, $this->sent($customs . '.commodities.0.customsValue.amount'));
+        self::assertSame('PT', $this->sent($customs . '.commodities.0.countryOfManufacture'));
+        self::assertSame('691200', $this->sent($customs . '.commodities.0.harmonizedCode'));
+        self::assertSame('MUG', $this->sent($customs . '.commodities.0.partNumber'));
+        self::assertEquals(59.5, $this->sent($customs . '.totalCustomsValue.amount'));
+        self::assertSame('SOLD', $this->sent($customs . '.commercialInvoice.shipmentPurpose'));
+        self::assertSame(
+            [['customerReferenceType' => 'INVOICE_NUMBER', 'value' => '000000042']],
+            $this->sent($customs . '.commercialInvoice.customerReferences'),
+        );
+
+        self::assertSame(['COMMERCIAL_INVOICE'], $this->sent('requestedShipment.shippingDocumentSpecification.shippingDocumentTypes'));
+        self::assertSame('PDF', $this->sent('requestedShipment.shippingDocumentSpecification.commercialInvoiceDetail.documentFormat.docType'));
+        self::assertSame('en_US', $this->sent('requestedShipment.shippingDocumentSpecification.commercialInvoiceDetail.documentFormat.locale'));
+    }
+
+    public function testTheInvoiceComesBackWithTheLabels(): void
+    {
+        $this->mockFedex($this->json($this->fixture('ship-international.json')));
+
+        $result = $this->carrier()->ship($this->internationalRequest());
+
+        self::assertCount(1, $result->labels);
+        self::assertNotNull($result->customsDocument);
+        self::assertSame('PDF', $result->customsDocument->format);
+        self::assertSame('%PDF-1.4 a FedEx commercial invoice', $result->customsDocument->contents);
+    }
+
+    public function testADomesticShipmentDeclaresNothingAndKeepsNoDocument(): void
+    {
+        $this->mockFedex($this->json($this->fixture('ship-international.json')));
+
+        $result = $this->carrier()->ship($this->request());
+
+        self::assertNull($this->sent('requestedShipment.customsClearanceDetail'));
+        self::assertNull($this->sent('requestedShipment.shippingDocumentSpecification'));
+        self::assertNull($result->customsDocument);
+    }
+
+    /**
+     * The labels are issued and paid for whether or not the invoice came back with them.
+     */
+    public function testAnInternationalAnswerWithoutTheInvoiceHasNoDocument(): void
+    {
+        $this->mockFedex($this->json($this->fixture('ship.json')));
+
+        $result = $this->carrier()->ship($this->internationalRequest());
+
+        self::assertCount(1, $result->labels);
+        self::assertNull($result->customsDocument);
+    }
+
+    public function testWhenTheRecipientPaysTheDutiesFedexIsToldSoWithoutAnAccount(): void
+    {
+        $this->mockFedex($this->json($this->fixture('ship-international.json')));
+
+        $this->carrier()->ship($this->internationalRequest());
+
+        self::assertSame('RECIPIENT', $this->sent('requestedShipment.customsClearanceDetail.dutiesPayment.paymentType'));
+        self::assertNull($this->sent('requestedShipment.customsClearanceDetail.dutiesPayment.payor'));
+    }
+
+    public function testWhenTheStorePaysTheDutiesTheyAreBilledToItsAccount(): void
+    {
+        $this->dutiesPayer = CarrierCredentialsInterface::DUTIES_PAYER_SHIPPER;
+        $this->mockFedex($this->json($this->fixture('ship-international.json')));
+
+        $this->carrier()->ship($this->internationalRequest());
+
+        self::assertSame('SENDER', $this->sent('requestedShipment.customsClearanceDetail.dutiesPayment.paymentType'));
+        self::assertSame(
+            '740561073',
+            $this->sent('requestedShipment.customsClearanceDetail.dutiesPayment.payor.responsibleParty.accountNumber.value'),
+        );
     }
 
     public function testWithoutAnAccountNumberFedexIsNotCalled(): void
@@ -226,6 +318,7 @@ final class FedexLabelCarrierTest extends TestCase
         $credentials->setEnvironment(CarrierCredentialsInterface::ENVIRONMENT_SANDBOX);
         $credentials->setPickupType(CarrierCredentialsInterface::PICKUP_TYPE_SCHEDULED);
         $credentials->setCredentials($this->credentials);
+        $credentials->setDutiesPayer($this->dutiesPayer);
 
         /** @var RepositoryInterface<CarrierCredentialsInterface>&Stub $repository */
         $repository = $this->createStub(RepositoryInterface::class);
@@ -258,7 +351,7 @@ final class FedexLabelCarrierTest extends TestCase
         ]);
     }
 
-    private function request(int $packages = 1, ?Package $package = null, ?Address $destination = null): ShipmentRequest
+    private function request(int $packages = 1, ?Package $package = null, ?Address $destination = null, ?CustomsInvoice $invoice = null): ShipmentRequest
     {
         $package ??= new Package('Medium', 13.0, 11.0, 9.0, 'in', 5.5, 'lb', []);
         $items = [new ShipmentPackage($package)];
@@ -273,6 +366,18 @@ final class FedexLabelCarrierTest extends TestCase
             $items,
             'PDF',
             'the shop reference',
+            $invoice,
+        );
+    }
+
+    private function internationalRequest(): ShipmentRequest
+    {
+        return $this->request(
+            destination: new Address('GB', 'SW1A 1AA', 'London', '10 Downing St', null, false, null, 'Grace Hopper', '442079460000'),
+            invoice: new CustomsInvoice('000000042', new \DateTimeImmutable('2026-09-21 10:00:00'), 'USD', [
+                new CustomsItem('691200', 'PT', 'Enamel mug', 2, 1200, 'USD', 'MUG'),
+                new CustomsItem('420222', 'CN', 'Leather bag', 1, 3550, 'USD', 'BAG'),
+            ]),
         );
     }
 

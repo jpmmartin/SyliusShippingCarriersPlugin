@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Label;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsDocument;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\IssuedLabel;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
@@ -18,6 +19,9 @@ use League\Flysystem\FilesystemOperator;
  * The path of a label is its shipment, the carrier's number for the parcel and its place in the shipment. The
  * tracking number is in it so that issuing a shipment again after cancelling the first one writes somewhere
  * else: the file of a cancelled label is still evidence until the retention takes it.
+ *
+ * The customs document of a shipment is kept next to its labels, under the same rules: nothing tells it apart
+ * from a label but its name.
  */
 final readonly class LabelStorage
 {
@@ -44,15 +48,30 @@ final readonly class LabelStorage
     }
 
     /**
+     * The carrier's name for the shipment is in it for the same reason the tracking number is in a label's.
+     *
+     * @param int|string $shipmentId The shipment the document belongs to
+     */
+    public function pathForCustomsDocument(CustomsDocument $document, int|string $shipmentId, string $carrierReference): string
+    {
+        return sprintf(
+            'labels/%s/customs-%s.%s',
+            self::slug((string) $shipmentId),
+            self::slug($carrierReference),
+            self::extension($document->format),
+        );
+    }
+
+    /**
      * @return string The path it waits at, to be given to promote() once the row exists
      *
      * @throws FilesystemException When it could not be written
      */
-    public function writeTemporary(IssuedLabel $label): string
+    public function writeTemporary(IssuedLabel|CustomsDocument $file): string
     {
-        $path = sprintf('%s/%s.%s', self::PENDING_DIRECTORY, bin2hex(random_bytes(16)), self::extension($label->format));
+        $path = sprintf('%s/%s.%s', self::PENDING_DIRECTORY, bin2hex(random_bytes(16)), self::extension($file->format));
 
-        $this->storage->write($path, $label->contents);
+        $this->storage->write($path, $file->contents);
 
         return $path;
     }

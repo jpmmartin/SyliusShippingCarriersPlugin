@@ -17,6 +17,7 @@ jpmmartin_carrier:
             issue_batch: Issue the labels
             issued: Labels issued
             download: Download the label
+            download_customs_document: Download the customs document
             void: Cancel the labels
             void_refused: The carrier refused to cancel
             void_until: 'The carrier cancels this shipment until %date%'

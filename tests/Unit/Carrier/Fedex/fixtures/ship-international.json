@@ -1,0 +1,37 @@
+{
+    "transactionId": "t-1",
+    "output": {
+        "transactionShipments": [
+            {
+                "masterTrackingNumber": "794953555571",
+                "serviceType": "INTERNATIONAL_PRIORITY",
+                "shipmentDocuments": [
+                    {
+                        "contentType": "AUXILIARY",
+                        "docType": "PDF",
+                        "encodedLabel": "YW4gYXV4aWxpYXJ5IGRvY3VtZW50"
+                    },
+                    {
+                        "contentType": "COMMERCIAL_INVOICE",
+                        "copiesToPrint": 3,
+                        "docType": "PDF",
+                        "encodedLabel": "JVBERi0xLjQgYSBGZWRFeCBjb21tZXJjaWFsIGludm9pY2U="
+                    }
+                ],
+                "pieceResponses": [
+                    {
+                        "trackingNumber": "794953555571",
+                        "packageSequenceNumber": 1,
+                        "packageDocuments": [
+                            {
+                                "docType": "PDF",
+                                "encodedLabel": "JVBERi0xLjQgYSBGZWRFeCBsYWJlbA==",
+                                "trackingNumber": "794953555571"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
