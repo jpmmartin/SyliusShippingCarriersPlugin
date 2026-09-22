@@ -34,7 +34,7 @@ final readonly class ShipmentRequest
 
     /**
      * Whether customs has to be told anything at all: a shipment that never leaves its country is not
-     * declared (002/CA-6).
+     * declared.
      */
     public function crossesABorder(): bool
     {
