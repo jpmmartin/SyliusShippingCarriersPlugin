@@ -31,6 +31,9 @@ final class RateRequestFactory implements ResetInterface
      */
     private array $channelsLoggedWithoutOrigin = [];
 
+    /** @var array<string, true> The channels whose incomplete origin has already been logged in this request. */
+    private array $channelsLoggedWithAnIncompleteOrigin = [];
+
     /**
      * @param RepositoryInterface<CarrierShippingOriginInterface> $originRepository
      */
@@ -77,6 +80,8 @@ final class RateRequestFactory implements ResetInterface
 
         $originAddress = $this->addressFactory->forOrigin($origin);
         if (null === $originAddress) {
+            $this->logIncompleteOrigin((string) $channel->getCode(), AddressFactory::missingFromOrigin($origin));
+
             return null;
         }
 
@@ -92,6 +97,26 @@ final class RateRequestFactory implements ResetInterface
     public function reset(): void
     {
         $this->channelsLoggedWithoutOrigin = [];
+        $this->channelsLoggedWithAnIncompleteOrigin = [];
+    }
+
+    /**
+     * The same silence as having no origin at all, so it gets the same shout: from the outside the method
+     * simply is not there, and nobody could tell the two apart.
+     *
+     * @param list<string> $missing
+     */
+    private function logIncompleteOrigin(string $channelCode, array $missing): void
+    {
+        if (isset($this->channelsLoggedWithAnIncompleteOrigin[$channelCode])) {
+            return;
+        }
+
+        $this->channelsLoggedWithAnIncompleteOrigin[$channelCode] = true;
+        $this->logger->error('The shipping origin of the channel {channel} has no {missing}, so no carrier shipping method is offered in it.', [
+            'channel' => $channelCode,
+            'missing' => implode(', ', $missing),
+        ]);
     }
 
     private function logChannelWithoutOrigin(string $channelCode): void

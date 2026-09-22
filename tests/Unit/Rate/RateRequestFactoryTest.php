@@ -159,11 +159,63 @@ final class RateRequestFactoryTest extends TestCase
         self::assertCount(2, $this->logger->records);
     }
 
-    public function testAnOriginWithoutAPostcodeIsNotRated(): void
+    /**
+     * An origin missing a part a carrier requires leaves the channel as unable to quote as having no origin at
+     * all, and from the outside it looks the same: the method simply is not offered. So it gets the same shout,
+     * naming what is missing — otherwise nobody can tell which of the two happened.
+     *
+     * @param \Closure(CarrierShippingOriginInterface): void $emptyIt
+     */
+    #[DataProvider('incompleteOrigins')]
+    public function testAnOriginMissingWhatACarrierRequiresIsNotRatedAndIsLogged(\Closure $emptyIt, string $missing): void
     {
-        $this->origin?->setPostcode(null);
+        self::assertInstanceOf(CarrierShippingOriginInterface::class, $this->origin);
+        $emptyIt($this->origin);
 
         self::assertNull($this->factory()->create($this->shipment()));
+
+        self::assertCount(1, $this->logger->records);
+        [$level, $message, $context] = $this->logger->records[0];
+        self::assertSame(LogLevel::ERROR, $level);
+        self::assertStringContainsString('has no {missing}', $message);
+        self::assertSame(['channel' => 'WEB', 'missing' => $missing], $context);
+    }
+
+    /**
+     * @return iterable<string, array{\Closure(CarrierShippingOriginInterface): void, string}>
+     */
+    public static function incompleteOrigins(): iterable
+    {
+        yield 'without a street' => [static fn (CarrierShippingOriginInterface $o): null => $o->setStreet(null), 'street'];
+        yield 'without a city' => [static fn (CarrierShippingOriginInterface $o): null => $o->setCity(null), 'city'];
+        yield 'without a postcode' => [static fn (CarrierShippingOriginInterface $o): null => $o->setPostcode(null), 'postcode'];
+        yield 'without a country' => [static fn (CarrierShippingOriginInterface $o): null => $o->setCountryCode(null), 'country'];
+        // Blank is as useless at a carrier as absent, and it is what a spreadsheet import leaves behind.
+        yield 'with a blank street' => [static fn (CarrierShippingOriginInterface $o): null => $o->setStreet('   '), 'street'];
+        yield 'missing more than one' => [
+            static function (CarrierShippingOriginInterface $o): void {
+                $o->setCity(null);
+                $o->setCountryCode(null);
+            },
+            'city, country',
+        ];
+    }
+
+    /**
+     * The shipping step asks once per shipping method, the same as with no origin at all.
+     */
+    public function testAnIncompleteOriginIsLoggedOncePerRequest(): void
+    {
+        $this->origin?->setPostcode(null);
+        $factory = $this->factory();
+
+        $factory->create($this->shipment());
+        $factory->create($this->shipment());
+        self::assertCount(1, $this->logger->records);
+
+        $factory->reset();
+        $factory->create($this->shipment());
+        self::assertCount(2, $this->logger->records);
     }
 
     public function testAShipmentThatCannotBePackedIsNotRated(): void

@@ -20,10 +20,11 @@ final readonly class AddressFactory
      */
     public function forOrigin(CarrierShippingOriginInterface $origin): ?Address
     {
-        $countryCode = self::filled($origin->getCountryCode());
-        $postcode = self::filled($origin->getPostcode());
-        $city = self::filled($origin->getCity());
-        $street = self::filled($origin->getStreet());
+        $parts = self::originParts($origin);
+        $countryCode = $parts['country'];
+        $postcode = $parts['postcode'];
+        $city = $parts['city'];
+        $street = $parts['street'];
         if (null === $countryCode || null === $postcode || null === $city || null === $street) {
             return null;
         }
@@ -39,6 +40,32 @@ final readonly class AddressFactory
             self::filled($origin->getContactName()),
             self::filled($origin->getPhone()),
         );
+    }
+
+    /**
+     * What a carrier requires of an origin and this one does not have. Empty when there is nothing missing.
+     *
+     * It reads the same parts {@see forOrigin()} does, so what the log names and what makes an origin unusable
+     * cannot drift apart.
+     *
+     * @return list<string>
+     */
+    public static function missingFromOrigin(CarrierShippingOriginInterface $origin): array
+    {
+        return array_keys(array_filter(self::originParts($origin), static fn (?string $part): bool => null === $part));
+    }
+
+    /**
+     * @return array{street: string|null, city: string|null, postcode: string|null, country: string|null}
+     */
+    private static function originParts(CarrierShippingOriginInterface $origin): array
+    {
+        return [
+            'street' => self::filled($origin->getStreet()),
+            'city' => self::filled($origin->getCity()),
+            'postcode' => self::filled($origin->getPostcode()),
+            'country' => self::filled($origin->getCountryCode()),
+        ];
     }
 
     /**
