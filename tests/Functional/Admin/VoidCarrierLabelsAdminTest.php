@@ -289,6 +289,48 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
         self::assertStringNotContainsString(self::CUSTOMS_LINK, (string) $this->client->getResponse()->getContent());
     }
 
+    /**
+     * Once the retention is over the files are gone, but the shipment is not: the screen stops offering what it
+     * can no longer serve and goes on saying the labels were issued, which is what makes the purge safe to run.
+     */
+    public function testAShipmentWhoseFilesWerePurgedOffersNoDownloadsAndIsStillIssued(): void
+    {
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
+        $label = $this->export($order->getShipments()->first(), CarrierShipmentExportInterface::STATE_ISSUED, true, true);
+        $export = $label->getExport();
+        self::assertInstanceOf(CarrierShipmentExportInterface::class, $export);
+        $this->client->loginUser($this->createAdmin('purged-admin'), 'admin');
+
+        $this->client->request('GET', '/admin/orders/' . $order->getId());
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $this->client->getResponse()->getContent();
+        self::assertStringNotContainsString(self::DOWNLOAD_LINK, $content);
+        self::assertStringNotContainsString(self::CUSTOMS_LINK, $content);
+        self::assertStringNotContainsString(self::ISSUE_BUTTON, $content, 'The labels were issued and still are: they are not offered again.');
+        self::assertStringContainsString(self::VOID_BUTTON, $content);
+
+        // What was sent, by whom and when is still on record.
+        self::assertSame('1Z999AA10123456784', $label->getTrackingNumber());
+        self::assertSame('warehouse@example.com', $export->getIssuedBy());
+        self::assertNotNull($export->getIssuedAt());
+    }
+
+    public function testNeitherThePurgedLabelNorThePurgedCustomsDocumentIsServed(): void
+    {
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
+        $label = $this->export($order->getShipments()->first(), CarrierShipmentExportInterface::STATE_ISSUED, true, true);
+        $export = $label->getExport();
+        self::assertInstanceOf(CarrierShipmentExportInterface::class, $export);
+        $this->client->loginUser($this->createAdmin('purged-download-admin'), 'admin');
+
+        $this->client->request('GET', '/admin/carrier-labels/' . $label->getId());
+        self::assertResponseStatusCodeSame(404);
+
+        $this->client->request('GET', '/admin/carrier-customs-documents/' . $export->getId());
+        self::assertResponseStatusCodeSame(404);
+    }
+
     public function testWithoutTheAdminsOwnTokenNothingIsCancelled(): void
     {
         $order = $this->createCarrierOrder($this->channel, 'ups_rate');
@@ -307,8 +349,10 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
 
     /**
      * @param CarrierShipmentExportInterface::STATE_* $state
+     * @param bool $purged As the retention leaves it: the files deleted, everything that says what was shipped
+     *                     still there
      */
-    private function export(mixed $shipment, string $state, bool $withCustomsDocument = false): CarrierShipmentLabel
+    private function export(mixed $shipment, string $state, bool $withCustomsDocument = false, bool $purged = false): CarrierShipmentLabel
     {
         self::assertInstanceOf(ShipmentInterface::class, $shipment);
 
@@ -317,9 +361,14 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
         $export->setCarrier('ups');
         $export->setState($state);
         $export->setCarrierReference('1Z999AA10123456784');
+        $export->setIssuedAt(new \DateTimeImmutable('2026-03-01 10:00:00'));
+        $export->setIssuedBy('warehouse@example.com');
         if ($withCustomsDocument) {
             $export->setCustomsDocumentPath(self::CUSTOMS_PATH);
             $export->setCustomsDocumentFormat('PDF');
+            if ($purged) {
+                $export->setCustomsDocumentPurgedAt(new \DateTimeImmutable('2026-09-22 10:00:00'));
+            }
         }
 
         $label = new CarrierShipmentLabel();
@@ -327,6 +376,9 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
         $label->setPath(self::LABEL_PATH);
         $label->setFormat('GIF');
         $label->setTrackingNumber('1Z999AA10123456784');
+        if ($purged) {
+            $label->setPurgedAt(new \DateTimeImmutable('2026-09-22 10:00:00'));
+        }
         $export->addLabel($label);
 
         $this->entityManager->persist($export);
