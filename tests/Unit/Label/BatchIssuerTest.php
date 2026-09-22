@@ -10,11 +10,18 @@ use JpmMartin\SyliusShippingCarriersPlugin\Label\BatchIssuer;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\BatchResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AlreadyIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelIssuerInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateProviderInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator;
+use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
+use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShippingChargeResolver;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Sylius\Component\Core\Model\Order;
 use Sylius\Component\Core\Model\Shipment;
 use Sylius\Component\Core\Model\ShipmentInterface;
+use Sylius\Component\Core\Model\ShippingMethod;
+use Sylius\Component\Registry\ServiceRegistry;
+use Sylius\Component\Shipping\Calculator\CalculatorInterface;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
 
 /**
@@ -103,9 +110,31 @@ final class BatchIssuerTest extends TestCase
         self::assertSame([], $this->issued);
     }
 
+    /**
+     * A failure nobody can read afterwards is a failure nobody fixes: the entry has to say which carrier,
+     * which shipment and what went wrong, not only that something did.
+     */
+    public function testAFailureIsLoggedWithTheCarrierTheShipmentAndTheCause(): void
+    {
+        $this->outcomes[7] = new AlreadyIssuedException('The shipment already has its labels.');
+
+        $this->batchIssuer()->issue([$this->shipment(7)], 'warehouse@example.com');
+
+        self::assertCount(1, $this->logger->records);
+        [$level, , $context] = $this->logger->records[0];
+        self::assertSame(LogLevel::ERROR, $level);
+        self::assertSame('ups', $context['carrier'] ?? null);
+        self::assertSame(7, $context['shipment'] ?? null);
+        self::assertSame('The shipment already has its labels.', $context['reason'] ?? null);
+    }
+
     private function batchIssuer(): BatchIssuer
     {
-        return new BatchIssuer($this->labelIssuer(), $this->logger);
+        $calculators = new ServiceRegistry(CalculatorInterface::class);
+        $chargeResolver = new ShippingChargeResolver($this->createStub(RateProviderInterface::class));
+        $calculators->register('ups_rate', new CarrierRateCalculator($chargeResolver, 'ups', 'ups_rate'));
+
+        return new BatchIssuer($this->labelIssuer(), new ShipmentCarrier($calculators), $this->logger);
     }
 
     /**
@@ -161,8 +190,13 @@ final class BatchIssuerTest extends TestCase
 
     private function shipment(int $id): ShipmentInterface
     {
+        $method = new ShippingMethod();
+        $method->setCode('ups-ground');
+        $method->setCalculator('ups_rate');
+
         $order = new Order();
         $shipment = new Shipment();
+        $shipment->setMethod($method);
         $order->addShipment($shipment);
 
         (new \ReflectionProperty(Shipment::class, 'id'))->setValue($shipment, $id);

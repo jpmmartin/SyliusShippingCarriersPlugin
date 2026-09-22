@@ -85,6 +85,24 @@ final class DocumentStorageTest extends KernelTestCase
         self::assertFileDoesNotExist($this->documentsDirectory() . '/' . self::FILE);
     }
 
+    /**
+     * The setting the README tells an integrator about. The kernel above re-points the whole storage, which is
+     * the other way in; this one changes nothing but `documents_dir`, so if the plugin stopped reading it
+     * nothing else would notice.
+     */
+    public function testTheSettingOfThePluginMovesTheDocuments(): void
+    {
+        self::bootKernel(['environment' => 'documents_dir_configured']);
+
+        $this->storage()->write(self::FILE, 'a label');
+
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+        self::assertIsString($projectDir);
+        $expected = rtrim($projectDir, '/') . '/var/documents-by-setting';
+        self::assertSame($expected, $this->documentsDirectory());
+        self::assertFileExists($expected . '/' . self::FILE);
+    }
+
     private function storage(): FilesystemOperator
     {
         $storage = self::getContainer()->get(JpmMartinSyliusShippingCarriersExtension::DOCUMENT_STORAGE);

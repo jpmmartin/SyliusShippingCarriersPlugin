@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Label;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
 use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
 
@@ -19,6 +20,7 @@ final readonly class BatchIssuer implements BatchIssuerInterface
 {
     public function __construct(
         private LabelIssuerInterface $labelIssuer,
+        private ShipmentCarrier $shipmentCarrier,
         private LoggerInterface $logger,
     ) {
     }
@@ -40,7 +42,8 @@ final readonly class BatchIssuer implements BatchIssuerInterface
             return BatchResult::of($shipment, $this->labelIssuer->issue($shipment, $issuedBy));
         } catch (\Throwable $exception) {
             // Every shipment answers for itself: whatever went wrong with this one, the rest are still issued.
-            $this->logger->error('The labels of the shipment {shipment} were not issued in the batch: {reason}', [
+            $this->logger->error('The labels of the shipment {shipment} were not issued by {carrier} in the batch: {reason}', [
+                'carrier' => $this->shipmentCarrier->of($shipment),
                 'shipment' => $shipment->getId(),
                 'reason' => $exception->getMessage(),
                 'exception' => $exception,

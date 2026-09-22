@@ -40,6 +40,14 @@ when@documents_elsewhere:
                 visibility: 'private'
                 directory_visibility: 'private'
 
+# Kernel for DocumentStorageTest: an application moves the documents with the plugin's own setting and nothing
+# else. Not named "test…" for the same reason as above.
+when@documents_dir_configured:
+    framework:
+        test: true
+    jpm_martin_sylius_shipping_carriers:
+        documents_dir: '%kernel.project_dir%/var/documents-by-setting'
+
 # Kernel for PackagingStrategyReplacementTest: an application replaces the packaging strategy by pointing the
 # plugin's alias at a service of its own. Not named "test…" for the same reason as above.
 when@packaging_strategy_replaced:

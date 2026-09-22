@@ -58,8 +58,9 @@ final readonly class LabelVoider implements LabelVoiderInterface
             $result = $labelCarrier->void($reference);
         } catch (CarrierException $exception) {
             // The carrier could not even be asked, so nothing is known and nothing is recorded.
-            $this->logger->error('The carrier {carrier} could not be told to cancel the shipment {reference}: {reason}', [
+            $this->logger->error('The carrier {carrier} could not be told to cancel the shipment {shipment} it calls {reference}: {reason}', [
                 'carrier' => $carrier,
+                'shipment' => $export->getShipment()?->getId(),
                 'reference' => $reference,
                 'reason' => $exception->getMessage(),
                 'exception' => $exception,
@@ -95,8 +96,9 @@ final readonly class LabelVoider implements LabelVoiderInterface
         $export->setFailureReason($reason);
         $this->exportManager->flush();
 
-        $this->logger->error('The carrier {carrier} refused to cancel the shipment {reference}, which is still issued: {reason}', [
+        $this->logger->error('The carrier {carrier} refused to cancel the shipment {shipment} it calls {reference}, which is still issued: {reason}', [
             'carrier' => $carrier,
+            'shipment' => $export->getShipment()?->getId(),
             'reference' => $reference,
             'reason' => $reason,
         ]);

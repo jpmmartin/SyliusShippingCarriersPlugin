@@ -57,6 +57,7 @@
 
         <service id="jpmmartin_carrier.label.batch_issuer" class="JpmMartin\SyliusShippingCarriersPlugin\Label\BatchIssuer">
             <argument type="service" id="jpmmartin_carrier.label.issuer" />
+            <argument type="service" id="jpmmartin_carrier.shipping.shipment_carrier" />
             <argument type="service" id="logger" />
         </service>
         <service id="JpmMartin\SyliusShippingCarriersPlugin\Label\BatchIssuerInterface" alias="jpmmartin_carrier.label.batch_issuer" />

@@ -47,6 +47,7 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\StorageAttributes;
+use League\Flysystem\UnableToMoveFile;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
@@ -114,6 +115,9 @@ final class LabelIssuerTest extends TestCase
     /** What happens while the rows are being committed, so a test can look at the storage at that instant. */
     private ?\Closure $whileCommitting = null;
 
+    /** Whether the store refuses to move a label from the waiting area to where its row says it is. */
+    private bool $storingFails = false;
+
     protected function setUp(): void
     {
         $this->logger = new RecordingLogger();
@@ -125,6 +129,7 @@ final class LabelIssuerTest extends TestCase
         $this->credentials = $this->storedCredentials();
         $this->origin = $this->origin();
         $this->whileCommitting = null;
+        $this->storingFails = false;
         $this->destinationCountry = 'US';
         $this->customsData = [];
         $this->recovery = null;
@@ -324,6 +329,24 @@ final class LabelIssuerTest extends TestCase
         }
 
         self::assertSame([], $this->storedFiles(), 'No label may be left anywhere.');
+    }
+
+    /**
+     * The other side of the same criterion. Once the carrier has issued, the shipment exists and is billed:
+     * losing the file is bad, and forgetting a shipment somebody has already paid for is worse. So the record
+     * stays, and the failure is shouted about.
+     */
+    public function testAShipmentTheCarrierIssuedIsKeptEvenIfItsFileCannotBeStored(): void
+    {
+        $this->storingFails = true;
+
+        $export = $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(CarrierShipmentExportInterface::STATE_ISSUED, $export->getState());
+        self::assertSame('1Z999AA10123456784', $export->getCarrierReference());
+        self::assertSame('warehouse@example.com', $export->getIssuedBy());
+        self::assertCount(2, $export->getLabels());
+        self::assertSame(LogLevel::ERROR, $this->logger->records[0][0] ?? null);
     }
 
     public function testTheCarrierIsGivenANameOfThePluginsOwnThatIsKeptOnTheExport(): void
@@ -828,7 +851,7 @@ final class LabelIssuerTest extends TestCase
                 new MockClock('2026-09-21 10:00:00'),
             ),
             new CredentialsProvider($credentialsRepository),
-            new LabelStorage($this->storage),
+            new LabelStorage($this->labelStore()),
             $exportRepository,
             $exportFactory,
             $labelFactory,
@@ -836,6 +859,30 @@ final class LabelIssuerTest extends TestCase
             new MockClock('2026-09-21 10:00:00'),
             $this->logger,
         );
+    }
+
+    /**
+     * The real store, unless a test asked for the move to its final place to fail: the disk filling up between
+     * writing the file and moving it is exactly when the carrier has already issued and billed.
+     */
+    private function labelStore(): FilesystemOperator
+    {
+        if (!$this->storingFails) {
+            return $this->storage;
+        }
+
+        $storage = $this->createMock(FilesystemOperator::class);
+        $storage->method('write')->willReturnCallback(function (string $path, string $contents): void {
+            $this->storage->write($path, $contents);
+        });
+        $storage->method('delete')->willReturnCallback(function (string $path): void {
+            $this->storage->delete($path);
+        });
+        $storage->method('move')->willReturnCallback(
+            static fn (string $source): never => throw UnableToMoveFile::fromLocationTo($source, 'its place'),
+        );
+
+        return $storage;
     }
 
     /**

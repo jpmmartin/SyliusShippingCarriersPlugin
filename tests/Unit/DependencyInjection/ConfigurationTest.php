@@ -51,6 +51,34 @@ final class ConfigurationTest extends TestCase
     }
 
     /**
+     * A shop with its own rules about how long it may keep a buyer's address has to be able to say so, and a
+     * shop that cannot keep the files where the plugin puts them has to be able to move them.
+     */
+    public function testHowLongDocumentsAreKeptAndWhereCanBeConfigured(): void
+    {
+        $config = $this->process([[
+            'documents_dir' => '/srv/carrier-documents',
+            'documents_retention' => 30 * 24 * 60 * 60,
+            'temporary_documents_retention' => 3600,
+        ]]);
+
+        self::assertSame('/srv/carrier-documents', $config['documents_dir']);
+        self::assertSame(2592000, $config['documents_retention']);
+        self::assertSame(3600, $config['temporary_documents_retention']);
+    }
+
+    /**
+     * Keeping a document for no time at all is not a retention, it is a deletion: the shortest the plugin
+     * takes is a second.
+     */
+    public function testADocumentCannotBeKeptForNoTimeAtAll(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->process([['documents_retention' => 0]]);
+    }
+
+    /**
      * Without configuration, the status of a shipment is kept for 5 minutes.
      */
     public function testTheStatusOfAShipmentIsKeptForFiveMinutesByDefault(): void

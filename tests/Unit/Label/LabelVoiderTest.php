@@ -16,6 +16,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\NotIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelVoider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
+use Sylius\Component\Core\Model\Order;
+use Sylius\Component\Core\Model\Shipment;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
@@ -72,6 +74,45 @@ final class LabelVoiderTest extends TestCase
         self::assertNull($export->getVoidedAt());
         self::assertNull($export->getVoidedBy());
         self::assertSame(LogLevel::ERROR, $this->logger->records[0][0] ?? null);
+    }
+
+    /**
+     * A failure nobody can read afterwards is a failure nobody fixes. The carrier's own name for the shipment
+     * is not enough: somebody has to be able to find the shipment in this shop.
+     */
+    public function testARefusalIsLoggedWithTheCarrierTheShipmentAndTheCause(): void
+    {
+        $this->answer = VoidResult::refused('UPS did not void the shipment: it is past the void window.');
+
+        $this->voider()->void($this->issuedExport(), 'warehouse@example.com');
+
+        self::assertCount(1, $this->logger->records);
+        [$level, , $context] = $this->logger->records[0];
+        self::assertSame(LogLevel::ERROR, $level);
+        self::assertSame('ups', $context['carrier'] ?? null);
+        self::assertSame(42, $context['shipment'] ?? null);
+        self::assertSame('1Z999AA10123456784', $context['reference'] ?? null);
+        self::assertSame('UPS did not void the shipment: it is past the void window.', $context['reason'] ?? null);
+    }
+
+    /**
+     * The same when the carrier could not even be asked: that entry is the only trace of what happened.
+     */
+    public function testACarrierThatCannotBeAskedIsLoggedWithTheCarrierTheShipmentAndTheCause(): void
+    {
+        $this->answer = new CarrierUnavailableException('UPS could not be reached: the request timed out.');
+
+        try {
+            $this->voider()->void($this->issuedExport(), 'warehouse@example.com');
+        } catch (CarrierUnavailableException) {
+            // Expected: it reaches the caller. What matters here is what was written down on the way.
+        }
+
+        self::assertCount(1, $this->logger->records);
+        $context = $this->logger->records[0][2];
+        self::assertSame('ups', $context['carrier'] ?? null);
+        self::assertSame(42, $context['shipment'] ?? null);
+        self::assertSame('UPS could not be reached: the request timed out.', $context['reason'] ?? null);
     }
 
     /**
@@ -181,7 +222,13 @@ final class LabelVoiderTest extends TestCase
 
     private function issuedExport(): CarrierShipmentExportInterface
     {
+        $order = new Order();
+        $shipment = new Shipment();
+        $order->addShipment($shipment);
+        (new \ReflectionProperty(Shipment::class, 'id'))->setValue($shipment, 42);
+
         $export = new CarrierShipmentExport();
+        $export->setShipment($shipment);
         $export->setCarrier('ups');
         $export->setState(CarrierShipmentExportInterface::STATE_ISSUED);
         $export->setCarrierReference('1Z999AA10123456784');
