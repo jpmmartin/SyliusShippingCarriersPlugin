@@ -160,7 +160,16 @@ final class UpsCarrier implements CarrierInterface
     }
 
     /**
-     * UPS dates its events as `20260917` and `134500`, in the time of the place the event happened.
+     * UPS dates its events as `20260917` and `134500`, in the time of the place the event happened, and gives
+     * that place's offset from UTC alongside as `-05:00`. Read without the offset, the server lends the event
+     * its own timezone: the buyer is shown an hour that is neither, and two scans in different zones can come
+     * out in the wrong order, which is what the buyer actually reads.
+     *
+     * The offset is taken from `gmtOffset` and not from `gmtDate`/`gmtTime`, whose own documentation says only
+     * «gmtDate» and «gmtTime» and whose example for the time comes without its leading zero. Whether those two
+     * are already UTC is a guess nobody here can settle: no real answer from UPS has been seen, because the
+     * fixtures were written from the SDK's `openapi.yaml`. `date` and `time` are documented, so they are what
+     * this reads. Without an offset it behaves as it always did.
      */
     private function occurredAt(Activity $activity): ?\DateTimeImmutable
     {
@@ -170,9 +179,31 @@ final class UpsCarrier implements CarrierInterface
         }
 
         $time = $activity->isInitialized('time') ? $activity->getTime() : '';
-        $occurredAt = \DateTimeImmutable::createFromFormat('YmdHis', $date . (1 === preg_match('/^\d{6}$/', $time) ? $time : '000000'));
+        $occurredAt = \DateTimeImmutable::createFromFormat(
+            'YmdHis',
+            $date . (1 === preg_match('/^\d{6}$/', $time) ? $time : '000000'),
+            self::whereItHappened($activity),
+        );
 
         return false === $occurredAt ? null : $occurredAt;
+    }
+
+    /**
+     * Null when UPS said nothing usable about the offset, which leaves the date where it has always been: the
+     * timezone of whoever is running this.
+     */
+    private static function whereItHappened(Activity $activity): ?\DateTimeZone
+    {
+        $offset = $activity->isInitialized('gmtOffset') ? trim($activity->getGmtOffset()) : '';
+        if (1 !== preg_match('/^[+-]\d{2}:\d{2}$/', $offset)) {
+            return null;
+        }
+
+        try {
+            return new \DateTimeZone($offset);
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     private function place(Activity $activity): ?string

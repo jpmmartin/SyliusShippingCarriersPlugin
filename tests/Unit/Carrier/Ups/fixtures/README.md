@@ -10,6 +10,15 @@ schema, not that it reads what UPS actually sends.
   instead of a list.
 - `error.json`: the error body UPS sends with a 4xx status.
 - `token.json`: a granted OAuth access token.
-- `track.json`: a tracking response for a delivered package with two activities.
+- `track.json`: a tracking response for a delivered package with two activities. It carries no
+  `gmtOffset`, which is the case where the plugin has nothing to go on and dates the event the way it
+  always did.
+- `track-across-time-zones.json`: the same package scanned in Seattle and in New York on the same day.
+  Read by their local times alone, the New York scan looks later; read with the offset each one
+  carries, it happened five minutes earlier. Written from the schema, like the rest: the meaning of
+  `gmtDate` and `gmtTime` is still unconfirmed, so only `gmtOffset` is relied on.
+- `track-with-an-unusable-offset.json`: an activity whose `gmtOffset` is not an offset at all. Nothing
+  here has seen what UPS really sends, so the one thing worth promising is that an odd value costs the
+  event its offset and not the whole tracking page.
 - `shipment-international.json`: a `ShipmentResponse` for a shipment that crosses a border, with the forms UPS
   printed in `ShipmentResults.Form` (schema `ShipmentResults_Form`), one PDF for all of them.

@@ -1,0 +1,44 @@
+{
+    "trackResponse": {
+        "shipment": [
+            {
+                "inquiryNumber": "1Z999AA10123456784",
+                "package": [
+                    {
+                        "trackingNumber": "1Z999AA10123456784",
+                        "currentStatus": {
+                            "code": "003",
+                            "description": "Origin Scan",
+                            "simplifiedTextDescription": "On the way",
+                            "statusCode": "003",
+                            "type": "I"
+                        },
+                        "activity": [
+                            {
+                                "date": "20260916",
+                                "time": "063000",
+                                "gmtOffset": "not an offset",
+                                "location": {
+                                    "address": {
+                                        "city": "Chicago",
+                                        "stateProvince": "IL",
+                                        "countryCode": "US",
+                                        "country": "US"
+                                    },
+                                    "slic": "5678"
+                                },
+                                "status": {
+                                    "code": "003",
+                                    "description": "Origin Scan",
+                                    "simplifiedTextDescription": "On the way",
+                                    "statusCode": "003",
+                                    "type": "I"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

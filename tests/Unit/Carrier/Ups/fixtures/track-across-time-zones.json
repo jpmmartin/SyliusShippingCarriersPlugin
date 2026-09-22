@@ -1,0 +1,69 @@
+{
+    "trackResponse": {
+        "shipment": [
+            {
+                "inquiryNumber": "1Z999AA10123456784",
+                "package": [
+                    {
+                        "trackingNumber": "1Z999AA10123456784",
+                        "currentStatus": {
+                            "code": "011",
+                            "description": "Delivered",
+                            "simplifiedTextDescription": "Delivered",
+                            "statusCode": "011",
+                            "type": "D"
+                        },
+                        "activity": [
+                            {
+                                "date": "20260917",
+                                "time": "101500",
+                                "gmtDate": "20260917",
+                                "gmtTime": "171500",
+                                "gmtOffset": "-07:00",
+                                "location": {
+                                    "address": {
+                                        "city": "Seattle",
+                                        "stateProvince": "WA",
+                                        "countryCode": "US",
+                                        "country": "US"
+                                    },
+                                    "slic": "1234"
+                                },
+                                "status": {
+                                    "code": "011",
+                                    "description": "Delivered",
+                                    "simplifiedTextDescription": "Delivered",
+                                    "statusCode": "011",
+                                    "type": "D"
+                                }
+                            },
+                            {
+                                "date": "20260917",
+                                "time": "131000",
+                                "gmtDate": "20260917",
+                                "gmtTime": "171000",
+                                "gmtOffset": "-04:00",
+                                "location": {
+                                    "address": {
+                                        "city": "New York",
+                                        "stateProvince": "NY",
+                                        "countryCode": "US",
+                                        "country": "US"
+                                    },
+                                    "slic": "5678"
+                                },
+                                "status": {
+                                    "code": "003",
+                                    "description": "Out For Delivery",
+                                    "simplifiedTextDescription": "On the way",
+                                    "statusCode": "003",
+                                    "type": "I"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -19,6 +19,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
+use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingEvent;
 use ParagonIE\Halite\KeyFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
@@ -232,6 +233,47 @@ final class UpsCarrierTest extends TestCase
         self::assertSame('Seattle, WA, US', $tracking->events[0]->location);
         self::assertSame('2026-09-17 10:15:00', $tracking->events[0]->occurredAt?->format('Y-m-d H:i:s'));
         self::assertSame('Origin Scan', $tracking->events[1]->description);
+    }
+
+    /**
+     * UPS times an event where it happened and says that place's offset alongside. Without it the server
+     * lends the event its own timezone, and the instant on record is not the one the scan happened at.
+     */
+    public function testAnEventKeepsTheInstantItHappenedAt(): void
+    {
+        $tracking = $this->carrier($this->json('track-across-time-zones.json'))->track('1Z999AA10123456784');
+
+        // 10:15 in Seattle, which is seven hours behind UTC.
+        self::assertSame(
+            (new \DateTimeImmutable('2026-09-17 17:15:00', new \DateTimeZone('UTC')))->getTimestamp(),
+            $tracking->events[0]->occurredAt?->getTimestamp(),
+        );
+    }
+
+    /**
+     * The order is what the buyer actually reads. By their local clocks the New York scan looks the later of
+     * the two; by the instants they happened at, it came five minutes first.
+     */
+    public function testEventsInDifferentTimeZonesComeOutInTheOrderTheyHappened(): void
+    {
+        $tracking = $this->carrier($this->json('track-across-time-zones.json'))->track('1Z999AA10123456784');
+
+        self::assertSame(
+            ['Delivered', 'Out For Delivery'],
+            array_map(static fn (TrackingEvent $event): string => $event->description, $tracking->events),
+        );
+    }
+
+    /**
+     * An offset that is not one is no worse than none: the event is still read, dated the way it was before
+     * any of this. A tracking page that fell over because a carrier sent an odd string would be a poor trade.
+     */
+    public function testAnOffsetThatCannotBeUnderstoodIsIgnoredRatherThanFatal(): void
+    {
+        $tracking = $this->carrier($this->json('track-with-an-unusable-offset.json'))->track('1Z999AA10123456784');
+
+        self::assertCount(1, $tracking->events);
+        self::assertSame('2026-09-16 06:30:00', $tracking->events[0]->occurredAt?->format('Y-m-d H:i:s'));
     }
 
     /**
