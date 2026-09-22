@@ -17,6 +17,14 @@ not answer, the shipping method either hides or falls back to a flat amount the 
 checkout keeps working and no shipment goes out uncharged. Once an order ships, its tracking shows
 in the buyer's account.
 
+From the order itself, an operator issues the labels of a shipment, one per package, and cancels
+them with the carrier when a parcel is not going out. A shipment that crosses a border is declared
+to customs in the same operation, and the paperwork comes back with the labels.
+
+> **Issuing a label contracts a shipment and is billed.** Everything up to this point only reads
+> from the carriers. From here on the plugin spends the merchant's money, which is why nothing is
+> ever issued as a side effect: an operator asks for it, from a page, every time.
+
 ## Requirements
 
 - PHP 8.2 or newer
@@ -110,6 +118,25 @@ jpm_martin_sylius_shipping_carriers:
     # Seconds the status of a shipment is kept before the carrier is asked again.
     tracking_lifetime: 300
 
+    # Where the labels and the customs documents are kept. Outside the published directory on
+    # purpose: see below.
+    documents_dir: '%kernel.project_dir%/var/jpmmartin_carrier/documents'
+
+    # Seconds a label or a customs document is kept before the purge deletes the file. The default
+    # is 180 days: the longest a UPS shipment can be cancelled for at all, so nothing is ever
+    # deleted while it could still be sent back.
+    documents_retention: 15552000
+
+    # Seconds a document still waiting to be named by a row is left alone before the purge collects
+    # it. Issuing takes seconds, so a day is far more than enough.
+    temporary_documents_retention: 86400
+
+    # What to ask each carrier to print its labels as. The two share no format.
+    # UPS: GIF, ZPL, EPL or SPL. FedEx: PDF or ZPLII.
+    label_formats:
+        ups: 'GIF'
+        fedex: 'PDF'
+
     # The services an administrator can choose for a shipping method, as the carrier's own service
     # code and the name shown for it. What is written here is added to the list the plugin ships
     # with, or renames an entry of it.
@@ -142,6 +169,35 @@ framework:
                 adapter: cache.adapter.redis
 ```
 
+### Where the labels and the customs documents are kept
+
+**Not under the published directory, and never served as a static file.** A label lets whoever
+holds it send a parcel on the merchant's account, and both a label and a customs invoice carry the
+buyer's address.
+
+The store is an ordinary Flysystem storage the plugin declares with the local adapter and private
+visibility, pointed at `documents_dir`. An application points it somewhere else — S3, a mounted
+volume — from its own configuration, without touching the plugin:
+
+```yaml
+# config/packages/flysystem.yaml
+
+flysystem:
+    storages:
+        jpmmartin_carrier.storage.documents:
+            adapter: 'aws'
+            options:
+                client: 'aws_client_service'
+                bucket: 'carrier-documents'
+```
+
+Any adapter `league/flysystem-bundle` supports will do; each one needs its own package, which the
+bundle names if it is missing. Only the local adapter comes with this plugin, because it is the one
+every installation already has.
+
+Whatever it is pointed at, a document is only ever handed over by an admin route that first asks
+who is asking and what happened to the shipment. There is no route that takes a path.
+
 ## Setting up the store
 
 ### 1. Carrier credentials
@@ -150,6 +206,10 @@ framework:
 production), how packages reach it — a scheduled pickup, dropped off at a carrier location, or a
 pickup requested when needed — the client id and secret of the carrier's API application, and the
 account number. The secret is never shown again; leaving it empty on an edit keeps the current one.
+
+Also **who pays the duties and taxes** of an international shipment at its destination: the
+recipient, which is the default and what a checkout that charged none implies, or the store, which
+bills them to the account above. Credentials saved before this existed keep the recipient.
 
 ### 2. Shipping origin
 
@@ -182,6 +242,83 @@ as the calculator, then the service, and what the method does when the carrier d
   completed with it.
 - **Offer it at a flat amount** — the amount is set per channel and is charged only when there is no
   rate and no last known rate to fall back on.
+
+### 5. Customs data
+
+**On each product variant**, under its own section: the HS code — six to ten digits, the code
+customs classifies the article by — and the country it was made in. Neither is needed to sell, and
+neither is needed to ship inside one country, but **without both, an international shipment is not
+issued at all**: the plugin refuses it and says which variant it could not declare, rather than
+letting the parcel be stopped at a border where somebody has to pay for it.
+
+A catalogue of thousands cannot be checked one by one, so **Catalog → Variants missing customs
+data** lists exactly the ones that are incomplete: no customs data, or customs data with a field
+left empty.
+
+## Shipping an order
+
+### Issuing the labels
+
+On the order, on each shipment sent by a carrier of this plugin, an action issues its labels: **one
+per package**, from the packages stored when the order was confirmed, not from packing it again.
+The shipment keeps the carrier's tracking number without anybody typing it, and the labels are
+there to download from the same place.
+
+Several orders at once: on **Sales → Shipments**, pick them and use the batch action. A shipment
+that fails does not stop the rest, and the summary says how many went out and why each one did not.
+
+A shipment that already has its labels is never issued again in silence: to reissue it, cancel it
+first.
+
+### When the carrier does not answer
+
+A carrier that refuses says why, and the shipment can be fixed and sent again. A carrier that
+answers nothing usable — a timeout, a body that cannot be read — is different: it may well have
+issued and billed the labels. That shipment is marked as **needing a check** and nothing, not the
+batch and not a retry, sends it again on its own. Somebody looks at the carrier's own records and
+decides.
+
+### Cancelling them
+
+Cancelling tells the carrier, and only counts as done when the carrier says so. A carrier that
+refuses leaves the labels issued — and still billed — with the reason on the screen, not only in a
+message that flashed by.
+
+**The two windows are not alike, and the screen says which one this is:**
+
+| Carrier | The plugin cancels it | Afterwards |
+|---|---|---|
+| UPS | 90 days from issuing | Between 90 and 180 days, only by contacting UPS. After that, nobody |
+| FedEx | 12 hours, on the ship date printed on the label or before | Nothing |
+
+Twelve hours against ninety days: an operator used to one finds out too late on the other.
+
+### The customs document
+
+A shipment that crosses a border is declared in the same request that issues the labels, and the
+document the carrier prints — the commercial invoice — comes back with them and is kept beside
+them, to download from the order. It goes when the labels go: a cancelled shipment offers neither.
+
+## Keeping the files no longer than needed
+
+A label and a customs invoice hold an address and what somebody bought. They are kept because a
+shipment can still be cancelled and because the merchant may still have to prove what was sent,
+and neither reason lasts forever.
+
+Nothing is deleted on its own. A command deletes what is past the retention, meant for cron:
+
+```bash
+bin/console jpmmartin:carrier:purge-documents
+```
+
+It deletes the file and keeps the row: who issued what and when is still there to read afterwards,
+without keeping the document itself. It also collects what an issue left behind when something went
+wrong between writing the file and recording it — files no row names, which nothing else would ever
+come looking for.
+
+Running it twice is not a problem: the second run finds nothing left. It comes back as a failure,
+with the reason in the log, when a file could not be deleted, which is the one thing a cron has to
+notice.
 
 ## What the buyer sees
 
