@@ -44,6 +44,17 @@ final class CarrierCredentialsType extends AbstractResourceType
                     'jpmmartin_carrier.form.credentials.pickup_types.on_demand' => CarrierCredentialsInterface::PICKUP_TYPE_ON_DEMAND,
                 ],
             ])
+            // Preselected on the recipient, unlike the two above: it changes no price, and the checkout never
+            // charged the buyer any duties.
+            ->add('dutiesPayer', ChoiceType::class, [
+                'label' => 'jpmmartin_carrier.form.credentials.duties_payer',
+                'help' => 'jpmmartin_carrier.form.credentials.duties_payer_help',
+                'placeholder' => false,
+                'choices' => [
+                    'jpmmartin_carrier.form.credentials.duties_payers.recipient' => CarrierCredentialsInterface::DUTIES_PAYER_RECIPIENT,
+                    'jpmmartin_carrier.form.credentials.duties_payers.shipper' => CarrierCredentialsInterface::DUTIES_PAYER_SHIPPER,
+                ],
+            ])
             ->add('credentials', CarrierCredentialsDataType::class, [
                 'label' => false,
             ])

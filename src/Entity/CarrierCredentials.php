@@ -32,6 +32,13 @@ class CarrierCredentials implements CarrierCredentialsInterface
     protected ?string $pickupType = null;
 
     /**
+     * The recipient by default, in PHP and in the database alike: the checkout never charged the buyer any
+     * duties, and credentials saved before the choice existed have to keep issuing labels.
+     */
+    #[ORM\Column(name: 'duties_payer', type: 'string', length: 16, options: ['default' => self::DUTIES_PAYER_RECIPIENT])]
+    protected string $dutiesPayer = self::DUTIES_PAYER_RECIPIENT;
+
+    /**
      * Plain in memory, encrypted value by value in the database: EntityEncryptionListener encrypts
      * them on flush and decrypts them on load.
      *
@@ -73,6 +80,16 @@ class CarrierCredentials implements CarrierCredentialsInterface
     public function setPickupType(?string $pickupType): void
     {
         $this->pickupType = $pickupType;
+    }
+
+    public function getDutiesPayer(): string
+    {
+        return $this->dutiesPayer;
+    }
+
+    public function setDutiesPayer(string $dutiesPayer): void
+    {
+        $this->dutiesPayer = $dutiesPayer;
     }
 
     public function getCredentials(): array

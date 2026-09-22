@@ -31,6 +31,8 @@ jpmmartin_carrier:
             not_blank: Choose whether these credentials go against the sandbox or production.
         pickup_type:
             not_blank: Choose how packages reach the carrier, since it changes the rates.
+        duties_payer:
+            not_blank: Choose who pays duties and taxes at the destination.
         account_number:
             required_for_fedex: FedEx needs an account number to quote rates.
         unreadable: This value could not be read with this store's encryption key. Type it again.

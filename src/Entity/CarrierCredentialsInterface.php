@@ -24,6 +24,11 @@ interface CarrierCredentialsInterface extends ResourceInterface, EncryptionAware
 
     public const PICKUP_TYPE_ON_DEMAND = 'on_demand';
 
+    /** Who pays the duties and taxes of an international shipment at its destination. */
+    public const DUTIES_PAYER_RECIPIENT = 'recipient';
+
+    public const DUTIES_PAYER_SHIPPER = 'shipper';
+
     /** The keys of getCredentials(). */
     public const CLIENT_ID = 'client_id';
 
@@ -44,6 +49,11 @@ interface CarrierCredentialsInterface extends ResourceInterface, EncryptionAware
     public function getPickupType(): ?string;
 
     public function setPickupType(?string $pickupType): void;
+
+    /** The recipient until the administrator chooses otherwise. */
+    public function getDutiesPayer(): string;
+
+    public function setDutiesPayer(string $dutiesPayer): void;
 
     /** @return array<string, string> */
     public function getCredentials(): array;

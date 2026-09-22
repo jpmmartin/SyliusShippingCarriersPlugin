@@ -245,6 +245,59 @@ final class CarrierCredentialsAdminTest extends WebTestCase
     }
 
     /**
+     * Who pays the duties and taxes of an international shipment: the recipient unless the administrator says
+     * the store does, and an edit that does not touch the choice keeps it.
+     */
+    public function testTheAdministratorChoosesWhoPaysDutiesAndTaxes(): void
+    {
+        $this->submitCreateForm([
+            self::FORM . '[carrier]' => 'ups',
+            self::FORM . '[environment]' => 'sandbox',
+            self::FORM . '[pickupType]' => 'drop_off',
+            self::FORM . '[credentials][client_id]' => 'client-id-1',
+            self::FORM . '[credentials][client_secret]' => 'secret-1',
+        ]);
+        self::assertResponseRedirects();
+        self::assertSame('recipient', $this->findUpsCredentials()->getDutiesPayer());
+
+        $id = $this->findUpsCredentials()->getId();
+        $crawler = $this->client->request('GET', sprintf('/admin/carrier-credentials/%d/edit', $id));
+        $this->client->submit($crawler->filter(sprintf('form[name="%s"]', self::FORM))->form([
+            self::FORM . '[dutiesPayer]' => 'shipper',
+        ]));
+        self::assertResponseRedirects();
+        self::assertSame('shipper', $this->findUpsCredentials()->getDutiesPayer());
+
+        $crawler = $this->client->request('GET', sprintf('/admin/carrier-credentials/%d/edit', $id));
+        self::assertSame(
+            'shipper',
+            $crawler->filter(sprintf('select[name="%s[dutiesPayer]"] option[selected]', self::FORM))->attr('value'),
+            'The edit form has to show the choice that is stored.',
+        );
+        $this->client->submit($crawler->filter(sprintf('form[name="%s"]', self::FORM))->form([
+            self::FORM . '[credentials][client_id]' => 'client-id-2',
+        ]));
+        self::assertResponseRedirects();
+        self::assertSame('shipper', $this->findUpsCredentials()->getDutiesPayer());
+    }
+
+    /**
+     * Credentials saved before the choice existed have no value of their own for it, and must keep issuing
+     * labels without anyone opening them: the database gives them the recipient.
+     */
+    public function testCredentialsSavedBeforeTheChoiceExistedAreLeftWithTheRecipient(): void
+    {
+        $this->entityManager->getConnection()->insert('jpmmartin_carrier_credentials', [
+            'carrier' => 'ups',
+            'environment' => 'sandbox',
+            'pickup_type' => 'drop_off',
+            'credentials' => '{}',
+        ]);
+
+        self::assertSame('recipient', $this->findUpsCredentials()->getDutiesPayer());
+    }
+
+    /**
      * FedEx does not quote without an account number.
      */
     public function testFedExCredentialsNeedAnAccountNumber(): void
