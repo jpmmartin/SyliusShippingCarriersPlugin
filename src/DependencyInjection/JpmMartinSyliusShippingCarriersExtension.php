@@ -31,6 +31,7 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
         $container->setParameter('jpmmartin_carrier.services', $config['services']);
         $container->setParameter('jpmmartin_carrier.label_formats', $config['label_formats']);
         $container->setParameter('jpmmartin_carrier.documents_dir', $config['documents_dir']);
+        $container->setParameter('jpmmartin_carrier.documents_retention', $config['documents_retention']);
 
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
 

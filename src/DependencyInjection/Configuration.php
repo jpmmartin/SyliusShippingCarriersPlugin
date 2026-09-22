@@ -24,6 +24,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackagingInterf
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierPackageBoxRepository;
+use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierShipmentExportRepository;
 use Sylius\Bundle\ResourceBundle\Controller\ResourceController;
 use Sylius\Bundle\ResourceBundle\SyliusResourceBundle;
 use Sylius\Resource\Factory\Factory;
@@ -61,6 +62,11 @@ final class Configuration implements ConfigurationInterface
                     ->info('Where the labels and the customs documents the plugin issues are kept. Outside the published directory on purpose.')
                     ->defaultValue('%kernel.project_dir%/var/jpmmartin_carrier/documents')
                     ->cannotBeEmpty()
+                ->end()
+                ->integerNode('documents_retention')
+                    ->info('Seconds a label or a customs document is kept before the purge deletes the file. Defaults to 180 days, the longest a shipment can be cancelled for.')
+                    ->defaultValue(180 * 24 * 60 * 60)
+                    ->min(1)
                 ->end()
                 ->integerNode('tracking_lifetime')
                     ->info('Seconds the status of a shipment is kept before the carrier is asked again.')
@@ -178,6 +184,7 @@ final class Configuration implements ConfigurationInterface
                                         ->scalarNode('model')->defaultValue(CarrierShipmentExport::class)->cannotBeEmpty()->end()
                                         ->scalarNode('interface')->defaultValue(CarrierShipmentExportInterface::class)->cannotBeEmpty()->end()
                                         ->scalarNode('controller')->defaultValue(ResourceController::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('repository')->defaultValue(CarrierShipmentExportRepository::class)->cannotBeEmpty()->end()
                                         ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
                                     ->end()
                                 ->end()

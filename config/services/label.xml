@@ -99,6 +99,21 @@
             <argument type="service" id="jpmmartin_carrier.controller.admin.download_document" />
         </service>
 
+        <!-- What a label and a customs document hold is not ours to keep once nobody needs it. -->
+        <service id="jpmmartin_carrier.label.document_purger" class="JpmMartin\SyliusShippingCarriersPlugin\Label\DocumentPurger">
+            <argument type="service" id="jpmmartin_carrier.repository.shipment_export" />
+            <argument type="service" id="jpmmartin_carrier.label.storage" />
+            <argument type="service" id="jpmmartin_carrier.manager.shipment_export" />
+            <argument type="service" id="clock" />
+            <argument type="service" id="logger" />
+            <argument>%jpmmartin_carrier.documents_retention%</argument>
+        </service>
+
+        <service id="jpmmartin_carrier.console.command.purge_documents" class="JpmMartin\SyliusShippingCarriersPlugin\Console\Command\PurgeCarrierDocumentsCommand">
+            <argument type="service" id="jpmmartin_carrier.label.document_purger" />
+            <tag name="console.command" />
+        </service>
+
         <!-- Ninety days in UPS against twelve hours in FedEx: the screen has to say which one this is. -->
         <service id="jpmmartin_carrier.label.void_window" class="JpmMartin\SyliusShippingCarriersPlugin\Label\VoidWindow">
             <argument type="service" id="clock" />
