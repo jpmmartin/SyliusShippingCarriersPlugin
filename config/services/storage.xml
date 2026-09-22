@@ -7,7 +7,7 @@
 >
     <services>
         <!-- The only way into a storage that is private and outside the published directory. -->
-        <service id="jpmmartin_carrier.controller.admin.download_document" class="JpmMartin\SyliusShippingCarriersPlugin\Controller\Admin\DownloadCarrierDocumentAction" public="true">
+        <service id="jpmmartin_carrier.controller.admin.download_document" class="JpmMartin\SyliusShippingCarriersPlugin\Controller\Admin\DownloadCarrierDocumentAction">
             <argument type="service" id="jpmmartin_carrier.storage.documents" />
             <argument type="service" id="security.authorization_checker" />
         </service>

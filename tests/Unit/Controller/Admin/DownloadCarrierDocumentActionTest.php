@@ -69,7 +69,8 @@ final class DownloadCarrierDocumentActionTest extends TestCase
     }
 
     /**
-     * The path comes from the URL, and a storage that is not a local directory may happily follow it.
+     * The path comes from a row now rather than from a URL, but a row can be written by something other than
+     * this plugin, and a storage that is not a local directory may happily follow it.
      */
     public function testAPathThatClimbsOutOfTheStorageIsNeverRead(): void
     {

@@ -331,6 +331,36 @@ final class VoidCarrierLabelsAdminTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
+    /**
+     * The file of a cancelled label stays in the store until the retention takes it, because it is still
+     * evidence of what went out. Being there must not make it reachable: a cancelled label would put a parcel
+     * on a van under a number the carrier no longer recognises.
+     *
+     * Asking for it by its path used to work, over the head of every check the action by id makes. There is no
+     * longer a route that takes a path, and this is what says so if one ever comes back.
+     */
+    public function testTheFileOfACancelledLabelIsStillStoredButCannotBeReached(): void
+    {
+        $order = $this->createCarrierOrder($this->channel, 'ups_rate');
+        $label = $this->export($order->getShipments()->first(), CarrierShipmentExportInterface::STATE_VOIDED, true);
+        $this->client->loginUser($this->createAdmin('cancelled-by-path-admin'), 'admin');
+
+        // It is still stored: nothing has deleted it, so the only thing keeping it back is the refusal to serve it.
+        self::assertTrue($this->storage()->fileExists(self::LABEL_PATH));
+
+        $this->client->request('GET', '/admin/carrier-documents/' . self::LABEL_PATH);
+        self::assertResponseStatusCodeSame(404);
+        self::assertStringNotContainsString(self::LABEL_CONTENTS, (string) $this->client->getResponse()->getContent());
+
+        $this->client->request('GET', '/admin/carrier-documents/' . self::CUSTOMS_PATH);
+        self::assertResponseStatusCodeSame(404);
+        self::assertStringNotContainsString(self::CUSTOMS_CONTENTS, (string) $this->client->getResponse()->getContent());
+
+        // And not by its own id either, which is the check that was being walked around.
+        $this->client->request('GET', '/admin/carrier-labels/' . $label->getId());
+        self::assertResponseStatusCodeSame(404);
+    }
+
     public function testWithoutTheAdminsOwnTokenNothingIsCancelled(): void
     {
         $order = $this->createCarrierOrder($this->channel, 'ups_rate');

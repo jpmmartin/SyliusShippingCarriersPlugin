@@ -13,11 +13,16 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
- * Serves a document of the plugin — a label, a customs document — to an authorised administrator.
+ * Hands a document of the plugin — a label, a customs document — to an authorised administrator.
  *
- * The storage is private and outside the published directory, so this is the only way in, and it asks for the
- * administration role itself instead of trusting the application's access rules: what it hands over lets
- * whoever holds it send a parcel on the merchant's account.
+ * It has no route of its own. Reaching a document by its path was once possible and is not any more: that way
+ * in served any file in the store to anyone with the role, while what may be downloaded depends on what
+ * happened to the shipment. Every request now comes through the actions that ask that question first, by the
+ * record's own id, and this is what they hand the work to once they are satisfied.
+ *
+ * It still asks for the administration role itself rather than trusting the application's access rules: what
+ * it hands over lets whoever holds it send a parcel on the merchant's account, so the check belongs where the
+ * bytes are read, not only where the route is declared.
  */
 final readonly class DownloadCarrierDocumentAction
 {
@@ -35,8 +40,9 @@ final readonly class DownloadCarrierDocumentAction
             throw new AccessDeniedException('Only an administrator downloads the documents of a carrier.');
         }
 
-        // Belt and braces: the local adapter refuses a path that leaves its root, but a storage of another
-        // kind may not, and this one is built from the URL.
+        // Belt and braces: the paths come from the plugin's own rows now, and the local adapter refuses one
+        // that leaves its root anyway, but a storage of another kind may not and a row can be written by
+        // something other than this plugin.
         if (str_contains($path, '..')) {
             throw new NotFoundHttpException(sprintf('There is no document "%s".', $path));
         }
