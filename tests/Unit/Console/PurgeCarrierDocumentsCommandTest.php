@@ -90,6 +90,7 @@ final class PurgeCarrierDocumentsCommandTest extends TestCase
             new MockClock('2026-09-22 10:00:00'),
             new NullLogger(),
             180 * 24 * 60 * 60,
+            24 * 60 * 60,
         );
     }
 

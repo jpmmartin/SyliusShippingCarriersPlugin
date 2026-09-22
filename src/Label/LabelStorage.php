@@ -110,6 +110,42 @@ final readonly class LabelStorage
     }
 
     /**
+     * Everything kept for one shipment, for when the shipment itself is deleted. Its labels and its customs
+     * document all hang from the same directory, so nothing has to be looked up to know what to take.
+     *
+     * @throws FilesystemException When it could not be deleted
+     */
+    public function forgetShipment(int|string $shipmentId): void
+    {
+        $this->storage->deleteDirectory(sprintf('labels/%s', self::slug((string) $shipmentId)));
+    }
+
+    /**
+     * The files left waiting by an issue that never got as far as its row. Nothing names them, so the only
+     * thing that tells an abandoned one from one being written right now is how long it has been there.
+     *
+     * @param int $untouchedSince Unix time before which a waiting file counts as abandoned
+     *
+     * @return list<string>
+     *
+     * @throws FilesystemException When the waiting area could not be read
+     */
+    public function abandonedTemporaries(int $untouchedSince): array
+    {
+        $abandoned = [];
+
+        foreach ($this->storage->listContents(self::PENDING_DIRECTORY) as $file) {
+            if (!$file->isFile() || ($file->lastModified() ?? 0) >= $untouchedSince) {
+                continue;
+            }
+
+            $abandoned[] = $file->path();
+        }
+
+        return $abandoned;
+    }
+
+    /**
      * What the carrier prints is not always a format with an obvious extension — UPS's SPL and EPL are its own
      * — so the format is used as it comes, lowercased, and anything that is not a letter or a digit is dropped
      * rather than trusted in a path.

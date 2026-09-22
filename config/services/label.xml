@@ -107,6 +107,15 @@
             <argument type="service" id="clock" />
             <argument type="service" id="logger" />
             <argument>%jpmmartin_carrier.documents_retention%</argument>
+            <argument>%jpmmartin_carrier.temporary_documents_retention%</argument>
+        </service>
+
+        <!-- A deleted shipment must not leave its labels behind: nothing would ever come looking for them. -->
+        <service id="jpmmartin_carrier.listener.forget_shipment_documents" class="JpmMartin\SyliusShippingCarriersPlugin\EventListener\ForgetShipmentDocumentsListener">
+            <argument type="service" id="jpmmartin_carrier.label.storage" />
+            <argument type="service" id="logger" />
+            <tag name="doctrine.event_listener" event="onFlush" />
+            <tag name="doctrine.event_listener" event="postFlush" />
         </service>
 
         <service id="jpmmartin_carrier.console.command.purge_documents" class="JpmMartin\SyliusShippingCarriersPlugin\Console\Command\PurgeCarrierDocumentsCommand">

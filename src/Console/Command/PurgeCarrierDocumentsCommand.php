@@ -35,17 +35,26 @@ final class PurgeCarrierDocumentsCommand extends Command
 
         $report = $this->purger->purge();
 
-        if (0 === $report->deletedFiles && 0 === $report->failedFiles) {
+        if (0 === $report->deletedFiles && 0 === $report->failedFiles && 0 === $report->temporaryFiles) {
             $io->success('There was nothing kept for longer than allowed.');
 
             return Command::SUCCESS;
         }
 
-        $io->success(sprintf(
-            '%d file(s) of %d shipment(s) have been deleted. What was issued, by whom and when is still recorded.',
-            $report->deletedFiles,
-            $report->shipments,
-        ));
+        if ($report->deletedFiles > 0) {
+            $io->success(sprintf(
+                '%d file(s) of %d shipment(s) have been deleted. What was issued, by whom and when is still recorded.',
+                $report->deletedFiles,
+                $report->shipments,
+            ));
+        }
+
+        if ($report->temporaryFiles > 0) {
+            $io->success(sprintf(
+                '%d file(s) left behind by an issue that never finished have been collected.',
+                $report->temporaryFiles,
+            ));
+        }
 
         if (0 === $report->failedFiles) {
             return Command::SUCCESS;

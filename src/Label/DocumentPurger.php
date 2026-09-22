@@ -34,6 +34,7 @@ final readonly class DocumentPurger
     /**
      * @param CarrierShipmentExportRepositoryInterface<CarrierShipmentExportInterface> $exportRepository
      * @param int $retention Seconds a file is kept for, counted from the moment the labels were issued
+     * @param int $temporaryRetention Seconds a file waiting to be named by a row is left alone
      */
     public function __construct(
         private CarrierShipmentExportRepositoryInterface $exportRepository,
@@ -42,6 +43,7 @@ final readonly class DocumentPurger
         private ClockInterface $clock,
         private LoggerInterface $logger,
         private int $retention,
+        private int $temporaryRetention,
     ) {
     }
 
@@ -74,7 +76,47 @@ final readonly class DocumentPurger
             $this->exportManager->flush();
         }
 
-        return new PurgeReport($deleted, $failed, $shipments);
+        // Collected first and passed after, because the collection is what counts the last of the failures.
+        $temporaries = $this->collectTemporaries($failed);
+
+        return new PurgeReport($deleted, $failed, $shipments, $temporaries);
+    }
+
+    /**
+     * The waiting area holds what an issue wrote before something went wrong between the file and its row. No
+     * row names those files, so nothing else will ever come looking for them.
+     *
+     * @param int $failed Counts up with every file the storage would not delete
+     *
+     * @return int How many were collected
+     */
+    private function collectTemporaries(int &$failed): int
+    {
+        $untouchedSince = $this->clock->now()->getTimestamp() - $this->temporaryRetention;
+
+        try {
+            $abandoned = $this->labelStorage->abandonedTemporaries($untouchedSince);
+        } catch (FilesystemException $exception) {
+            $this->logger->error('The waiting area of the carrier documents could not be read, so nothing was collected from it.', [
+                'exception' => $exception,
+            ]);
+
+            return 0;
+        }
+
+        $collected = 0;
+
+        foreach ($abandoned as $path) {
+            if ($this->forget($path)) {
+                ++$collected;
+
+                continue;
+            }
+
+            ++$failed;
+        }
+
+        return $collected;
     }
 
     /**

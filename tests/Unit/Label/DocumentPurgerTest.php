@@ -12,6 +12,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabelInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\DocumentPurger;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelStorage;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierShipmentExportRepositoryInterface;
+use League\Flysystem\DirectoryListing;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\Local\LocalFilesystemAdapter;
@@ -31,6 +32,9 @@ final class DocumentPurgerTest extends TestCase
 {
     /** The longest a shipment can be cancelled for, which is what the retention defaults to. */
     private const RETENTION = 180 * 24 * 60 * 60;
+
+    /** Far longer than issuing takes, which is what tells an abandoned file from one being written. */
+    private const TEMPORARY_RETENTION = 24 * 60 * 60;
 
     private const NOW = '2026-09-22 10:00:00';
 
@@ -223,6 +227,48 @@ final class DocumentPurgerTest extends TestCase
         self::assertSame(0, $report->deletedFiles);
     }
 
+    /**
+     * Nothing names a waiting file, so if the purge does not take it nothing ever will: it stays in the store
+     * for good, with an address inside and no way to reach it.
+     */
+    public function testAFileLeftWaitingByAnIssueThatNeverFinishedIsCollected(): void
+    {
+        $this->waiting('labels/pending/abandoned.gif', '2026-09-21 09:00:00');
+
+        $report = $this->purger()->purge();
+
+        self::assertFalse($this->storage->fileExists('labels/pending/abandoned.gif'));
+        self::assertSame(1, $report->temporaryFiles);
+        // It was nobody's label, so no shipment lost a file.
+        self::assertSame(0, $report->deletedFiles);
+        self::assertSame(0, $report->shipments);
+    }
+
+    /**
+     * An issue being written right now has its file in there too, and taking it would break the issue it
+     * belongs to.
+     */
+    public function testAFileWrittenJustNowIsLeftWaiting(): void
+    {
+        $this->waiting('labels/pending/in-flight.gif', '2026-09-22 09:59:00');
+
+        $report = $this->purger()->purge();
+
+        self::assertTrue($this->storage->fileExists('labels/pending/in-flight.gif'));
+        self::assertSame(0, $report->temporaryFiles);
+    }
+
+    public function testAWaitingFileTheStorageWillNotDeleteIsReportedLikeAnyOther(): void
+    {
+        $this->waiting('labels/pending/abandoned.gif', '2026-09-21 09:00:00');
+        $this->unwritable = ['labels/pending/abandoned.gif'];
+
+        $report = $this->purger()->purge();
+
+        self::assertSame(0, $report->temporaryFiles);
+        self::assertSame(1, $report->failedFiles);
+    }
+
     private function purger(): DocumentPurger
     {
         return new DocumentPurger(
@@ -232,6 +278,7 @@ final class DocumentPurgerTest extends TestCase
             new MockClock(self::NOW),
             $this->logger,
             self::RETENTION,
+            self::TEMPORARY_RETENTION,
         );
     }
 
@@ -311,8 +358,18 @@ final class DocumentPurgerTest extends TestCase
 
             $this->storage->delete($path);
         });
+        // Everything but deleting is the real store: only the deletes are what a broken mount refuses.
+        $storage->method('listContents')->willReturnCallback(
+            fn (string $location, bool $deep = false): DirectoryListing => $this->storage->listContents($location, $deep),
+        );
 
         return $storage;
+    }
+
+    private function waiting(string $path, string $writtenAt): void
+    {
+        $this->storage->write($path, 'a label nobody was told about');
+        touch($this->storageDirectory . '/' . $path, (int) strtotime($writtenAt));
     }
 
     /**

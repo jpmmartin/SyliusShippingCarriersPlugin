@@ -18,4 +18,15 @@ final class DocumentsRetentionTest extends KernelTestCase
 
         self::assertSame(180 * 24 * 60 * 60, self::getContainer()->getParameter('jpmmartin_carrier.documents_retention'));
     }
+
+    /**
+     * A file still waiting to be named by a row is left alone for a day. Issuing takes seconds, so anything
+     * older than that was abandoned by an issue that never finished.
+     */
+    public function testAnApplicationWithoutConfigurationLeavesAWaitingDocumentForADay(): void
+    {
+        self::bootKernel();
+
+        self::assertSame(24 * 60 * 60, self::getContainer()->getParameter('jpmmartin_carrier.temporary_documents_retention'));
+    }
 }

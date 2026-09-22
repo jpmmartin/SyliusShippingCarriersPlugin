@@ -16,6 +16,8 @@ final readonly class PurgeReport
         public int $failedFiles = 0,
         /** Shipments at least one file of which is gone. */
         public int $shipments = 0,
+        /** Files left waiting by an issue that never got as far as its row, now collected. */
+        public int $temporaryFiles = 0,
     ) {
     }
 }
