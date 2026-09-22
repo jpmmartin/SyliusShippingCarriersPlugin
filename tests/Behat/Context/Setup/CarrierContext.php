@@ -91,6 +91,16 @@ final readonly class CarrierContext implements Context
         $this->fakeCarrierState->rateService(self::carrierCode($carrierName), $serviceCode, self::minorUnits($amount), 'USD');
     }
 
+    /**
+     * What the carrier answers when it is asked to ship: what it will call the shipment, and what it prints
+     * the labels as. One label comes back per package, which is its own rule.
+     */
+    #[Given('/^(UPS|FedEx) issues the labels as "([^"]+)" in "([^"]+)"$/')]
+    public function theCarrierIssuesTheLabelsAs(string $carrierName, string $reference, string $format): void
+    {
+        $this->fakeCarrierState->issueLabelsAs(self::carrierCode($carrierName), $reference, $format);
+    }
+
     #[Given('/^(UPS|FedEx) (does not answer in time|answers with a server error|answers with something unreadable|rejects the store\'s credentials)$/')]
     public function theCarrierFails(string $carrierName, string $failure): void
     {

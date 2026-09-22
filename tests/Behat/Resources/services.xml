@@ -21,6 +21,20 @@
             <tag name="jpmmartin_carrier.carrier" carrier="fedex" />
         </service>
 
+        <!-- Issuing spends the merchant's money, so the label adapters are replaced too: no scenario may
+             reach the real carrier by accident. -->
+        <service id="jpmmartin_carrier.carrier.label.ups" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Carrier\FakeLabelCarrier">
+            <argument>ups</argument>
+            <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
+            <tag name="jpmmartin_carrier.label_carrier" carrier="ups" />
+        </service>
+
+        <service id="jpmmartin_carrier.carrier.label.fedex" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Carrier\FakeLabelCarrier">
+            <argument>fedex</argument>
+            <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
+            <tag name="jpmmartin_carrier.label_carrier" carrier="fedex" />
+        </service>
+
         <!-- Hooks -->
         <service id="jpmmartin_carrier.behat.context.hook.carrier" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Hook\CarrierContext">
             <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
@@ -85,6 +99,9 @@
             <argument type="string">jpmmartin_carrier_admin_shipping_origin_index</argument>
         </service>
 
+        <!-- Sylius' own page of an order, with what this plugin adds to the shipment on it. -->
+        <service id="jpmmartin_carrier.behat.page.admin.order.show" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Page\Admin\Order\ShowPage" parent="sylius.behat.page.admin.order.show" public="false" />
+
         <!-- Api -->
         <service id="jpmmartin_carrier.behat.context.api.admin.managing_carrier_shipping_methods" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Api\Admin\ManagingCarrierShippingMethodsContext">
             <argument type="service" id="sylius.behat.api_platform_client.admin" />
@@ -113,6 +130,11 @@
             <argument type="service" id="jpmmartin_carrier.behat.page.admin.shipping_origin.create" />
             <argument type="service" id="jpmmartin_carrier.behat.page.admin.shipping_origin.index" />
             <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
+        </service>
+
+        <service id="jpmmartin_carrier.behat.context.ui.admin.managing_carrier_labels" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Admin\ManagingCarrierLabelsContext">
+            <argument type="service" id="jpmmartin_carrier.behat.page.admin.order.show" />
+            <argument type="service" id="jpmmartin_carrier.behat.fake_carrier_state" />
         </service>
 
         <service id="jpmmartin_carrier.behat.context.ui.shop.checkout" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Shop\CheckoutContext">

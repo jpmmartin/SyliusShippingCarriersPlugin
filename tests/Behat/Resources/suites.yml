@@ -6,3 +6,4 @@ imports:
     - suites/shipping_origin.yml
     - suites/rate_quoting.yml
     - suites/shipment_tracking.yml
+    - suites/shipping_labels.yml

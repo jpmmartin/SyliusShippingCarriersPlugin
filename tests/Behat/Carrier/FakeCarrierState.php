@@ -125,11 +125,63 @@ final class FakeCarrierState
     {
         $state = $this->read();
         foreach ($state as $carrier => $carrierState) {
-            unset($carrierState['calls'], $carrierState['residential_destination'], $carrierState['track_calls']);
+            unset($carrierState['calls'], $carrierState['residential_destination'], $carrierState['track_calls'], $carrierState['ship_calls'], $carrierState['voided']);
             $state[$carrier] = $carrierState;
         }
 
         $this->write($state);
+    }
+
+    /**
+     * What the carrier answers when it is asked to ship: what it will call the shipment, and what it prints the
+     * labels as. One label comes back per package of the request, which is the carrier's own rule.
+     */
+    public function issueLabelsAs(string $carrier, string $reference, string $format): void
+    {
+        $state = $this->read();
+        $state[$carrier]['failure'] = null;
+        $state[$carrier]['shipment'] = ['reference' => $reference, 'format' => $format];
+
+        $this->write($state);
+    }
+
+    /**
+     * @return array{reference: string, format: string}|null Null when no scenario said what it issues
+     */
+    public function shipment(string $carrier): ?array
+    {
+        return $this->read()[$carrier]['shipment'] ?? null;
+    }
+
+    public function recordShipCall(string $carrier): void
+    {
+        $state = $this->read();
+        $state[$carrier]['ship_calls'] = ($state[$carrier]['ship_calls'] ?? 0) + 1;
+
+        $this->write($state);
+    }
+
+    public function shipCalls(string $carrier): int
+    {
+        return $this->read()[$carrier]['ship_calls'] ?? 0;
+    }
+
+    public function recordVoid(string $carrier, string $reference): void
+    {
+        $state = $this->read();
+        $voided = $state[$carrier]['voided'] ?? [];
+        $voided[] = $reference;
+        $state[$carrier]['voided'] = array_values($voided);
+
+        $this->write($state);
+    }
+
+    /**
+     * @return list<string> The shipments the carrier was asked to cancel, as it names them
+     */
+    public function voided(string $carrier): array
+    {
+        return $this->read()[$carrier]['voided'] ?? [];
     }
 
     public function calls(string $carrier): int
@@ -161,7 +213,7 @@ final class FakeCarrierState
     }
 
     /**
-     * @return array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool, track_calls?: int, tracking?: array{status: string|null, events: list<array{occurred_at: string, description: string, location: string|null}>}}>
+     * @return array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool, track_calls?: int, tracking?: array{status: string|null, events: list<array{occurred_at: string, description: string, location: string|null}>}, shipment?: array{reference: string, format: string}, ship_calls?: int, voided?: list<string>}>
      */
     private function read(): array
     {
@@ -169,14 +221,14 @@ final class FakeCarrierState
             return [];
         }
 
-        /** @var array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool, track_calls?: int, tracking?: array{status: string|null, events: list<array{occurred_at: string, description: string, location: string|null}>}}> $state */
+        /** @var array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool, track_calls?: int, tracking?: array{status: string|null, events: list<array{occurred_at: string, description: string, location: string|null}>}, shipment?: array{reference: string, format: string}, ship_calls?: int, voided?: list<string>}> $state */
         $state = json_decode((string) file_get_contents($this->path), true, flags: \JSON_THROW_ON_ERROR);
 
         return $state;
     }
 
     /**
-     * @param array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool, track_calls?: int, tracking?: array{status: string|null, events: list<array{occurred_at: string, description: string, location: string|null}>}}> $state
+     * @param array<string, array{failure?: self::FAILURE_*|null, rates?: array<string, array{amount: int, currency: string}>, calls?: int, residential_destination?: bool, track_calls?: int, tracking?: array{status: string|null, events: list<array{occurred_at: string, description: string, location: string|null}>}, shipment?: array{reference: string, format: string}, ship_calls?: int, voided?: list<string>}> $state
      */
     private function write(array $state): void
     {
