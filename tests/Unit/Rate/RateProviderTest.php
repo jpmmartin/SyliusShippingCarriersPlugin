@@ -314,6 +314,36 @@ final class RateProviderTest extends TestCase
     }
 
     /**
+     * The one place where two criteria pull apart: the carrier is down, there is a last known rate, and it is
+     * in a currency nobody set a rate for. It cannot be charged as it stands, so what is left is the policy
+     * the merchant chose for exactly this — and the resolver can only see that by getting no rate back.
+     */
+    public function testALastKnownRateThatCannotBeConvertedLeavesTheFailurePolicyInCharge(): void
+    {
+        $this->exchangeRate = $this->exchangeRate('USD', 'EUR', 0.9);
+        $this->provider()->rateFor($this->shipment(currencyCode: 'EUR'), 'ups', '03');
+
+        // The rate is stored in dollars; by the time the carrier falls over, the pair has no rate any more.
+        $this->clock->sleep(self::LIFETIME);
+        $this->exchangeRate = null;
+        $this->ups->answer = new CarrierUnavailableException('UPS did not answer in time.');
+
+        $result = $this->provider()->rateFor($this->shipment(currencyCode: 'EUR'), 'ups', '03');
+
+        self::assertTrue($result->carrierFailed);
+        self::assertNull($result->lastKnownRate, 'A rate that cannot be converted must not reach the resolver.');
+
+        // Nothing is charged silently: the reason it could not be converted is on record.
+        $conversion = array_values(array_filter(
+            $this->logger->records,
+            static fn (array $record): bool => isset($record[2]['rate_currency']),
+        ));
+        self::assertCount(1, $conversion);
+        self::assertSame(LogLevel::ERROR, $conversion[0][0]);
+        self::assertSame(['service' => '03', 'rate_currency' => 'USD', 'order_currency' => 'EUR'], $conversion[0][2]);
+    }
+
+    /**
      * Charging the dollars as the same number of euros is never an option.
      */
     public function testARateInACurrencyWithoutAnExchangeRateIsUnavailableAndLogged(): void
