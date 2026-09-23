@@ -18,7 +18,7 @@ use Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Carrier\FakeCarrierState;
  *
  * The shipping step itself does quote — the cart has no method there either, because choosing one is what the
  * buyer is about to do — and that is the whole point of quoting. What this pins is that nothing runs ahead of
- * it. How many calls the step itself makes is 001/CA-8, proved elsewhere.
+ * it. How many calls the step itself makes is another promise, proved elsewhere.
  */
 final class NoCarrierIsAskedBeforeTheShippingStepTest extends WebTestCase
 {
