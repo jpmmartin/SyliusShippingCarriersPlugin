@@ -11,6 +11,10 @@
         "fedex"
     ],
     "license": "MIT",
+    "support": {
+        "issues": "https://github.com/jpmmartin/SyliusShippingCarriersPlugin/issues",
+        "source": "https://github.com/jpmmartin/SyliusShippingCarriersPlugin"
+    },
     "require": {
         "php": "^8.2",
         "paragonie/halite": "^5.0",
@@ -63,7 +67,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "2.0-dev"
+            "dev-main": "1.0-dev"
         },
         "symfony": {
             "require": "^7.4"
@@ -84,6 +88,18 @@
         }
     },
     "scripts": {
+        "check": [
+            "@ecs",
+            "@phpstan",
+            "@lint-container",
+            "@phpunit",
+            "@behat"
+        ],
+        "ecs": "vendor/bin/ecs check",
+        "phpstan": "vendor/bin/phpstan analyse",
+        "lint-container": "vendor/bin/console lint:container",
+        "phpunit": "vendor/bin/phpunit",
+        "behat": "vendor/bin/behat --strict --no-interaction",
         "database-reset": [
             "vendor/bin/console doctrine:database:drop --force --if-exists",
             "vendor/bin/console doctrine:database:create",
@@ -98,5 +114,16 @@
             "@database-reset",
             "@frontend-clear"
         ]
+    },
+    "scripts-descriptions": {
+        "check": "ECS, PHPStan, the container lint, PHPUnit and Behat, stopping at the first failure. What a pull request has to pass",
+        "ecs": "Coding standard (sylius-labs/coding-standard), check only; add --fix to apply",
+        "phpstan": "Static analysis of src/ and tests/ at the level set in phpstan.neon",
+        "lint-container": "Every service argument matches the type its constructor declares",
+        "phpunit": "PHPUnit suites (Unit, Integration, Functional); needs the test database migrated",
+        "behat": "Behat scenarios, none of which needs a browser; needs the test database migrated and the test application built",
+        "database-reset": "Drops, creates and migrates the database of the test application, then loads the fixtures",
+        "frontend-clear": "Builds the front end of the test application and installs its assets",
+        "test-app-init": "database-reset, then frontend-clear"
     }
 }

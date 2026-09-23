@@ -226,7 +226,7 @@ Note `docs`, not `doc`.
 > **The table above assumes a `1.0.0` or later release line.** Under SemVer 2.0.0 §4, `0.y.z` makes
 > no compatibility promise at all: there, a breaking change goes in MINOR and `MAJOR` stays at zero,
 > so `feat` → MINOR / `!` → MAJOR does not hold. `composer.json` sets
-> `extra.branch-alias.dev-master` to `2.0-dev`, so the intended line is `2.x` and the table applies
+> `extra.branch-alias.dev-main` to `1.0-dev`, so the first line is `1.x` and the table applies
 > from the first tag. If a `0.x` pre-release ever ships ahead of that, say so explicitly in the
 > release notes and do not pretend the mapping is binding for it.
 >
@@ -245,9 +245,12 @@ changes when the change is archived. Commits made before the move to OpenSpec us
 > guide, a README or an older revision of this file does not work here. Use the commands below,
 > or add a `Makefile` first.
 
-### Composer scripts (the only ones defined)
+### Composer scripts
+
+`composer run-script --list` prints each with its description, from `scripts-descriptions`.
 
 ```bash
+composer check                 # ecs, phpstan, lint-container, phpunit, behat — stops at the first failure
 composer run database-reset    # drop + create + migrate + load fixtures
 composer run frontend-clear    # yarn install && yarn build in the test app, then assets:install
 composer run test-app-init     # database-reset + frontend-clear
