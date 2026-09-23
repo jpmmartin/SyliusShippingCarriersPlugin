@@ -19,6 +19,7 @@ Feature: A channel without a shipping origin
         And I addressed the cart with "Jon Snow" as the billing address
         When I go to the shipping step
         Then there should be information about no available shipping methods
+        And this step is left undefined on purpose, to see the build fail on Behat
 
     Scenario: Being offered it once the store says where it ships from
         Given the store ships from "1 Main St", "Chicago" "60601" in the "United States"
