@@ -69,7 +69,7 @@ its default is. Defaults are chosen so that a store that ignores them keeps beha
 | | |
 |---|---|
 | **PHP** | 8.2 and newer |
-| **Sylius** | 2.2 and newer. Sylius 1.x is not supported and will not be |
+| **Sylius** | 2.2.6 and newer. Earlier 2.2 releases carry security advisories, and a current Composer refuses to install them. Sylius 1.x is not supported and will not be |
 | **Databases** | Whatever your Sylius version supports — MySQL, MariaDB or PostgreSQL. The migrations are written against Doctrine's schema representation, not an engine's SQL, so one set serves all of them |
 
 A release that raises the PHP or Sylius floor is a **major** release, and its upgrade note says so.

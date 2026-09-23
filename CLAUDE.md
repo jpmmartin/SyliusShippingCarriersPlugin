@@ -51,7 +51,7 @@ between a verified answer and an unverified one.
 ### Versions to query against
 
 Never query "latest", and never trust a version written down in this file. Only two things here are
-stable enough to record: the declared constraints, `php ^8.2` and `sylius/sylius ^2.2`.
+stable enough to record: the declared constraints, `php ^8.2` and `sylius/sylius ^2.2.6`.
 
 Everything else is derived, never quoted. Print the resolved versions:
 

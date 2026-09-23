@@ -54,7 +54,7 @@ Not in your hands, so worth starting before anything else:
 | | |
 |---|---|
 | PHP | 8.2 or newer |
-| Sylius | 2.2 or newer |
+| Sylius | 2.2.6 or newer. Earlier 2.2 releases carry security advisories, and a current Composer refuses to install them |
 | Database | MySQL, MariaDB or PostgreSQL. The migrations are written against Doctrine's schema representation rather than an engine's SQL, and every build checks the schema they make on PostgreSQL and on MySQL |
 
 ## Installation

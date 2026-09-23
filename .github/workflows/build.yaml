@@ -25,11 +25,12 @@ jobs:
             matrix:
                 # The two ends of what composer.json promises, not every combination between them. The
                 # lowest PHP with the lowest Sylius is where new syntax or a newer API slips in unnoticed; the
-                # latest of both is where deprecations bite. If 2.2.0 fails, the answer is to narrow the
-                # constraint in composer.json, not to drop this leg: the constraint is the promise.
+                # latest of both is where deprecations bite. If the lowest fails, the answer is to narrow the
+                # constraint in composer.json, not to drop this leg: the constraint is the promise. It is
+                # 2.2.6 because every earlier 2.2 carries security advisories, and Composer refuses them.
                 include:
                     - php: "8.2"
-                      sylius: "2.2.0"
+                      sylius: "2.2.6"
                     - php: "8.5"
                       sylius: ""
 
@@ -91,11 +92,7 @@ jobs:
             - name: Which Sylius this leg runs
               run: composer show sylius/sylius | grep -E '^versions'
 
-            # On the leg that resolves what a new store gets. The other pins Sylius 2.2.0 on purpose, and
-            # every Sylius before 2.2.6 carries advisories of its own: auditing it would report Sylius, not
-            # this plugin, whose suite passes on 2.2.0.
             - name: Check for known vulnerabilities
-              if: matrix.sylius == ''
               run: composer audit --abandoned=ignore
 
             - name: Prepare the database

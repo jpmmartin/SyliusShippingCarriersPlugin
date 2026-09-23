@@ -21,7 +21,7 @@
         "shipstream/fedex-rest-sdk": "^1.6",
         "league/flysystem-bundle": "^3.3",
         "shipstream/ups-rest-php-sdk": "^2.3",
-        "sylius/sylius": "^2.2",
+        "sylius/sylius": "^2.2.6",
         "symfony/lock": "^6.4 || ^7.4"
     },
     "require-dev": {
