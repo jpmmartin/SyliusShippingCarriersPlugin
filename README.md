@@ -46,8 +46,8 @@ Not in your hands, so worth starting before anything else:
   of an API application, and the account number the carrier bills to. Without the account number you
   can be quoted, but you cannot issue a label.
 - **FedEx label certification**, to issue real FedEx labels in production. FedEx reviews the labels
-  a plugin generates before allowing it, and that takes weeks. Rates and tracking work against both
-  sandboxes from the first day; issuing in production with FedEx does not.
+  a plugin generates before allowing it, and that takes weeks. Rates and tracking do not need it;
+  issuing in production with FedEx does.
 
 ## Requirements
 
