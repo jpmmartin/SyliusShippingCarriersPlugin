@@ -177,9 +177,13 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
         ]);
     }
 
+    /**
+     * A namespace of the plugin's own. Sylius Standard lists the store's migrations under `DoctrineMigrations`, and
+     * the store's configuration is merged over the plugin's, so under that name the plugin's would never run.
+     */
     protected function getMigrationsNamespace(): string
     {
-        return 'DoctrineMigrations';
+        return 'JpmMartin\SyliusShippingCarriersPlugin\Migrations';
     }
 
     protected function getMigrationsDirectory(): string
