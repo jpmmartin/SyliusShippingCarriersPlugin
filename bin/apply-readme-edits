@@ -1,0 +1,165 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Applies the install steps that are file *edits* rather than commands.
+ *
+ * **This half is weaker than the command half, and saying so is the point.** The commands the
+ * verification job runs are extracted from the README, so an untested one cannot survive a
+ * release. These cannot be: two are fragments on purpose — one line to add beside a `// ...` in
+ * `config/bundles.php`, one line to add to a `.gitignore` the store already has — and there is no
+ * honest way to turn a fragment into a file.
+ *
+ * So what this does is take the README's blocks and place them the way the README's prose tells a
+ * reader to. That is a **mirror**: change the shape of one of those blocks and this script must
+ * change with it, and nothing will tell you that it must. Only a reader will notice.
+ *
+ * It fails loudly rather than quietly whenever the README stops looking the way it expects, which
+ * is the most this arrangement can offer.
+ *
+ * Usage:
+ *   bin/apply-readme-edits <path to README.md> <path to the store>
+ */
+[$self, $readmePath, $storePath] = $argv + [null, null, null];
+
+if (null === $readmePath || null === $storePath) {
+    fwrite(\STDERR, "Usage: apply-readme-edits <README.md> <store directory>\n");
+
+    exit(1);
+}
+
+$readme = (string) file_get_contents($readmePath);
+
+// Only the install section. The README's later sections show blocks too — the purge command is one —
+// and applying those here would be applying a step the reader has not reached.
+$from = strpos($readme, '## Installation');
+$to = strpos($readme, '## Setting up the store');
+if (false === $from || false === $to) {
+    fail('The README no longer has both an "Installation" heading and a "Setting up the store" heading, so there is no way to tell where the install steps end.');
+}
+$install = substr($readme, $from, $to - $from);
+
+preg_match_all('/^```(\w*)\n(.*?)^```/sm', $install, $matches, \PREG_SET_ORDER);
+
+/** @var array<string, list<string>> $blocks */
+$blocks = [];
+foreach ($matches as [, $language, $body]) {
+    $blocks[strtolower($language)][] = $body;
+}
+
+// ── Step 2: register the bundle ──────────────────────────────────────────────────────────────
+// A fragment: the README shows one line among a `// ...`. Inserted before the closing bracket. On a
+// store with Flex, `composer require` adds it as well; whichever comes first, it is there once.
+$bundleLine = firstLineContaining($blocks['php'] ?? [], 'JpmMartinSyliusShippingCarriersPlugin::class');
+$bundlesPath = $storePath . '/config/bundles.php';
+$bundles = readOrFail($bundlesPath);
+
+if (!str_contains($bundles, 'JpmMartinSyliusShippingCarriersPlugin::class')) {
+    $bundles = rtrim(rtrim(rtrim($bundles), ';'));
+    if (!str_ends_with($bundles, ']')) {
+        fail('config/bundles.php does not end in a closing bracket, so there is nowhere obvious to add the bundle.');
+    }
+
+    file_put_contents($bundlesPath, rtrim(substr($bundles, 0, -1)) . "\n" . $bundleLine . "\n];\n");
+    report('registered the bundle');
+}
+
+// ── Step 3: the configuration and routes imports ─────────────────────────────────────────────
+// Whole files, so these are written as they appear. The first line of each names its path and is
+// for the reader: dropped.
+$written = [];
+foreach ($blocks['yaml'] ?? [] as $body) {
+    $first = strtok($body, "\n");
+
+    foreach ([
+        'config/packages/jpmmartin_shipping_carriers.yaml',
+        'config/routes/jpmmartin_shipping_carriers.yaml',
+    ] as $path) {
+        if (str_contains((string) $first, $path)) {
+            file_put_contents($storePath . '/' . $path, withoutFirstLine($body));
+            report('wrote ' . $path);
+            $written[] = $path;
+        }
+    }
+}
+if (2 !== count($written)) {
+    fail('The install section no longer shows both the configuration and the routes file, each named on its first line.');
+}
+
+// ── Step 4: the ignore rule, appended rather than written ────────────────────────────────────
+// A file the store already has. Lines go below what is there, and a line already there is not added
+// twice.
+foreach ($blocks['gitignore'] ?? [] as $body) {
+    if (!str_contains((string) strtok($body, "\n"), '.gitignore')) {
+        continue;
+    }
+
+    if (appendMissingLines($storePath . '/.gitignore', withoutFirstLine($body))) {
+        report('appended to .gitignore');
+    }
+}
+
+/** @param list<string> $bodies */
+function firstLineContaining(array $bodies, string $needle): string
+{
+    foreach ($bodies as $body) {
+        foreach (explode("\n", $body) as $line) {
+            if (str_contains($line, $needle)) {
+                return rtrim($line);
+            }
+        }
+    }
+
+    fail(sprintf('No block in the README\'s install section contains "%s" any more.', $needle));
+}
+
+/** The first line of these blocks is the path comment, which is for the reader and not content. */
+function withoutFirstLine(string $body): string
+{
+    $lines = explode("\n", $body);
+    array_shift($lines);
+
+    return implode("\n", $lines);
+}
+
+/** Adds the lines of a block that the file does not have yet; says whether it added any. */
+function appendMissingLines(string $path, string $lines): bool
+{
+    $existing = is_file($path) ? readOrFail($path) : '';
+    $present = array_map('trim', explode("\n", $existing));
+    $missing = array_filter(
+        array_map('rtrim', explode("\n", rtrim($lines))),
+        static fn (string $line): bool => '' !== trim($line) && !in_array(trim($line), $present, true),
+    );
+
+    if ([] === $missing) {
+        return false;
+    }
+
+    file_put_contents($path, rtrim($existing) . ('' === $existing ? '' : "\n") . implode("\n", $missing) . "\n", \LOCK_EX);
+
+    return true;
+}
+
+function readOrFail(string $path): string
+{
+    if (!is_readable($path)) {
+        fail(sprintf('Cannot read %s.', $path));
+    }
+
+    return (string) file_get_contents($path);
+}
+
+function report(string $what): void
+{
+    fwrite(\STDOUT, '  ' . $what . "\n");
+}
+
+function fail(string $why): never
+{
+    fwrite(\STDERR, "\n" . $why . "\n");
+
+    exit(1);
+}
