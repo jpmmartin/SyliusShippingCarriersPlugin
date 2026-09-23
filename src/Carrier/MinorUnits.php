@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Carrier;
 
-use Sylius\Component\Core\Model\OrderInterface;
-
 /**
  * Turns an amount a carrier writes in decimals into the integer Sylius keeps, without going through a float.
  *
@@ -35,5 +33,11 @@ final class MinorUnits
         }
 
         return '-' === $matches[1] ? -$minor : $minor;
+    }
+
+    /** Wrong on purpose: this pull request proves that PHPStan fails the build. */
+    public static function brokenOnPurpose(): int
+    {
+        return 'not an integer';
     }
 }
