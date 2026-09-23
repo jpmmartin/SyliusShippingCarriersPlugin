@@ -386,6 +386,23 @@ still present alongside the plugin's own code.
 - **Tooling**: PHPStan, ECS, Rector, PHPUnit and Behat are installed and configured at the repo
   root (`phpstan.neon`, `ecs.php`, `rector.php`, `phpunit.xml.dist`, `behat.yml.dist`)
 
+### Publication
+
+- **The public surface is a list, and the list is tested.** `docs/extending.md` names every seam a
+  store may rely on: hooks, template paths, routes, the interfaces with their service ids, the carrier
+  tags, the value objects and exceptions that cross them, the stored configuration values and the
+  resources. Every class under `src/` is either named there or carries `@internal`, and
+  `tests/Unit/Docs/ExtendingSurfaceTest` fails when either half drifts. A new class starts internal;
+  making it public is a decision taken in the document, not by leaving the tag off. SemVer is promised
+  about the list and nothing else.
+- **The README's install section is executed.** The *Install* workflow runs, in a Sylius Standard
+  store, the ` ```bash ` commands `bin/extract-readme-commands` finds between `## Installation` and
+  `## Setting up the store`, and `bin/apply-readme-edits` mirrors the `php`, `yaml` and `gitignore`
+  blocks of that section. A command belongs in a `bash` fence and nothing else does; change the shape
+  of one of the mirrored blocks and that script must change with it.
+- **How a release is cut, and what counts as breaking in this package, is in `RELEASING.md`.** The
+  consumer's side is `docs/upgrading.md`.
+
 ### Database Configuration
 Database credentials should be configured in:
 - `tests/TestApplication/.env` (for development)
