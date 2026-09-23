@@ -39,6 +39,8 @@ final class TrackingProviderTest extends TestCase
 
     private TrackingCarrier $ups;
 
+    private TrackingCarrier $fedex;
+
     private ?CarrierCredentials $credentials;
 
     protected function setUp(): void
@@ -48,6 +50,8 @@ final class TrackingProviderTest extends TestCase
         $this->ups = new TrackingCarrier(new TrackingInfo('1Z999AA10123456784', 'Delivered', [
             new TrackingEvent(new \DateTimeImmutable('2026-09-17 10:15:00'), 'Delivered', 'Seattle, WA, US'),
         ]));
+
+        $this->fedex = new TrackingCarrier(new TrackingInfo('794658123456', 'In transit', []));
 
         $this->credentials = new CarrierCredentials();
         $this->credentials->setCarrier(CarrierCredentialsInterface::CARRIER_UPS);
@@ -65,6 +69,21 @@ final class TrackingProviderTest extends TestCase
 
         self::assertSame('Delivered', $tracking?->status);
         self::assertSame(['1Z999AA10123456784'], $this->ups->enquiries);
+    }
+
+    /**
+     * With only one carrier about, asking «the carrier of the method» and asking «the only carrier» look the
+     * same. This is the shipment that tells them apart: it goes by FedEx, and UPS must hear nothing about it.
+     */
+    public function testAShipmentOfAnotherCarrierAsksThatCarrierAndNotTheOther(): void
+    {
+        $this->credentials?->setCarrier(CarrierCredentialsInterface::CARRIER_FEDEX);
+
+        $tracking = $this->provider()->track($this->shipment('fedex_rate'));
+
+        self::assertSame('In transit', $tracking?->status);
+        self::assertSame(['1Z999AA10123456784'], $this->fedex->enquiries);
+        self::assertSame([], $this->ups->enquiries, 'UPS was asked about a parcel that is not travelling with it.');
     }
 
     /**
@@ -127,15 +146,34 @@ final class TrackingProviderTest extends TestCase
         self::assertCount(2, $this->ups->enquiries);
     }
 
+    /**
+     * Emptying the pool by hand would pass whatever the configured lifetime was, even one that never expired.
+     * This asks the same shipment twice under a lifetime that is over by the time the second one arrives, so
+     * what it proves is that the configured value is the one that governs.
+     */
     public function testAStatusOlderThanItsLifetimeIsAskedAgain(): void
     {
-        $this->provider()->track($this->shipment());
+        $expiringAtOnce = $this->provider(lifetime: 0);
 
-        // The pool forgets the entry the way it would once the lifetime is over.
-        $this->cache->clear();
-        $this->provider()->track($this->shipment());
+        $expiringAtOnce->track($this->shipment());
+        $expiringAtOnce->reset();
+        $expiringAtOnce->track($this->shipment());
 
         self::assertCount(2, $this->ups->enquiries);
+    }
+
+    /**
+     * The other side of it: under a lifetime that has not run out, the carrier is left alone.
+     */
+    public function testAStatusWithinItsLifetimeIsNotAskedAgain(): void
+    {
+        $lasting = $this->provider(lifetime: self::LIFETIME);
+
+        $lasting->track($this->shipment());
+        $lasting->reset();
+        $lasting->track($this->shipment());
+
+        self::assertCount(1, $this->ups->enquiries);
     }
 
     /**
@@ -189,11 +227,12 @@ final class TrackingProviderTest extends TestCase
         self::assertCount(2, $this->logger->records);
     }
 
-    private function provider(): TrackingProvider
+    private function provider(?int $lifetime = null): TrackingProvider
     {
         $calculators = new ServiceRegistry(CalculatorInterface::class);
         $chargeResolver = new ShippingChargeResolver($this->createStub(RateProviderInterface::class));
         $calculators->register('ups_rate', new CarrierRateCalculator($chargeResolver, 'ups', 'ups_rate'));
+        $calculators->register('fedex_rate', new CarrierRateCalculator($chargeResolver, 'fedex', 'fedex_rate'));
         $calculators->register('flat_rate', new FlatRateCalculator());
 
         /** @var RepositoryInterface<CarrierCredentialsInterface>&Stub $credentialsRepository */
@@ -203,10 +242,13 @@ final class TrackingProviderTest extends TestCase
         return new TrackingProvider(
             new ShipmentCarrier($calculators),
             new CredentialsProvider($credentialsRepository),
-            new ServiceLocator(['ups' => fn (): CarrierInterface => $this->ups]),
+            new ServiceLocator([
+                'ups' => fn (): CarrierInterface => $this->ups,
+                'fedex' => fn (): CarrierInterface => $this->fedex,
+            ]),
             $this->cache,
             $this->logger,
-            self::LIFETIME,
+            $lifetime ?? self::LIFETIME,
         );
     }
 

@@ -18,6 +18,7 @@ use Sylius\Component\Core\Model\Channel;
 use Sylius\Component\Core\Model\Order;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\Shipment;
+use Sylius\Component\Core\Model\ShipmentInterface;
 use Sylius\Component\Core\Model\ShippingMethod;
 use Sylius\Component\Registry\ServiceRegistry;
 use Sylius\Component\Shipping\Calculator\CalculatorInterface;
@@ -56,6 +57,32 @@ final class ShippingChargeSourceProcessorTest extends TestCase
         self::assertArrayNotHasKey('carrierRateSource', $adjustment->getDetails());
     }
 
+    /**
+     * This runs on every change to a cart, long before the buyer has chosen how it travels. A shipment with no
+     * method yet must not be priced: rating costs the merchant a call to a carrier, and at that point nobody
+     * has asked for one.
+     */
+    public function testAShipmentWithNoMethodYetIsNotRated(): void
+    {
+        [$order, $adjustment] = $this->order('ups_rate', ['service' => '03']);
+        $shipment = $order->getShipments()->first();
+        self::assertInstanceOf(ShipmentInterface::class, $shipment);
+        $shipment->setMethod(null);
+
+        $asked = 0;
+        $rateProvider = $this->createMock(RateProviderInterface::class);
+        $rateProvider->method('rateFor')->willReturnCallback(function () use (&$asked): RateResult {
+            ++$asked;
+
+            return RateResult::unavailable();
+        });
+
+        (new ShippingChargeSourceProcessor($this->calculators(new ShippingChargeResolver($rateProvider)), new ShippingChargeResolver($rateProvider)))->process($order);
+
+        self::assertSame(0, $asked, 'A cart with nothing chosen yet cost the merchant a call to a carrier.');
+        self::assertArrayNotHasKey('carrierRateSource', $adjustment->getDetails());
+    }
+
     public function testAnOrderThatIsNoLongerACartIsLeftAlone(): void
     {
         [$order, $adjustment] = $this->order('ups_rate', ['service' => '03']);
@@ -72,11 +99,16 @@ final class ShippingChargeSourceProcessorTest extends TestCase
         $rateProvider->method('rateFor')->willReturn($result);
         $chargeResolver = new ShippingChargeResolver($rateProvider);
 
+        return new ShippingChargeSourceProcessor($this->calculators($chargeResolver), $chargeResolver);
+    }
+
+    private function calculators(ShippingChargeResolver $chargeResolver): ServiceRegistry
+    {
         $calculators = new ServiceRegistry(CalculatorInterface::class);
         $calculators->register('ups_rate', new CarrierRateCalculator($chargeResolver, 'ups', 'ups_rate'));
         $calculators->register('flat_rate', new FlatRateCalculator());
 
-        return new ShippingChargeSourceProcessor($calculators, $chargeResolver);
+        return $calculators;
     }
 
     /**

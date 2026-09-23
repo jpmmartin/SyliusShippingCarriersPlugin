@@ -76,6 +76,25 @@ final class ShippingChargeResolverTest extends TestCase
         self::assertNull($this->resolve(RateResult::carrierFailed(null), ['service' => '03', 'flat_amount' => ['WEB_US' => 1200]]));
     }
 
+    /**
+     * A shipping method is one row in the admin and the store may sell in dollars in one channel and in euros
+     * in another, so the flat amount is kept per channel. Charging one channel the amount meant for the other
+     * would be charging the right number of the wrong currency, which nothing downstream would question.
+     */
+    public function testEachChannelIsChargedItsOwnFlatAmount(): void
+    {
+        $perChannel = ['service' => '03', 'failure_policy' => 'flat', 'flat_amount' => ['WEB_US' => 1200, 'WEB_EU' => 1100]];
+
+        self::assertEquals(
+            new ShippingCharge(1200, ShippingCharge::SOURCE_FLAT),
+            $this->resolve(RateResult::carrierFailed(null), $perChannel, 'WEB_US'),
+        );
+        self::assertEquals(
+            new ShippingCharge(1100, ShippingCharge::SOURCE_FLAT),
+            $this->resolve(RateResult::carrierFailed(null), $perChannel, 'WEB_EU'),
+        );
+    }
+
     public function testAFlatMethodWithoutAnAmountForTheChannelIsUnavailable(): void
     {
         self::assertNull($this->resolve(RateResult::carrierFailed(null), self::FLAT, 'WEB_MX'));

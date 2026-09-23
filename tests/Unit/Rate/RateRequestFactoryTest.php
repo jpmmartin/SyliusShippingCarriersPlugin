@@ -21,6 +21,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Sylius\Component\Core\Model\Address;
 use Sylius\Component\Core\Model\Channel;
+use Sylius\Component\Core\Model\ChannelInterface;
 use Sylius\Component\Core\Model\Order;
 use Sylius\Component\Core\Model\Shipment;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
@@ -29,6 +30,9 @@ use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
 final class RateRequestFactoryTest extends TestCase
 {
     private ?CarrierShippingOrigin $origin;
+
+    /** @var array<string, CarrierShippingOrigin> An origin of its own per channel code, when a test sets them. */
+    private array $origins = [];
 
     private string $destinationType = DestinationType::COMMERCIAL;
 
@@ -63,6 +67,41 @@ final class RateRequestFactoryTest extends TestCase
         self::assertEquals(new CarrierAddress('US', '60601', 'Chicago', '1 Main St', 'IL'), $request?->origin);
         self::assertEquals(new CarrierAddress('US', '98101', 'Seattle', '500 Pine St', 'WA'), $request?->destination);
         self::assertSame($packages, $request?->packages);
+    }
+
+    /**
+     * With one origin in the store, «the origin of its channel» and «the only origin» are the same sentence.
+     * A store that ships from two places is where they part: each channel quotes from its own, and getting
+     * this wrong would quote every parcel from the wrong warehouse without anything looking broken.
+     */
+    public function testEachChannelIsRatedFromItsOwnOrigin(): void
+    {
+        $this->packagingStrategy->method('pack')->willReturn([new Package('Medium', 13.0, 11.0, 9.0, 'in', 5.5, 'lb', [])]);
+        $this->origins = [
+            'WEB' => $this->origin(street: '1 Main St', city: 'Chicago', postcode: '60601', province: 'IL'),
+            'WEB_EU' => $this->origin(street: '10 Rue de Rivoli', city: 'Paris', postcode: '75001', province: null),
+        ];
+
+        self::assertEquals(
+            new CarrierAddress('US', '60601', 'Chicago', '1 Main St', 'IL'),
+            $this->factory()->create($this->shipment('WEB'))?->origin,
+        );
+        self::assertEquals(
+            new CarrierAddress('US', '75001', 'Paris', '10 Rue de Rivoli'),
+            $this->factory()->create($this->shipment('WEB_EU'))?->origin,
+        );
+    }
+
+    private function origin(string $street, string $city, string $postcode, ?string $province): CarrierShippingOrigin
+    {
+        $origin = new CarrierShippingOrigin();
+        $origin->setStreet($street);
+        $origin->setCity($city);
+        $origin->setPostcode($postcode);
+        $origin->setCountryCode('US');
+        $origin->setProvinceCode($province);
+
+        return $origin;
     }
 
     /**
@@ -229,7 +268,14 @@ final class RateRequestFactoryTest extends TestCase
     {
         /** @var RepositoryInterface<CarrierShippingOriginInterface>&Stub $originRepository */
         $originRepository = $this->createStub(RepositoryInterface::class);
-        $originRepository->method('findOneBy')->willReturnCallback(fn (): ?CarrierShippingOrigin => $this->origin);
+        $originRepository->method('findOneBy')->willReturnCallback(
+            function (array $criteria): ?CarrierShippingOrigin {
+                $channel = $criteria['channel'] ?? null;
+                $code = $channel instanceof ChannelInterface ? (string) $channel->getCode() : '';
+
+                return $this->origins[$code] ?? $this->origin;
+            },
+        );
 
         $destinationTypeResolver = $this->createStub(DestinationTypeResolverInterface::class);
         $destinationTypeResolver->method('resolve')->willReturnCallback(fn (): string => $this->destinationType);
@@ -237,10 +283,10 @@ final class RateRequestFactoryTest extends TestCase
         return new RateRequestFactory($originRepository, $this->packagingStrategy, $destinationTypeResolver, new AddressFactory(), $this->logger);
     }
 
-    private function shipment(): Shipment
+    private function shipment(string $channelCode = 'WEB'): Shipment
     {
         $channel = new Channel();
-        $channel->setCode('WEB');
+        $channel->setCode($channelCode);
 
         $address = new Address();
         $address->setStreet('500 Pine St');
