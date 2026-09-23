@@ -34,10 +34,4 @@ final class MinorUnits
 
         return '-' === $matches[1] ? -$minor : $minor;
     }
-
-    /** Wrong on purpose: this pull request proves that PHPStan fails the build. */
-    public static function brokenOnPurpose(): int
-    {
-        return 'not an integer';
-    }
 }
