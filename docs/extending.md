@@ -52,6 +52,70 @@ aliased to. The implementation behind each is internal.
 | `JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationTypeResolverInterface` | `jpmmartin_carrier.resolver.destination_type` | whether an order goes to a home or a business |
 | `JpmMartin\SyliusShippingCarriersPlugin\Encryption\EncrypterInterface` | `jpmmartin_carrier.encrypter` | how the carrier credentials are encrypted at rest |
 
+### Packing your own way: the packaging strategy
+
+The default strategy puts a shipment's units into the boxes of the shipping origin, or stacks them
+when none fits, as the README describes. A store that packs another way — padding in every parcel, a
+box it always uses, articles that travel on their own — decorates or replaces
+`jpmmartin_carrier.packaging_strategy`. What it returns is what the carriers are asked to quote and,
+once the order is confirmed, what its labels are issued for.
+
+Decorating it, to add the weight of the packing material to every package:
+
+```php
+namespace App\Shipping;
+
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
+use JpmMartin\SyliusShippingCarriersPlugin\Packaging\PackagingStrategyInterface;
+use Sylius\Component\Shipping\Model\ShipmentInterface;
+use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
+
+#[AsDecorator('jpmmartin_carrier.packaging_strategy')]
+final class PaddedPackagingStrategy implements PackagingStrategyInterface
+{
+    /** What the paper and the tape weigh, in the origin's weight unit. */
+    private const PADDING = 0.2;
+
+    public function __construct(private readonly PackagingStrategyInterface $inner)
+    {
+    }
+
+    public function pack(ShipmentInterface $shipment, CarrierShippingOriginInterface $origin): array
+    {
+        return array_map(
+            static fn (Package $package): Package => new Package(
+                $package->boxName,
+                $package->length,
+                $package->width,
+                $package->height,
+                $package->dimensionUnit,
+                $package->weight + self::PADDING,
+                $package->weightUnit,
+                $package->units,
+            ),
+            $this->inner->pack($shipment, $origin),
+        );
+    }
+}
+```
+
+Replacing it outright is the same interface, with the service id pointed at your class:
+
+```yaml
+# config/services.yaml
+services:
+    jpmmartin_carrier.packaging_strategy:
+        alias: App\Shipping\OwnPackagingStrategy
+```
+
+Either way the contract is the interface's: at least one
+`JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package`, measured in the units the shipping origin
+declares; a `JpmMartin\SyliusShippingCarriersPlugin\Packaging\Exception\UnpackableShipmentException`
+for a shipment that cannot be packed, which is then not quoted; and **the same packages every time for
+the same shipment**, because the order is packed again when it is completed, and the packages are kept
+only because they match the ones that were quoted.
+
 The label services answer with a `JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface`,
 the record of what happened to a shipment's labels. They throw
 `JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AlreadyIssuedException` for a shipment that
