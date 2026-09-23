@@ -24,6 +24,8 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
  *
  * One shipment failing never stops the others: each one is issued on its own and answers for itself, and when
  * it is over the operator is told how many went out and what happened to every one that did not.
+ *
+ * @internal
  */
 final readonly class IssueCarrierLabelsInBatchAction
 {

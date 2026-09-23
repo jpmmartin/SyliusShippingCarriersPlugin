@@ -9,6 +9,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
 /**
  * Picks the box for the contents of a package. Volumes are compared, not shapes: contents that fit by
  * volume but not by shape get a box smaller than the one they need.
+ *
+ * @internal
  */
 final class BoxSelector
 {

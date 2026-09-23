@@ -13,6 +13,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Shipping;
  *         services:
  *             ups:
  *                 '02': 'UPS 2nd Day Air'
+ *
+ * @internal
  */
 final readonly class CarrierServices
 {

@@ -54,6 +54,8 @@ use ShipStream\FedEx\Api\ShipV1\Responses\ShpcResponseVoShipShipment;
 /**
  * Issues and cancels FedEx labels through shipstream/fedex-rest-sdk. Every exception of the SDK, of Saloon or
  * of the JSON decoding is translated to a CarrierException by FedexErrorTranslator.
+ *
+ * @internal
  */
 final readonly class FedexLabelCarrier implements LabelCarrierInterface
 {

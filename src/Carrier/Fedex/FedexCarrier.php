@@ -40,6 +40,8 @@ use ShipStream\FedEx\Api\TrackV1\Responses\TrkcResponseVoTrackingNumber;
 /**
  * FedEx through shipstream/fedex-rest-sdk. Every exception of the SDK, of Saloon or of the JSON decoding is
  * translated here to a CarrierException.
+ *
+ * @internal
  */
 final class FedexCarrier implements CarrierInterface
 {

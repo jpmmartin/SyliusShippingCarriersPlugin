@@ -11,6 +11,8 @@ use Sylius\Component\Core\Model\ShipmentInterface;
  *
  * What the carrier said is separate from the shipment itself, because the carrier may not have answered and the
  * buyer is still owed the number.
+ *
+ * @internal
  */
 final readonly class TrackedShipment
 {

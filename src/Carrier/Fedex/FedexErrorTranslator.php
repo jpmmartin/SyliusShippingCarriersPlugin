@@ -23,6 +23,8 @@ use Saloon\RateLimitPlugin\Exceptions\RateLimitReachedException;
  *
  * Shared by everything the plugin asks FedEx, so a new operation — a shipment, a cancellation — needs nothing
  * added here beyond saying what it was asking for.
+ *
+ * @internal
  */
 final readonly class FedexErrorTranslator
 {

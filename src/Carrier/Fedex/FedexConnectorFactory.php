@@ -15,6 +15,8 @@ use Symfony\Component\Lock\LockFactory;
 /**
  * Builds the FedEx SDK connector for the stored credentials. The access token is shared by every process and
  * obtained under a lock, and no request waits longer than the carrier timeout.
+ *
+ * @internal
  */
 final class FedexConnectorFactory
 {

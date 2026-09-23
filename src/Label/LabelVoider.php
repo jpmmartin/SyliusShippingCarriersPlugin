@@ -20,6 +20,8 @@ use Psr\Log\LoggerInterface;
  * Cancelling is told to the carrier first and recorded afterwards, and only if the carrier says it did cancel.
  * A record that says «cancelled» about a shipment the carrier will still bill for is worse than no record: the
  * warehouse stops looking for the parcel and the invoice arrives anyway.
+ *
+ * @internal
  */
 final readonly class LabelVoider implements LabelVoiderInterface
 {

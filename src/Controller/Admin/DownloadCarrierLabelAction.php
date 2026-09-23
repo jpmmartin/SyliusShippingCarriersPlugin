@@ -16,6 +16,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * It goes by the label's own record rather than by a path, because what may be downloaded depends on what
  * happened to the shipment: a label the carrier cancelled is not a label any more, and handing it over would
  * put a parcel on a van under a number that no longer exists.
+ *
+ * @internal
  */
 final readonly class DownloadCarrierLabelAction
 {

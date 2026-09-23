@@ -15,6 +15,8 @@ use Sylius\Component\Core\Model\ShipmentInterface;
  * the ones behind it, so every shipment is issued on its own and answers for itself. And the calls are never
  * made in parallel: both SDKs hold their own rate limits back, and firing shipment requests at a carrier all
  * at once is the quickest way to be cut off with money already in flight.
+ *
+ * @internal
  */
 final readonly class BatchIssuer implements BatchIssuerInterface
 {

@@ -45,6 +45,8 @@ use ShipStream\Ups\Api\Model\TrackApiResponse;
 /**
  * UPS through shipstream/ups-rest-php-sdk. Every exception of the SDK, of the HTTP client or of the
  * serializer is translated here to a CarrierException.
+ *
+ * @internal
  */
 final class UpsCarrier implements CarrierInterface
 {

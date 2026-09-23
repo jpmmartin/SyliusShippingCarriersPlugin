@@ -11,6 +11,8 @@ use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 
 /**
  * The credentials an adapter calls its carrier with, as the administrator stored them.
+ *
+ * @internal
  */
 final readonly class CredentialsProvider
 {

@@ -17,6 +17,8 @@ use Symfony\Component\Form\FormView;
 
 /**
  * The values stored in CarrierCredentials::$credentials.
+ *
+ * @internal
  */
 final class CarrierCredentialsDataType extends AbstractType
 {

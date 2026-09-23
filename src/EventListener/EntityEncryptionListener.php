@@ -19,6 +19,8 @@ use Psr\Log\NullLogger;
  * encrypt what is about to be written, decrypt what was just written or loaded.
  *
  * @template T of EncryptionAwareInterface
+ *
+ * @internal
  */
 final readonly class EntityEncryptionListener
 {

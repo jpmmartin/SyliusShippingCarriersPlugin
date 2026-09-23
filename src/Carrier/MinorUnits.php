@@ -9,6 +9,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Carrier;
  *
  * Sylius keeps every amount in hundredths, whatever the currency: its money formatter divides by 100 and its
  * money form type uses a divisor of 100. So ¥1,500 is kept as 150000, not 1500.
+ *
+ * @internal
  */
 final class MinorUnits
 {

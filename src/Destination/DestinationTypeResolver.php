@@ -9,6 +9,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 
+/** @internal */
 final readonly class DestinationTypeResolver implements DestinationTypeResolverInterface
 {
     /**

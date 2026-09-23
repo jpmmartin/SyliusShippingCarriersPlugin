@@ -15,6 +15,8 @@ use Sylius\Component\Core\Model\ShipmentInterface;
  *
  * Whether a shipping method is offered and what it charges both come from here, so the price shown is the price
  * charged.
+ *
+ * @internal
  */
 final readonly class ShippingChargeResolver
 {

@@ -19,6 +19,8 @@ use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
  * A variant with no HS code or no country of origin stops the shipment, and the message names the variant and
  * the field: a customs declaration that is wrong is held at the border, and one that cannot be filled in is
  * better caught in the warehouse than at the airport.
+ *
+ * @internal
  */
 final readonly class CustomsDataProvider
 {

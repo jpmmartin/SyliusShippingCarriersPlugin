@@ -15,6 +15,8 @@ use ParagonIE\HiddenString\HiddenString;
 /**
  * Same construction as Sylius' payment encrypter (Component/Payment/Encryption/Encrypter.php), on its
  * own key file.
+ *
+ * @internal
  */
 final class Encrypter implements EncrypterInterface
 {

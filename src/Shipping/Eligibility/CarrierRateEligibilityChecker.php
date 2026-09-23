@@ -19,6 +19,8 @@ use Sylius\Component\Shipping\Model\ShippingSubjectInterface;
  * Sylius asks every eligibility checker before it offers a shipping method, before it assigns one by default and
  * before it completes an order, in the shop and in the API. So an unavailable shipping method is neither offered
  * nor completed with, and a shipment is never left without a charge.
+ *
+ * @internal
  */
 final readonly class CarrierRateEligibilityChecker implements ShippingMethodEligibilityCheckerInterface
 {

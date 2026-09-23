@@ -13,6 +13,8 @@ use ShipStream\Ups\Authentication\AccessTokenCache;
 /**
  * Keeps the UPS access token where every process finds it, encrypted, since it gives access to the
  * merchant's account.
+ *
+ * @internal
  */
 final readonly class UpsAccessTokenCache implements AccessTokenCache
 {

@@ -6,6 +6,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Label;
 
 /**
  * What a purge did, for whoever asked for it to say so.
+ *
+ * @internal
  */
 final readonly class PurgeReport
 {

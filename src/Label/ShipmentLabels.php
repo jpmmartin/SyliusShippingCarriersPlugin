@@ -10,6 +10,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabelInterface;
 /**
  * Where a shipment of a carrier of this plugin stands: what has been asked of the carrier, and therefore what
  * the admin may offer to do next.
+ *
+ * @internal
  */
 final readonly class ShipmentLabels
 {

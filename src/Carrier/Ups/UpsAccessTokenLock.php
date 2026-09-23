@@ -12,6 +12,8 @@ use Symfony\Component\Lock\LockInterface;
  * Makes the processes that find the shared UPS access token expired renew it one at a time: the first one
  * renews it, and the others find the new one when they get the lock. Works with whatever store the
  * application configures for symfony/lock.
+ *
+ * @internal
  */
 final class UpsAccessTokenLock implements AccessTokenLock
 {

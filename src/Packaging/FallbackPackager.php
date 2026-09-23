@@ -11,6 +11,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface
  * side, `max(length) × max(width) × sum(heights)`. Every unit fits in
  * `max(length) × max(width) × its height`, so the package is never smaller than its contents and the
  * possible error is quoting too much, never too little.
+ *
+ * @internal
  */
 final class FallbackPackager
 {

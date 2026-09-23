@@ -27,6 +27,8 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
  *
  * What the carrier answers is what is shown: a carrier that refuses leaves the labels issued, and saying so is
  * the point — a warehouse told a parcel was cancelled stops looking for it.
+ *
+ * @internal
  */
 final readonly class VoidCarrierLabelsAction
 {

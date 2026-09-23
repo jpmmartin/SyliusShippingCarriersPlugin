@@ -28,6 +28,8 @@ use ShipStream\Ups\Exception\AuthenticationException;
  * It matches on the SDK's base exceptions rather than on the per-operation ones, so asking UPS something new —
  * a shipment, a void, a label recovery — needs nothing added here. The token exceptions are the exception to
  * that: a rejected token is bad credentials, not a bad request.
+ *
+ * @internal
  */
 final readonly class UpsErrorTranslator
 {

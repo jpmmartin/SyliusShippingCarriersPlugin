@@ -19,6 +19,8 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * Same behaviour as Sylius' `sylius:payment:generate-key`, for the key that encrypts the
  * carrier credentials.
+ *
+ * @internal
  */
 #[AsCommand(
     name: 'jpmmartin:carrier:generate-key',

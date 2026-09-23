@@ -13,6 +13,7 @@ use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Sylius\Resource\Factory\FactoryInterface;
 use Webmozart\Assert\Assert;
 
+/** @internal */
 final readonly class SetOrderDestinationTypeHandler
 {
     /**

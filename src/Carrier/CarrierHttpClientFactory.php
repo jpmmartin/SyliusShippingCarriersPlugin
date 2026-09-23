@@ -11,6 +11,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * The PSR-18 client the carrier SDKs call through. It gives up on a request once the carrier timeout has
  * passed, whether the carrier stays silent or keeps sending slowly.
+ *
+ * @internal
  */
 final class CarrierHttpClientFactory
 {

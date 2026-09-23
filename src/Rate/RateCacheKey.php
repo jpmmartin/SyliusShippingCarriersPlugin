@@ -13,6 +13,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
  *
  * Of the destination only the country, province, postcode, city and whether it is a home count: carriers
  * price by place, not by street. Of the origin the whole address counts, so editing it asks again.
+ *
+ * @internal
  */
 final class RateCacheKey
 {

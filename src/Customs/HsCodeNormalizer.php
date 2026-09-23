@@ -8,6 +8,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Customs;
  * Catalogues are written by people, and people punctuate a Harmonized System code however their supplier did:
  * `6912.00`, `6912 00`, `6912-00`. They all name the same goods, so the separators are dropped and the code is
  * kept as the digits it is.
+ *
+ * @internal
  */
 final class HsCodeNormalizer
 {

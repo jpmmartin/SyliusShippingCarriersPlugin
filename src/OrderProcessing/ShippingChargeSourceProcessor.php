@@ -18,6 +18,8 @@ use Sylius\Component\Registry\ServiceRegistryInterface;
  *
  * Runs after Sylius's shipping charges processor, which creates the adjustment without asking the calculator for
  * anything but the amount.
+ *
+ * @internal
  */
 final readonly class ShippingChargeSourceProcessor implements OrderProcessorInterface
 {

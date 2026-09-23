@@ -9,6 +9,8 @@ use Psr\Http\Message\RequestInterface;
 
 /**
  * A carrier could not be reached, or stopped answering, as PSR-18 reports it to an SDK.
+ *
+ * @internal
  */
 final class CarrierNetworkException extends \RuntimeException implements NetworkExceptionInterface
 {

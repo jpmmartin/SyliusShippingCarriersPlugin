@@ -9,6 +9,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Label;
  *
  * It exists because the two carriers are nothing alike: ninety days against twelve hours. An operator used to
  * UPS working a FedEx shipment finds out too late unless the screen says so.
+ *
+ * @internal
  */
 final readonly class VoidWindowState
 {

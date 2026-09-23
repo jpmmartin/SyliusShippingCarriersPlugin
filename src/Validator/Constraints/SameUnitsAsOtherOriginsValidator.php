@@ -10,6 +10,7 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Webmozart\Assert\Assert;
 
+/** @internal */
 final class SameUnitsAsOtherOriginsValidator extends ConstraintValidator
 {
     /** @param RepositoryInterface<CarrierShippingOriginInterface> $originRepository */

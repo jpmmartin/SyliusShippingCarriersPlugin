@@ -16,6 +16,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *
  * Meant for cron: a shop runs it as often as it likes, and running it twice in a row is not a problem, because
  * the second run finds nothing left to delete.
+ *
+ * @internal
  */
 #[AsCommand(
     name: 'jpmmartin:carrier:purge-documents',

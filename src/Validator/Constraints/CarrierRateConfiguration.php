@@ -10,6 +10,8 @@ use Symfony\Component\Validator\Constraint;
 /**
  * The configuration of a shipping method rated by a carrier: one of the carrier's services, a known failure policy
  * and, with the flat policy, a flat amount for every channel.
+ *
+ * @internal
  */
 final class CarrierRateConfiguration extends Constraint
 {

@@ -22,6 +22,8 @@ use Psr\Log\LoggerInterface;
  *
  * Nothing is deleted the moment it expires: the files go when this is asked to run, which is what makes it
  * something a shop schedules rather than something that happens behind its back.
+ *
+ * @internal
  */
 final readonly class DocumentPurger
 {

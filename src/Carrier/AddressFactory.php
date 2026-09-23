@@ -12,6 +12,8 @@ use Sylius\Component\Addressing\Model\AddressInterface;
  *
  * One place, because what the carriers accept is not what Sylius stores: the subdivision goes without its country
  * in front, and an address missing any of the four parts a carrier requires is no address at all.
+ *
+ * @internal
  */
 final readonly class AddressFactory
 {

@@ -22,6 +22,8 @@ use Webmozart\Assert\Assert;
  * The configuration of a shipping method rated by a carrier, shown in the admin's shipping method form once its
  * calculator is chosen. The flat amount is set by channel, in the channel's base currency, like Sylius's own flat
  * rate.
+ *
+ * @internal
  */
 final class CarrierRateConfigurationType extends AbstractType
 {

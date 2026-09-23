@@ -8,6 +8,8 @@ use Sylius\Bundle\ApiBundle\Attribute\OrderTokenValueAware;
 
 /**
  * Says whether the order goes to a home or to a business, which changes what the carriers charge.
+ *
+ * @internal
  */
 #[OrderTokenValueAware]
 class SetOrderDestinationType

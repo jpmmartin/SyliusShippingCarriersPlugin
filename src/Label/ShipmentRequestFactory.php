@@ -32,6 +32,8 @@ use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
  * The packages are the ones stored when the order was confirmed, read and never recomputed: what the buyer was
  * charged for and what goes on the van have to be the same parcels, and the catalogue may well have changed
  * since. A shipment whose packages were never stored is not issued at all.
+ *
+ * @internal
  */
 final readonly class ShipmentRequestFactory
 {

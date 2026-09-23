@@ -23,6 +23,8 @@ use Symfony\Component\Validator\Constraints\Valid;
  *
  * The data lives in a table of the plugin (see CarrierCustomsData), so it cannot simply be a mapped field of
  * the variant: the form carries it unmapped and this extension loads it and saves it alongside.
+ *
+ * @internal
  */
 final class AdminProductVariantTypeExtension extends AbstractTypeExtension
 {

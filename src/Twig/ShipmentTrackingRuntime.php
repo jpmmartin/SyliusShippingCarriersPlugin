@@ -13,6 +13,8 @@ use Twig\Extension\RuntimeExtensionInterface;
 
 /**
  * What the shop can tell the buyer about where the shipments of an order are.
+ *
+ * @internal
  */
 final readonly class ShipmentTrackingRuntime implements RuntimeExtensionInterface
 {

@@ -11,6 +11,7 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Webmozart\Assert\Assert;
 
+/** @internal */
 final class WithinCarrierSizeLimitsValidator extends ConstraintValidator
 {
     /** Maximum outer length, in inches, published by UPS and by FedEx Ground and Express. */

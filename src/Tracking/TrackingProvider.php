@@ -17,6 +17,8 @@ use Symfony\Contracts\Service\ResetInterface;
 /**
  * Asks the carrier where a shipment is, and keeps the answer for a short while: opening the same order again does
  * not ask the carrier again.
+ *
+ * @internal
  */
 final class TrackingProvider implements TrackingProviderInterface, ResetInterface
 {

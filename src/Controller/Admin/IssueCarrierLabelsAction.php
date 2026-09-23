@@ -28,6 +28,8 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
  *
  * A carrier that refuses or that says nothing is not an error of the admin: it is recorded on the shipment and
  * told to whoever asked, and the page comes back as a page.
+ *
+ * @internal
  */
 final readonly class IssueCarrierLabelsAction
 {

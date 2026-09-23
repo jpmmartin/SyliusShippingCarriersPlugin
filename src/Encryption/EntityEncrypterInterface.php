@@ -6,6 +6,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Encryption;
 
 /**
  * @template T of EncryptionAwareInterface
+ *
+ * @internal
  */
 interface EntityEncrypterInterface
 {

@@ -20,6 +20,8 @@ use Symfony\Contracts\Service\ResetInterface;
 /**
  * Turns a shipment into what a carrier is asked to rate: from the origin of its channel to the shipping address
  * of its order, in the packages the packaging strategy builds.
+ *
+ * @internal
  */
 final class RateRequestFactory implements ResetInterface
 {

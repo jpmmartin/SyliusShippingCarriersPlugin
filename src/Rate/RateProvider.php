@@ -21,6 +21,8 @@ use Symfony\Contracts\Service\ResetInterface;
  *
  * Every answer of a carrier is kept with two ages. While younger than the lifetime it is quoted. After that it
  * is only the last known rate, charged when the carrier fails, and it is dropped after the retention.
+ *
+ * @internal
  */
 final class RateProvider implements RateProviderInterface, ResetInterface
 {

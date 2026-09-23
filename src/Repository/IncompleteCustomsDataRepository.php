@@ -13,6 +13,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCustomsDataInterface;
  *
  * A catalogue of thousands of variants cannot be audited one by one, and what is missing is only discovered at
  * the border unless somebody can list it.
+ *
+ * @internal
  */
 final readonly class IncompleteCustomsDataRepository
 {

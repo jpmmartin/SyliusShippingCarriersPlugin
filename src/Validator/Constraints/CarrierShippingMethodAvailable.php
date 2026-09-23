@@ -10,6 +10,8 @@ use Symfony\Component\Validator\Constraint;
 /**
  * An order is not completed with a carrier's shipping method that has nothing to charge, such as one that hides
  * while its carrier is down. Checked on the order in the shop and on the completion command in the API.
+ *
+ * @internal
  */
 final class CarrierShippingMethodAvailable extends Constraint
 {

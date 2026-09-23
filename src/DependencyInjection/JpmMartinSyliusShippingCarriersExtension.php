@@ -12,6 +12,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
+/** @internal */
 final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExtension implements PrependExtensionInterface
 {
     /** The Flysystem storage the plugin keeps its labels and customs documents in. */

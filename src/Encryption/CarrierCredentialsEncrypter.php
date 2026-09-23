@@ -12,6 +12,8 @@ use Webmozart\Assert\Assert;
  * strings, so they are encrypted as they are: no serialize()/unserialize() round trip.
  *
  * @implements EntityEncrypterInterface<CarrierCredentialsInterface>
+ *
+ * @internal
  */
 final readonly class CarrierCredentialsEncrypter implements EntityEncrypterInterface
 {

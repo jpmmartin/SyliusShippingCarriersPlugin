@@ -6,6 +6,7 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Menu;
 
 use Sylius\Bundle\UiBundle\Menu\Event\MenuBuilderEvent;
 
+/** @internal */
 final class AdminMenuListener
 {
     public function __invoke(MenuBuilderEvent $event): void

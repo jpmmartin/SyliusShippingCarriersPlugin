@@ -21,6 +21,8 @@ use Sylius\Component\Shipping\Model\ShipmentInterface;
  * Nothing has to be looked up to know what to take: everything kept for a shipment hangs from its own
  * directory. The id is noted while the deletion is being written and the files go once it is committed, so a
  * transaction that rolls back leaves the shipment with its files, not without them.
+ *
+ * @internal
  */
 final class ForgetShipmentDocumentsListener
 {

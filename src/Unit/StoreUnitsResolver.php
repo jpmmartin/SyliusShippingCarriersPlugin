@@ -7,6 +7,7 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Unit;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 
+/** @internal */
 final readonly class StoreUnitsResolver implements StoreUnitsResolverInterface
 {
     /** @param RepositoryInterface<CarrierShippingOriginInterface> $originRepository */

@@ -12,6 +12,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
  * The two carriers share no format. UPS does not issue PDF at all — its SDK lists GIF, ZPL, EPL and SPL —
  * while FedEx does. So the default is the best «office» format each one offers, printable on any printer and
  * readable in any browser, and a warehouse with a thermal printer changes it to ZPL from configuration.
+ *
+ * @internal
  */
 final class LabelFormats
 {

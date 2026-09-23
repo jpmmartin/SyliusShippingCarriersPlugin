@@ -22,6 +22,8 @@ use League\Flysystem\FilesystemOperator;
  *
  * The customs document of a shipment is kept next to its labels, under the same rules: nothing tells it apart
  * from a label but its name.
+ *
+ * @internal
  */
 final readonly class LabelStorage
 {

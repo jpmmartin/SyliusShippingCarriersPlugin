@@ -15,6 +15,8 @@ use Symfony\Component\DependencyInjection\Reference;
  * products of the order. A carrier's shipping method is rejected by the plugin instead, with a message saying it is
  * not available right now, so Sylius's two completion validators are given every eligibility checker but the
  * plugin's. Everything else in Sylius keeps asking all of them.
+ *
+ * @internal
  */
 final class ShippingMethodEligibilityOnCompletionPass implements CompilerPassInterface
 {

@@ -21,6 +21,8 @@ use Webmozart\Assert\Assert;
  * packages.
  *
  * A shipment it cannot pack is logged with the reason before the exception leaves.
+ *
+ * @internal
  */
 final class DefaultPackagingStrategy implements PackagingStrategyInterface
 {

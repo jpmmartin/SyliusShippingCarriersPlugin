@@ -12,6 +12,8 @@ use Sylius\Component\Core\Model\OrderItemUnitInterface;
  *
  * What was paid, not what the catalogue asks. A parcel declared at the list price of goods that were sold at
  * half of it is a declaration that does not match the invoice, which is what customs compares it against.
+ *
+ * @internal
  */
 final readonly class DeclaredValueCalculator
 {

@@ -27,6 +27,8 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
  * refusal stays exactly as Sylius sends it, even if this fails; what changes is that the next look at the order
  * shows the new total, and the next attempt is measured against it. Only carts this plugin ships are touched: any
  * other order behaves as it would without the plugin.
+ *
+ * @internal
  */
 final readonly class KeepTheRecalculatedCartListener
 {

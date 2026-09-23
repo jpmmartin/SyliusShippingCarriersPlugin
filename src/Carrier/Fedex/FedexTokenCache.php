@@ -16,6 +16,8 @@ use ShipStream\FedEx\Contracts\TokenCache;
  *
  * The SDK calls TokenCache statically, so the pool and the encrypter are bound to the class through
  * configure() rather than injected: FedexConnectorFactory binds them when it is built.
+ *
+ * @internal
  */
 final class FedexTokenCache implements TokenCache
 {

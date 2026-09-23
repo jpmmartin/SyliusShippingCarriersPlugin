@@ -10,6 +10,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * Sylius finds the configuration form of a calculator by its class, so each carrier needs its own.
+ *
+ * @internal
  */
 final class FedexRateConfigurationType extends AbstractType
 {

@@ -24,6 +24,8 @@ use Symfony\Component\Workflow\Event\Event;
  * confirms it. From then on they are the only word on what that shipment physically is: nothing recalculates them.
  *
  * A shipment that cannot be packed is stored as a failure with its reason, and the order is confirmed all the same.
+ *
+ * @internal
  */
 final readonly class StoreShipmentPackagesListener
 {

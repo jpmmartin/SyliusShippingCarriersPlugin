@@ -74,6 +74,8 @@ use ShipStream\Ups\Api\Model\VOIDSHIPMENTResponseWrapper;
 /**
  * Issues UPS labels through shipstream/ups-rest-php-sdk. Every exception of the SDK, of the HTTP client or of
  * the serializer is translated to a CarrierException by UpsErrorTranslator.
+ *
+ * @internal
  */
 final readonly class UpsLabelCarrier implements LabelCarrierInterface
 {

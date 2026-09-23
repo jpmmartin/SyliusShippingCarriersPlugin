@@ -18,6 +18,8 @@ use Sylius\Component\Grid\Builder\GridBuilderInterface;
 /**
  * A PHP grid, not YAML: grid-bundle 1.16 deprecates YAML grids and AbstractGrid in favour of
  * #[AsGrid] (vendor/sylius/grid-bundle/UPGRADE.md).
+ *
+ * @internal
  */
 #[AsGrid(name: self::NAME, resourceClass: CarrierShippingOrigin::class)]
 final class ShippingOriginGrid

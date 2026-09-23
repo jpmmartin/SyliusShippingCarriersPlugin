@@ -15,6 +15,7 @@ use Sylius\Bundle\GridBundle\Builder\Field\StringField;
 use Sylius\Component\Grid\Attribute\AsGrid;
 use Sylius\Component\Grid\Builder\GridBuilderInterface;
 
+/** @internal */
 #[AsGrid(name: self::NAME, resourceClass: CarrierPackageBox::class)]
 final class PackageBoxGrid
 {

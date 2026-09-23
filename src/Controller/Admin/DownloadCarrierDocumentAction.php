@@ -23,6 +23,8 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
  * It still asks for the administration role itself rather than trusting the application's access rules: what
  * it hands over lets whoever holds it send a parcel on the merchant's account, so the check belongs where the
  * bytes are read, not only where the route is declared.
+ *
+ * @internal
  */
 final readonly class DownloadCarrierDocumentAction
 {

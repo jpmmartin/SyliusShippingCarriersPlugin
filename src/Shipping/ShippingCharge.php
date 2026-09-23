@@ -6,6 +6,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Shipping;
 
 /**
  * What a shipping method of a carrier charges for a shipment, and where the amount comes from.
+ *
+ * @internal
  */
 final readonly class ShippingCharge
 {

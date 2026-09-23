@@ -12,6 +12,8 @@ use Sylius\Component\Currency\Repository\ExchangeRateRepositoryInterface;
 /**
  * Carriers rate in the currency of the merchant's account, which need not be the currency of the order. Such a
  * rate is converted with the exchange rate the store has for the pair.
+ *
+ * @internal
  */
 final readonly class RateCurrencyConverter
 {

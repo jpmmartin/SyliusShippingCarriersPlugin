@@ -12,6 +12,8 @@ use Symfony\Component\Validator\Constraint;
  *
  * Six digits is the part the whole world shares; the rest is what each country adds. Anything shorter names
  * no goods, and anything longer belongs to no tariff.
+ *
+ * @internal
  */
 final class HsCode extends Constraint
 {

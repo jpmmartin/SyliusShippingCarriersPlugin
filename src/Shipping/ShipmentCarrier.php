@@ -10,6 +10,8 @@ use Sylius\Component\Registry\ServiceRegistryInterface;
 
 /**
  * Which carrier a shipment belongs to, read from the calculator of its shipping method so that nobody has to say it.
+ *
+ * @internal
  */
 final readonly class ShipmentCarrier
 {

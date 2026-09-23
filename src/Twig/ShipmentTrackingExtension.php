@@ -7,6 +7,7 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Twig;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
+/** @internal */
 final class ShipmentTrackingExtension extends AbstractExtension
 {
     public function getFunctions(): array

@@ -8,6 +8,8 @@ use Symfony\Component\Validator\Constraint;
 
 /**
  * Every origin declares the same units.
+ *
+ * @internal
  */
 final class SameUnitsAsOtherOrigins extends Constraint
 {

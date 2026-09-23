@@ -10,6 +10,7 @@ use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 use Symfony\Component\Validator\Exception\UnexpectedValueException;
 
+/** @internal */
 final class HsCodeValidator extends ConstraintValidator
 {
     public function validate(mixed $value, Constraint $constraint): void

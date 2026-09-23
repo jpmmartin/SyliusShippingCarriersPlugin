@@ -14,6 +14,8 @@ use Twig\Extension\RuntimeExtensionInterface;
 
 /**
  * What the admin may offer to do with the labels of a shipment.
+ *
+ * @internal
  */
 final readonly class ShipmentLabelsRuntime implements RuntimeExtensionInterface
 {

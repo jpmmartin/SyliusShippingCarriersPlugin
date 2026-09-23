@@ -17,6 +17,8 @@ use Sylius\Component\Grid\Builder\GridBuilderInterface;
 
 /**
  * Carrier and environment only: the credential values never appear in the grid.
+ *
+ * @internal
  */
 #[AsGrid(name: self::NAME, resourceClass: CarrierCredentials::class)]
 final class CarrierCredentialsGrid

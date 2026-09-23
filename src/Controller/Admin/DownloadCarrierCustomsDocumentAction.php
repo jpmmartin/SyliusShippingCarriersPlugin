@@ -14,6 +14,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  *
  * It goes by the export's own record for the same reason a label does: the paperwork of a cancelled shipment
  * declares a parcel the carrier no longer has.
+ *
+ * @internal
  */
 final readonly class DownloadCarrierCustomsDocumentAction
 {

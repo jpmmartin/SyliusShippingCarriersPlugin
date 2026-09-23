@@ -12,6 +12,8 @@ use Psr\Clock\ClockInterface;
  *
  * The difference is not a nuance: ninety days against twelve hours. The numbers come from each carrier's own
  * documentation and they are the reason the admin shows the window at all.
+ *
+ * @internal
  */
 final readonly class VoidWindow
 {

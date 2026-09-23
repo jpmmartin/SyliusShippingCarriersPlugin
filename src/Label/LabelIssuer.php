@@ -34,6 +34,8 @@ use Sylius\Resource\Factory\FactoryInterface;
  * a body that cannot be read — may well have issued and charged for the labels, and sending the request again
  * pays for a second shipment. That case is kept apart as «needs check» so that nobody, and nothing, retries it
  * on its own.
+ *
+ * @internal
  */
 final readonly class LabelIssuer implements LabelIssuerInterface
 {
