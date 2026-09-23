@@ -1,4 +1,7 @@
-# Configuration
+# Configuration reference
+
+Every setting of the plugin, its default, and where it keeps what it stores. The README's install
+steps come first.
 
 Everything has a default; an application only writes the keys it wants to change.
 
@@ -98,8 +101,3 @@ every installation already has.
 
 Whatever it is pointed at, a document is only ever handed over by an admin route that first asks
 who is asking and what happened to the shipment. There is no route that takes a path.
-
-## Where to go next
-
-- [Usage](usage.md) — setting the store up and despatching an order.
-- [Installation](installation.md) — if you have not got this far yet.
