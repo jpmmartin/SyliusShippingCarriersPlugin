@@ -34,6 +34,11 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
         $container->setParameter('jpmmartin_carrier.documents_retention', $config['documents_retention']);
         $container->setParameter('jpmmartin_carrier.temporary_documents_retention', $config['temporary_documents_retention']);
 
+        // The key of the carrier credentials, separate from Sylius's payment key. Set here rather than in the
+        // plugin's config.yaml because Flex registers the bundle before anybody imports that file, and every page
+        // would fail on this variable until they did. An application's own value, or the variable itself, wins.
+        $container->setParameter('env(JPMMARTIN_CARRIER_ENCRYPTION_KEY_PATH)', '%kernel.project_dir%/config/encryption/jpmmartin_carrier.key');
+
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
 
         $loader->load('services.xml');
