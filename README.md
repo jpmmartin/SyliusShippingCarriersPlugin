@@ -3,11 +3,7 @@
 <p align="center">UPS and FedEx for Sylius 2.2: real rates at checkout, labels from the admin, customs paperwork
 and tracking.</p>
 
-<p align="center">
-    <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/licence-MIT-blue.svg"></a>
-    <img alt="PHP 8.2+" src="https://img.shields.io/badge/php-8.2%2B-777bb3.svg">
-    <img alt="Sylius 2.2+" src="https://img.shields.io/badge/sylius-2.2%2B-1abb9c.svg">
-</p>
+<p align="center"><a href="https://github.com/jpmmartin/SyliusShippingCarriersPlugin/actions/workflows/build.yaml"><img src="https://github.com/jpmmartin/SyliusShippingCarriersPlugin/actions/workflows/build.yaml/badge.svg?branch=main" alt="Build — the test suite on main, on the lowest and the latest PHP and Sylius it supports"></a> <a href="https://github.com/jpmmartin/SyliusShippingCarriersPlugin/actions/workflows/install.yaml?query=event%3Arelease"><img src="https://github.com/jpmmartin/SyliusShippingCarriersPlugin/actions/workflows/install.yaml/badge.svg?event=release" alt="Install — the last published version, installed from its own README into a store that had never seen it"></a></p>
 
 ---
 
