@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Carrier;
 
+use Sylius\Component\Core\Model\OrderInterface;
+
 /**
  * Turns an amount a carrier writes in decimals into the integer Sylius keeps, without going through a float.
  *
