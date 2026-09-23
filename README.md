@@ -211,7 +211,15 @@ as the calculator, then the service, and what the method does when the carrier d
 The services on offer are the ones the plugin ships with plus any your configuration adds; see
 [docs/configuration.md](docs/configuration.md).
 
-### 5. Customs data
+### 5. Weights and measures
+
+**Every variant a carrier ships needs a weight, a width, a height and a depth** — Sylius's own
+shipping fields on the variant — in the units the shipping origin declares. A cart holding one
+without them is not quoted at all: no carrier method is offered for it, whatever the method does when
+a carrier does not answer, and the log names the variant and what it lacks. Sylius's sample data
+declares no weight.
+
+### 6. Customs data
 
 **On each product variant**, under its own section: the HS code — six to ten digits, the code
 customs classifies the article by — and the country it was made in. Neither is needed to sell, and
