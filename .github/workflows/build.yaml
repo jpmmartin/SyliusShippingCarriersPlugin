@@ -1,0 +1,193 @@
+name: Build
+
+on:
+    # Markdown changes nothing this job checks, with one exception: docs/extending.md is read by a test
+    # that holds it to the code. The last pattern that matches a file decides.
+    push:
+        branches: [main]
+        paths: ["**", "!**.md", "docs/extending.md"]
+    pull_request:
+        paths: ["**", "!**.md", "docs/extending.md"]
+    workflow_dispatch: ~
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    tests:
+        runs-on: ubuntu-latest
+
+        name: "PHP ${{ matrix.php }}, Sylius ${{ matrix.sylius || 'latest' }}"
+
+        strategy:
+            fail-fast: false
+            matrix:
+                # The two ends of what composer.json promises, not every combination between them. The
+                # lowest PHP with the lowest Sylius is where new syntax or a newer API slips in unnoticed; the
+                # latest of both is where deprecations bite. If 2.2.0 fails, the answer is to narrow the
+                # constraint in composer.json, not to drop this leg: the constraint is the promise.
+                include:
+                    - php: "8.2"
+                      sylius: "2.2.0"
+                    - php: "8.5"
+                      sylius: ""
+
+        env:
+            APP_ENV: test
+            # Overrides the value committed in tests/TestApplication/.env. A real environment variable wins
+            # over a dotenv file.
+            DATABASE_URL: "postgresql://postgres:postgres@127.0.0.1:5432/carriers_plugin_test?serverVersion=16&charset=utf8"
+
+        services:
+            postgres:
+                image: postgres:16-alpine
+                env:
+                    POSTGRES_PASSWORD: postgres
+                ports: ["5432:5432"]
+                options: >-
+                    --health-cmd "pg_isready -U postgres"
+                    --health-interval 5s
+                    --health-timeout 3s
+                    --health-retries 10
+
+        steps:
+            - uses: actions/checkout@v5
+
+            - name: Set up PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "${{ matrix.php }}"
+                  extensions: intl, gd, opcache, pdo_pgsql, pgsql, sodium
+                  tools: composer:v2
+                  coverage: none
+
+            # The test application's front end, which every page Behat opens asks Encore for.
+            - name: Set up Node
+              uses: actions/setup-node@v5
+              with:
+                  node-version: "22.x"
+
+            - name: Enable Yarn
+              run: corepack enable
+
+            - name: Cache Composer
+              uses: actions/cache@v5
+              with:
+                  path: ~/.cache/composer/files
+                  key: "${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}"
+                  restore-keys: "${{ runner.os }}-php-${{ matrix.php }}-composer-"
+
+            # Strict, and without --no-check-publish: this package is published, so the checks that only
+            # matter for publishing are exactly the ones that matter.
+            - name: Validate composer.json
+              run: composer validate --ansi --strict
+
+            # There is no composer.lock to install from — the package does not publish one — so this
+            # resolves the declared constraints as a store would, which is the point of running it.
+            - name: Resolve and install the dependencies
+              run: composer update --no-interaction --no-progress --prefer-dist ${{ matrix.sylius && format('--with sylius/sylius:{0}', matrix.sylius) || '' }}
+
+            - name: Which Sylius this leg runs
+              run: composer show sylius/sylius | grep -E '^versions'
+
+            # On the leg that resolves what a new store gets. The other pins Sylius 2.2.0 on purpose, and
+            # every Sylius before 2.2.6 carries advisories of its own: auditing it would report Sylius, not
+            # this plugin, whose suite passes on 2.2.0.
+            - name: Check for known vulnerabilities
+              if: matrix.sylius == ''
+              run: composer audit --abandoned=ignore
+
+            - name: Prepare the database
+              run: |
+                  vendor/bin/console doctrine:database:create --if-not-exists
+                  vendor/bin/console doctrine:migrations:migrate --no-interaction
+
+            - name: Build the front end
+              run: composer frontend-clear
+
+            - name: Run ECS
+              run: vendor/bin/ecs check --no-progress-bar
+
+            - name: Lint the container
+              run: vendor/bin/console lint:container
+
+            - name: Run PHPStan
+              run: vendor/bin/phpstan analyse --no-progress
+
+            - name: Run PHPUnit
+              run: vendor/bin/phpunit --colors=always
+
+            - name: Run Behat
+              run: vendor/bin/behat --colors --strict --no-interaction -f progress
+
+            - name: Upload Behat logs
+              uses: actions/upload-artifact@v7
+              if: failure()
+              with:
+                  name: "behat-logs-php${{ matrix.php }}-sylius-${{ matrix.sylius || 'latest' }}"
+                  path: etc/build/
+                  if-no-files-found: ignore
+
+    # The schema on the other engine Sylius supports. The jobs above build their database with the
+    # migrations on PostgreSQL and run the whole suite; this one builds it on MySQL and runs the test that
+    # compares the tables the migrations built with the ones the mapping describes. The migrations are
+    # written against Doctrine's schema representation, so Doctrine derives each engine's statements when
+    # they run — and this job, not a copy of the SQL per engine, is what proves it.
+    schema-on-mysql:
+        runs-on: ubuntu-latest
+
+        name: "Migrations on MySQL"
+
+        env:
+            APP_ENV: test
+            DATABASE_URL: "mysql://root:root@127.0.0.1:3306/carriers_plugin_test?serverVersion=8.4&charset=utf8mb4"
+
+        services:
+            mysql:
+                image: mysql:8.4
+                env:
+                    MYSQL_ROOT_PASSWORD: root
+                ports: ["3306:3306"]
+                options: >-
+                    --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot"
+                    --health-interval 5s
+                    --health-timeout 3s
+                    --health-retries 20
+
+        steps:
+            - uses: actions/checkout@v5
+
+            - name: Set up PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.5"
+                  extensions: intl, gd, opcache, pdo_mysql, sodium
+                  tools: composer:v2
+                  coverage: none
+
+            - name: Cache Composer
+              uses: actions/cache@v5
+              with:
+                  path: ~/.cache/composer/files
+                  key: "${{ runner.os }}-php-8.5-composer-${{ hashFiles('composer.json') }}"
+                  restore-keys: "${{ runner.os }}-php-8.5-composer-"
+
+            - name: Resolve and install the dependencies
+              run: composer update --no-interaction --no-progress --prefer-dist
+
+            # Before anything asks the server a question: MySQL refuses a connection to a database that does
+            # not exist yet, where PostgreSQL would only have refused the query.
+            - name: Create the database
+              run: vendor/bin/console doctrine:database:create --if-not-exists
+
+            # The plugin's thirteen migrations must all run here as they do on PostgreSQL; none may be
+            # skipped.
+            - name: Build the schema with the migrations
+              run: |
+                  set -o pipefail
+                  vendor/bin/console doctrine:migrations:migrate --no-interaction | tee migrate.log
+                  ! grep -i 'JpmMartin' migrate.log | grep -qi skipped
+
+            - name: The tables the migrations built are the ones the mapping describes
+              run: vendor/bin/phpunit tests/Integration/Migrations --colors=always
