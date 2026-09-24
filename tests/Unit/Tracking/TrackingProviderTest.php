@@ -9,6 +9,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateProviderInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator;
@@ -20,6 +22,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
+use Sylius\Component\Core\Model\Channel;
+use Sylius\Component\Core\Model\Order;
 use Sylius\Component\Core\Model\Shipment;
 use Sylius\Component\Core\Model\ShippingMethod;
 use Sylius\Component\Registry\ServiceRegistry;
@@ -178,6 +182,27 @@ final class TrackingProviderTest extends TestCase
      * This asks the same shipment twice under a lifetime that is over by the time the second one arrives, so
      * what it proves is that the configured value is the one that governs.
      */
+    /**
+     * The channel of the order says how long the status of its shipments is kept: with a minute, a buyer asking again
+     * two minutes later gets it from the carrier, while the configuration's five would still have it stored.
+     */
+    public function testTheStatusIsKeptForAsLongAsTheChannelOfTheOrderSays(): void
+    {
+        $origin = new CarrierShippingOrigin();
+        $origin->setTrackingLifetime(60);
+        /** @var RepositoryInterface<CarrierShippingOriginInterface>&Stub $originRepository */
+        $originRepository = $this->createStub(RepositoryInterface::class);
+        $originRepository->method('findOneBy')->willReturn($origin);
+        $provider = $this->provider(settings: CarrierSettingsFactory::provider(trackingLifetime: self::LIFETIME, originRepository: $originRepository));
+
+        $provider->track($this->shipment(channelCode: 'WEB'));
+        $this->clock->sleep(120);
+        $provider->reset();
+        $provider->track($this->shipment(channelCode: 'WEB'));
+
+        self::assertCount(2, $this->ups->enquiries);
+    }
+
     public function testAStatusOlderThanItsLifetimeIsAskedAgain(): void
     {
         $provider = $this->provider(lifetime: 60);
@@ -280,7 +305,7 @@ final class TrackingProviderTest extends TestCase
         );
     }
 
-    private function shipment(string $calculator = 'ups_rate'): Shipment
+    private function shipment(string $calculator = 'ups_rate', ?string $channelCode = null): Shipment
     {
         $method = new ShippingMethod();
         $method->setCalculator($calculator);
@@ -288,6 +313,14 @@ final class TrackingProviderTest extends TestCase
         $shipment = new Shipment();
         $shipment->setMethod($method);
         $shipment->setTracking('1Z999AA10123456784');
+
+        if (null !== $channelCode) {
+            $channel = new Channel();
+            $channel->setCode($channelCode);
+            $order = new Order();
+            $order->setChannel($channel);
+            $order->addShipment($shipment);
+        }
 
         return $shipment;
     }

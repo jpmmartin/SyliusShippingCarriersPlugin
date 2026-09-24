@@ -13,6 +13,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
@@ -65,7 +66,8 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
         }
 
         // Shown as a status that is not available, the way a carrier that does not answer is.
-        $settings = $this->settings->defaults();
+        $order = $shipment->getOrder();
+        $settings = $this->settings->forChannel($order instanceof OrderInterface ? $order->getChannel() : null);
 
         try {
             $settings->assertTrackingUsable();
