@@ -11,6 +11,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Shipping\CarrierServices;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Sylius\Bundle\ResourceBundle\Form\Registry\FormTypeRegistryInterface;
 use Sylius\Component\Registry\ServiceRegistryInterface;
+use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Form\ChoiceList\View\ChoiceView;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -93,11 +94,16 @@ final class CarrierRateCalculatorRegistrationTest extends KernelTestCase
 
     /**
      * An application adds services and renames them from its own configuration, without touching the plugin. That
-     * environment has no database of its own, so the list is read where the form reads it.
+     * environment has no database of its own, and the list also reads the services the channels add on their
+     * shipping origins, so it is given no origins to read: what is under test is what the configuration adds.
      */
     public function testAnApplicationAddsAndRenamesServices(): void
     {
         self::bootKernel(['environment' => 'carrier_services_extended']);
+
+        $noOrigins = $this->createStub(RepositoryInterface::class);
+        $noOrigins->method('findAll')->willReturn([]);
+        self::getContainer()->set('jpmmartin_carrier.repository.shipping_origin', $noOrigins);
 
         $services = self::getContainer()->get('jpmmartin_carrier.shipping.carrier_services');
         self::assertInstanceOf(CarrierServices::class, $services);

@@ -9,6 +9,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Shipping\CarrierServices;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\FailurePolicy;
 use Sylius\Component\Channel\Model\ChannelInterface;
 use Sylius\Component\Channel\Repository\ChannelRepositoryInterface;
+use Sylius\Component\Core\Model\ShippingMethodInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Webmozart\Assert\Assert;
@@ -25,6 +26,30 @@ final class CarrierRateConfigurationValidator extends ConstraintValidator
     ) {
     }
 
+    /**
+     * A service one channel added is not one another channel of the same method has. Said when the method is saved,
+     * naming the channel, rather than found out in that channel's checkout.
+     */
+    private function serviceInEveryChannel(string $service, CarrierRateConfiguration $constraint): void
+    {
+        $method = $this->context->getObject();
+        if (!$method instanceof ShippingMethodInterface) {
+            return;
+        }
+
+        foreach ($method->getChannels() as $channel) {
+            if (!$channel instanceof ChannelInterface || null !== $this->services->nameInChannel($constraint->carrier, $service, $channel)) {
+                continue;
+            }
+
+            $this->context->buildViolation($constraint->serviceNotInChannelMessage)
+                ->atPath(sprintf('[%s]', CarrierRateCalculator::SERVICE))
+                ->setParameter('{{ channel }}', (string) $channel->getName())
+                ->addViolation()
+            ;
+        }
+    }
+
     public function validate(mixed $value, Constraint $constraint): void
     {
         Assert::isInstanceOf($constraint, CarrierRateConfiguration::class);
@@ -37,6 +62,8 @@ final class CarrierRateConfigurationValidator extends ConstraintValidator
                 ->atPath(sprintf('[%s]', CarrierRateCalculator::SERVICE))
                 ->addViolation()
             ;
+        } else {
+            $this->serviceInEveryChannel($service, $constraint);
         }
 
         // Left out, the policy is to hide the shipping method.

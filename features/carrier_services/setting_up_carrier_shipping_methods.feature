@@ -38,3 +38,29 @@ Feature: Setting up carrier shipping methods
         And I add it
         Then I should be told that the service is not one of that carrier's
         And there should be no carrier shipping method
+
+    Scenario: Rating a method with a service its channel adds
+        Given the "United States" channel adds the "UPS" service "02" named "UPS 2nd Day Air" on its shipping origin
+        When I want to create a new shipping method
+        And I specify its code as "UPS_2ND_DAY"
+        And I name it "UPS 2nd Day Air" in "en_US"
+        And I define it for the zone named "United States"
+        And I make it available in channel "United States"
+        And I rate it with UPS service "02"
+        And I add it
+        Then I should be notified that it has been successfully created
+        And the "UPS_2ND_DAY" shipping method should be rated with UPS service "02"
+
+    Scenario: Trying to offer a service in a channel that does not have it
+        Given the store also operates on another channel named "Mobile"
+        And the "United States" channel adds the "UPS" service "02" named "UPS 2nd Day Air" on its shipping origin
+        When I want to create a new shipping method
+        And I specify its code as "UPS_2ND_DAY"
+        And I name it "UPS 2nd Day Air" in "en_US"
+        And I define it for the zone named "United States"
+        And I make it available in channel "United States"
+        And I make it available in channel "Mobile"
+        And I rate it with UPS service "02"
+        And I add it
+        Then I should be told that the "Mobile" channel does not offer that service
+        And there should be no carrier shipping method

@@ -8,6 +8,9 @@
     <services>
         <service id="jpmmartin_carrier.shipping.carrier_services" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\CarrierServices">
             <argument>%jpmmartin_carrier.services%</argument>
+            <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
+            <!-- The channels' own are read once per request: an administrator may change them between two. -->
+            <tag name="kernel.reset" method="reset" />
         </service>
 
         <service id="jpmmartin_carrier.shipping.shipment_carrier" class="JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier">

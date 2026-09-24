@@ -17,6 +17,8 @@ final class CarrierRateConfiguration extends Constraint
 {
     public string $serviceMessage = 'jpmmartin_carrier.shipping_method.service.invalid';
 
+    public string $serviceNotInChannelMessage = 'jpmmartin_carrier.shipping_method.service.not_in_channel';
+
     public string $failurePolicyMessage = 'jpmmartin_carrier.shipping_method.failure_policy.invalid';
 
     public string $flatAmountMessage = 'jpmmartin_carrier.shipping_method.flat_amount.required';

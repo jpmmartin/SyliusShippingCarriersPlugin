@@ -18,6 +18,7 @@ jpmmartin_carrier:
     shipping_method:
         service:
             invalid: Choose one of the services of this carrier.
+            not_in_channel: The channel {{ channel }} does not offer this service. Add it on that channel's shipping origin, or take the channel off this shipping method.
         failure_policy:
             invalid: Choose whether this shipping method is hidden or offered at a flat amount when the carrier does not answer.
         flat_amount:

@@ -92,6 +92,12 @@ final class ManagingCarrierShippingMethodsContext implements Context
         Assert::contains($this->error(), 'Choose one of the services of this carrier.');
     }
 
+    #[Then('I should be told that the :channelName channel does not offer that service')]
+    public function iShouldBeToldThatTheChannelDoesNotOfferThatService(string $channelName): void
+    {
+        Assert::contains($this->error(), sprintf('The channel %s does not offer this service.', $channelName));
+    }
+
     #[Then('/^I should be told that the "([^"]+)" channel needs a flat amount$/')]
     public function iShouldBeToldThatTheChannelNeedsAFlatAmount(string $channelCode): void
     {
