@@ -17,7 +17,6 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexConnectorFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexLabelCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelCarrierInterface;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentResult;
@@ -116,7 +115,7 @@ final class NoSdkExceptionEscapesTest extends TestCase
         );
 
         $this->assertFailsWith($expected, new UpsCarrier($credentialsProvider, $clientFactory));
-        $this->assertLabelsFailWith($expected, new UpsLabelCarrier($credentialsProvider, $clientFactory, new LabelFormats([])), recovers: true);
+        $this->assertLabelsFailWith($expected, new UpsLabelCarrier($credentialsProvider, $clientFactory), recovers: true);
     }
 
     /**
@@ -185,7 +184,7 @@ final class NoSdkExceptionEscapesTest extends TestCase
 
         $this->assertFailsWith($expected, new FedexCarrier($credentialsProvider, $connectorFactory));
         // FedEx never asks anybody whether it issued a shipment: it has no operation that answers that.
-        $this->assertLabelsFailWith($expected, new FedexLabelCarrier($credentialsProvider, $connectorFactory, new LabelFormats([])), recovers: false);
+        $this->assertLabelsFailWith($expected, new FedexLabelCarrier($credentialsProvider, $connectorFactory), recovers: false);
     }
 
     /**

@@ -14,7 +14,6 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsInvoice;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsItem;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\IssuedLabel;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelCarrierInterface;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentResult;
@@ -176,7 +175,6 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
     public function __construct(
         private CredentialsProvider $credentialsProvider,
         private UpsClientFactory $clientFactory,
-        private LabelFormats $labelFormats,
         private UpsErrorTranslator $errorTranslator = new UpsErrorTranslator(),
     ) {
     }
@@ -398,7 +396,7 @@ final readonly class UpsLabelCarrier implements LabelCarrierInterface
                 ->setLabelSpecification(
                     (new ShipmentRequestLabelSpecification())
                         ->setLabelImageFormat(
-                            (new LabelSpecificationLabelImageFormat())->setCode($this->labelFormats->for(CarrierCredentialsInterface::CARRIER_UPS)),
+                            (new LabelSpecificationLabelImageFormat())->setCode($request->labelFormat),
                         )
                         ->setLabelStockSize(
                             (new LabelSpecificationLabelStockSize())

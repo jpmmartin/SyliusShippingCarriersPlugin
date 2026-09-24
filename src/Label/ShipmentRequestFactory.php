@@ -7,7 +7,6 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Label;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\AddressFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsInvoice;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsItem;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Customs\CustomsDataProvider;
@@ -20,6 +19,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackagingInterf
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\UnissuableShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator;
 use Psr\Clock\ClockInterface;
 use Sylius\Component\Core\Model\OrderInterface;
@@ -46,7 +46,7 @@ final readonly class ShipmentRequestFactory
         private RepositoryInterface $packagingRepository,
         private DestinationTypeResolverInterface $destinationTypeResolver,
         private AddressFactory $addressFactory,
-        private LabelFormats $labelFormats,
+        private CarrierSettingsProvider $settings,
         private CustomsDataProvider $customsDataProvider,
         private DeclaredValueCalculator $declaredValueCalculator,
         private ClockInterface $clock,
@@ -101,7 +101,8 @@ final readonly class ShipmentRequestFactory
             $destination,
             $serviceCode,
             $packages,
-            $this->labelFormats->for($carrier),
+            // What the order's channel prints this carrier's labels as, its own or the configuration's.
+            $this->settings->forChannel($channel)->labelFormat($carrier),
             $ownReference,
             $crossesABorder ? $this->invoice($order, $packages) : null,
         );

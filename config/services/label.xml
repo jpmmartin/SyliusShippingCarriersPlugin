@@ -12,7 +12,7 @@
             <argument type="service" id="jpmmartin_carrier.repository.shipment_packaging" />
             <argument type="service" id="jpmmartin_carrier.resolver.destination_type" />
             <argument type="service" id="jpmmartin_carrier.carrier.address_factory" />
-            <argument type="service" id="jpmmartin_carrier.carrier.label_formats" />
+            <argument type="service" id="jpmmartin_carrier.settings" />
             <argument type="service" id="jpmmartin_carrier.customs.data_provider" />
             <argument type="service" id="jpmmartin_carrier.customs.declared_value_calculator" />
             <argument type="service" id="clock" />

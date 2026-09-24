@@ -13,7 +13,6 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexConnectorFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexLabelCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsInvoice;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsItem;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Encrypter;
@@ -49,9 +48,6 @@ final class FedexLabelCarrierTest extends TestCase
         CarrierCredentialsInterface::CLIENT_SECRET => 'fedex-client-secret',
         CarrierCredentialsInterface::ACCOUNT_NUMBER => '740561073',
     ];
-
-    /** @var array<string, string> */
-    private array $formats = [];
 
     private string $keyPath;
 
@@ -112,7 +108,7 @@ final class FedexLabelCarrierTest extends TestCase
      * The bytes, not a link: FedEx's label URLs stop working after twelve hours, and a label has to be
      * printable for as long as the order is.
      */
-    public function testTheLabelIsAskedForAsBytesInTheConfiguredFormat(): void
+    public function testTheLabelIsAskedForAsBytesInTheFormatTheRequestSays(): void
     {
         $this->mockFedex($this->json($this->fixture('ship.json')));
         $this->carrier()->ship($this->request());
@@ -122,8 +118,7 @@ final class FedexLabelCarrierTest extends TestCase
         self::assertSame('PAPER_4X6', $this->sent('requestedShipment.labelSpecification.labelStockType'));
 
         $this->sent = [];
-        $this->formats = [CarrierCredentialsInterface::CARRIER_FEDEX => 'ZPLII'];
-        $this->carrier()->ship($this->request());
+        $this->carrier()->ship($this->request(labelFormat: 'ZPLII'));
         self::assertSame('ZPLII', $this->sent('requestedShipment.labelSpecification.imageType'));
     }
 
@@ -327,7 +322,6 @@ final class FedexLabelCarrierTest extends TestCase
         return new FedexLabelCarrier(
             new CredentialsProvider($repository),
             new FedexConnectorFactory(new ArrayAdapter(), new Encrypter($this->keyPath), new LockFactory(new InMemoryStore()), 10.0),
-            new LabelFormats($this->formats),
         );
     }
 
@@ -351,7 +345,7 @@ final class FedexLabelCarrierTest extends TestCase
         ]);
     }
 
-    private function request(int $packages = 1, ?Package $package = null, ?Address $destination = null, ?CustomsInvoice $invoice = null): ShipmentRequest
+    private function request(int $packages = 1, ?Package $package = null, ?Address $destination = null, ?CustomsInvoice $invoice = null, string $labelFormat = 'PDF'): ShipmentRequest
     {
         $package ??= new Package('Medium', 13.0, 11.0, 9.0, 'in', 5.5, 'lb', []);
         $items = [new ShipmentPackage($package)];
@@ -364,7 +358,7 @@ final class FedexLabelCarrierTest extends TestCase
             $destination ?? new Address('US', '98101', 'Seattle', '500 Pine St', 'WA', true, null, 'Grace Hopper', '12065550100'),
             'FEDEX_GROUND',
             $items,
-            'PDF',
+            $labelFormat,
             'the shop reference',
             $invoice,
         );

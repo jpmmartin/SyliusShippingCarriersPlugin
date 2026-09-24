@@ -14,7 +14,6 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierRe
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsDocument;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\IssuedLabel;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelCarrierInterface;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\VoidResult;
@@ -336,6 +335,29 @@ final class LabelIssuerTest extends TestCase
         $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
 
         self::assertSame(['ship' => [3.5], 'recover' => [3.5]], $this->timeouts);
+    }
+
+    /**
+     * The carrier is asked for the format the order's channel prints its labels as, its own or the configuration's.
+     */
+    public function testTheLabelIsAskedForInTheFormatOfTheOrdersChannel(): void
+    {
+        $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+        self::assertInstanceOf(CarrierShippingOrigin::class, $this->origin);
+        $this->origin->setLabelFormat('ups', 'ZPL');
+        $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(['GIF', 'ZPL'], array_map(static fn (ShipmentRequest $request): string => $request->labelFormat, $this->requests));
+    }
+
+    public function testFedexLabelsAreAskedForInTheFormatOfTheOrdersChannelToo(): void
+    {
+        self::assertInstanceOf(CarrierShippingOrigin::class, $this->origin);
+        $this->origin->setLabelFormat('fedex', 'ZPLII');
+
+        $this->issuer()->issue($this->shipment('fedex_rate'), 'warehouse@example.com');
+
+        self::assertSame('ZPLII', $this->requests[0]->labelFormat ?? null);
     }
 
     public function testWithoutStoredCredentialsNothingIsAskedOfTheCarrier(): void
@@ -870,6 +892,7 @@ final class LabelIssuerTest extends TestCase
         $calculators = new ServiceRegistry(CalculatorInterface::class);
         $chargeResolver = new ShippingChargeResolver($this->createStub(RateProviderInterface::class));
         $calculators->register('ups_rate', new CarrierRateCalculator($chargeResolver, 'ups', 'ups_rate'));
+        $calculators->register('fedex_rate', new CarrierRateCalculator($chargeResolver, 'fedex', 'fedex_rate'));
         $calculators->register('flat_rate', new FlatRateCalculator());
 
         /** @var RepositoryInterface<CarrierShippingOriginInterface>&Stub $originRepository */
@@ -896,15 +919,20 @@ final class LabelIssuerTest extends TestCase
         /** @var FactoryInterface<CarrierShipmentLabelInterface> $labelFactory */
         $labelFactory = new Factory(CarrierShipmentLabel::class);
 
+        $settings ??= CarrierSettingsFactory::provider(originRepository: $originRepository);
+
         return new LabelIssuer(
             new ShipmentCarrier($calculators),
-            new ServiceLocator(['ups' => fn (): LabelCarrierInterface => $this->carrier()]),
+            new ServiceLocator([
+                'ups' => fn (): LabelCarrierInterface => $this->carrier(),
+                'fedex' => fn (): LabelCarrierInterface => $this->carrier(),
+            ]),
             new ShipmentRequestFactory(
                 $originRepository,
                 $packagingRepository,
                 $destinationTypeResolver,
                 new AddressFactory(),
-                new LabelFormats([]),
+                $settings,
                 new CustomsDataProvider($this->customsDataRepository()),
                 new DeclaredValueCalculator(),
                 new MockClock('2026-09-21 10:00:00'),
@@ -917,7 +945,7 @@ final class LabelIssuerTest extends TestCase
             $this->manager(),
             new MockClock('2026-09-21 10:00:00'),
             $this->logger,
-            $settings ?? CarrierSettingsFactory::provider(originRepository: $originRepository),
+            $settings,
             $this->scope ??= new CarrierCallScope(),
         );
     }

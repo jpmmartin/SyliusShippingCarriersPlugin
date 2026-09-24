@@ -12,7 +12,6 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequ
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\UnexpectedCarrierResponseException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsInvoice;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsItem;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Ups\UpsAccessTokenCache;
@@ -47,9 +46,6 @@ final class UpsLabelCarrierTest extends TestCase
         CarrierCredentialsInterface::CLIENT_SECRET => 'ups-client-secret',
         CarrierCredentialsInterface::ACCOUNT_NUMBER => 'A1B2C3',
     ];
-
-    /** @var array<string, string> */
-    private array $formats = [];
 
     private string $dutiesPayer = CarrierCredentialsInterface::DUTIES_PAYER_RECIPIENT;
 
@@ -127,14 +123,13 @@ final class UpsLabelCarrierTest extends TestCase
     /**
      * The shop without a label printer gets something it can open; the warehouse asks for ZPL instead.
      */
-    public function testTheLabelIsAskedForInTheConfiguredFormat(): void
+    public function testTheLabelIsAskedForInTheFormatTheRequestSays(): void
     {
         $this->carrier()->ship($this->request());
         self::assertSame('GIF', $this->sent('LabelSpecification.LabelImageFormat.Code'));
 
         $this->requests = [];
-        $this->formats = [CarrierCredentialsInterface::CARRIER_UPS => 'ZPL'];
-        $this->carrier()->ship($this->request());
+        $this->carrier()->ship($this->request(labelFormat: 'ZPL'));
         self::assertSame('ZPL', $this->sent('LabelSpecification.LabelImageFormat.Code'));
     }
 
@@ -507,7 +502,6 @@ final class UpsLabelCarrierTest extends TestCase
                 new UpsAccessTokenCache(new ArrayAdapter(), new Encrypter($this->keyPath)),
                 new LockFactory(new InMemoryStore()),
             ),
-            new LabelFormats($this->formats),
         );
     }
 
@@ -517,6 +511,7 @@ final class UpsLabelCarrierTest extends TestCase
         ?Address $destination = null,
         ?CustomsInvoice $invoice = null,
         ?Address $origin = null,
+        string $labelFormat = 'GIF',
     ): ShipmentRequest {
         $package ??= new Package('Medium', 13.0, 11.0, 9.0, 'in', 5.5, 'lb', []);
 
@@ -525,7 +520,7 @@ final class UpsLabelCarrierTest extends TestCase
             $destination ?? new Address('US', '98101', 'Seattle', '500 Pine St', 'WA', true, null, 'Grace Hopper', '12065550100'),
             '03',
             $this->packages($packages, $package),
-            'PDF',
+            $labelFormat,
             'the shop reference',
             $invoice,
         );

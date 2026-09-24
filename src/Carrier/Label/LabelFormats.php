@@ -11,7 +11,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
  *
  * The two carriers share no format. UPS does not issue PDF at all — its SDK lists GIF, ZPL, EPL and SPL —
  * while FedEx does. So the default is the best «office» format each one offers, printable on any printer and
- * readable in any browser, and a warehouse with a thermal printer changes it to ZPL from configuration.
+ * readable in any browser, and a warehouse with a thermal printer changes it to ZPL, in the configuration or on
+ * its channel's shipping origin. Which one applies to a label is the order's channel's to say.
  *
  * @internal
  */
@@ -34,17 +35,4 @@ final class LabelFormats
         CarrierCredentialsInterface::CARRIER_UPS => ['GIF', 'ZPL', 'EPL', 'SPL'],
         CarrierCredentialsInterface::CARRIER_FEDEX => ['PDF', 'ZPLII'],
     ];
-
-    /**
-     * @param array<string, string> $formats By carrier code
-     */
-    public function __construct(
-        private readonly array $formats,
-    ) {
-    }
-
-    public function for(string $carrier): string
-    {
-        return $this->formats[$carrier] ?? self::DEFAULTS[$carrier] ?? 'PDF';
-    }
 }

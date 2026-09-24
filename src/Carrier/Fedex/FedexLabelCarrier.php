@@ -14,7 +14,6 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsInvoice;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsItem;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\IssuedLabel;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelCarrierInterface;
-use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentResult;
@@ -118,7 +117,6 @@ final readonly class FedexLabelCarrier implements LabelCarrierInterface
     public function __construct(
         private CredentialsProvider $credentialsProvider,
         private FedexConnectorFactory $connectorFactory,
-        private LabelFormats $labelFormats,
         private FedexErrorTranslator $errorTranslator = new FedexErrorTranslator(),
     ) {
     }
@@ -148,7 +146,7 @@ final readonly class FedexLabelCarrier implements LabelCarrierInterface
                     shippingChargesPayment: new Payment(self::PAYMENT_SENDER),
                     labelSpecification: new LabelSpecification(
                         labelStockType: self::LABEL_STOCK_PAPER,
-                        imageType: $this->labelFormats->for(CarrierCredentialsInterface::CARRIER_FEDEX),
+                        imageType: $request->labelFormat,
                     ),
                     requestedPackageLineItems: array_map($this->package(...), $request->packages),
                     customsClearanceDetail: null === $request->customsInvoice
