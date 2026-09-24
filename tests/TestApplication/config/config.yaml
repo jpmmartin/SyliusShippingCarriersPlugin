@@ -26,6 +26,23 @@ when@rate_cache_in_memory:
                 jpmmartin_carrier.cache.rates:
                     adapter: cache.adapter.array
 
+# Kernel for SettingsFromEnvironmentTest: every numeric setting of the plugin given by an environment variable,
+# one of them through a processor of the store's own that turns days into seconds. Not named "test…" for the same
+# reason as above.
+when@settings_from_environment:
+    framework:
+        test: true
+    services:
+        Tests\JpmMartin\SyliusShippingCarriersPlugin\EnvVarProcessor\DaysEnvVarProcessor:
+            tags: ['container.env_var_processor']
+    jpm_martin_sylius_shipping_carriers:
+        carrier_timeout: '%env(float:CARRIER_TIMEOUT)%'
+        rate_lifetime: '%env(int:CARRIER_RATE_LIFETIME)%'
+        rate_retention: '%env(int:CARRIER_RATE_RETENTION)%'
+        tracking_lifetime: '%env(int:CARRIER_TRACKING_LIFETIME)%'
+        documents_retention: '%env(days:CARRIER_DOCUMENTS_RETENTION_DAYS)%'
+        temporary_documents_retention: '%env(int:CARRIER_TEMPORARY_DOCUMENTS_RETENTION)%'
+
 # Kernel for DocumentStorageTest: an application points the plugin's document storage somewhere else from its
 # own configuration. Not named "test…" for the same reason as above.
 when@documents_elsewhere:
