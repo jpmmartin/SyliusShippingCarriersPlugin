@@ -55,6 +55,9 @@ final class RateProviderTest extends TestCase
 
     private MockClock $clock;
 
+    /** @var array<string, CarrierShippingOrigin> The origin of a channel with settings of its own, by channel code */
+    private array $originsByChannel = [];
+
     private RecordingLogger $logger;
 
     private ?CarrierShippingOrigin $origin;
@@ -237,6 +240,45 @@ final class RateProviderTest extends TestCase
         yield 'retention below the lifetime' => [CarrierSettingsFactory::provider(rateLifetime: 900, rateRetention: 600), 'rate_retention is 600 and rate_lifetime is 900'];
         yield 'lifetime of zero' => [CarrierSettingsFactory::provider(rateLifetime: 0), 'rate_lifetime is 0'];
         yield 'timeout of zero' => [CarrierSettingsFactory::provider(carrierTimeout: 0.0), 'carrier_timeout is 0'];
+    }
+
+    /**
+     * Two channels quote the same cart to the same place. Each asks once, because they do not share a stored rate,
+     * and once the shorter lifetime is over only that channel asks again.
+     */
+    public function testEachChannelQuotesRatesForAsLongAsItSays(): void
+    {
+        $this->originsByChannel['WEB'] = $this->originOfItsOwn(rateLifetime: 300);
+        $this->originsByChannel['MOBILE'] = $this->originOfItsOwn(rateLifetime: 1800);
+        $provider = $this->provider();
+
+        $provider->rateFor($this->shipment(channelCode: 'WEB'), 'ups', '03');
+        $provider->rateFor($this->shipment(channelCode: 'MOBILE'), 'ups', '03');
+        self::assertCount(2, $this->ups->requests);
+
+        $this->clock->sleep(600);
+        $provider->reset();
+        $provider->rateFor($this->shipment(channelCode: 'WEB'), 'ups', '03');
+        $provider->rateFor($this->shipment(channelCode: 'MOBILE'), 'ups', '03');
+        self::assertCount(3, $this->ups->requests);
+    }
+
+    /**
+     * The last known rate is kept for as long as the channel says, too.
+     */
+    public function testEachChannelKeepsTheLastKnownRateForAsLongAsItSays(): void
+    {
+        $this->originsByChannel['WEB'] = $this->originOfItsOwn(rateLifetime: 60, rateRetention: 120);
+        $provider = $this->provider();
+        $provider->rateFor($this->shipment(channelCode: 'WEB'), 'ups', '03');
+
+        $this->clock->sleep(121);
+        $provider->reset();
+        $this->ups->answer = new CarrierUnavailableException('UPS did not answer in time.');
+
+        $result = $provider->rateFor($this->shipment(channelCode: 'WEB'), 'ups', '03');
+        self::assertTrue($result->carrierFailed);
+        self::assertNull($result->lastKnownRate, 'The channel keeps it for 120 seconds, and 121 have gone by.');
     }
 
     public function testTheLifetimeAndTheRetentionAreTheConfiguredOnes(): void
@@ -469,7 +511,12 @@ final class RateProviderTest extends TestCase
     {
         /** @var RepositoryInterface<CarrierShippingOriginInterface>&Stub $originRepository */
         $originRepository = $this->createStub(RepositoryInterface::class);
-        $originRepository->method('findOneBy')->willReturnCallback(fn (): ?CarrierShippingOrigin => $this->origin);
+        $originRepository->method('findOneBy')->willReturnCallback(function (array $criteria): ?CarrierShippingOrigin {
+            $channel = $criteria['channel'] ?? null;
+            $code = $channel instanceof Channel ? (string) $channel->getCode() : '';
+
+            return $this->originsByChannel[$code] ?? $this->origin;
+        });
 
         $packagingStrategy = $this->createStub(PackagingStrategyInterface::class);
         $packagingStrategy->method('pack')->willReturnCallback(fn (): array => $this->unpackable
@@ -494,14 +541,24 @@ final class RateProviderTest extends TestCase
             new RateCurrencyConverter($exchangeRateRepository, new CurrencyConverter($exchangeRateRepository), $this->logger),
             $this->clock,
             $this->logger,
-            $settings ?? CarrierSettingsFactory::provider(rateLifetime: $lifetime, rateRetention: $retention),
+            $settings ?? CarrierSettingsFactory::provider(rateLifetime: $lifetime, rateRetention: $retention, originRepository: $originRepository),
         );
     }
 
-    private function shipment(string $postcode = '98101', string $currencyCode = 'USD'): Shipment
+    private function originOfItsOwn(?int $rateLifetime = null, ?int $rateRetention = null): CarrierShippingOrigin
+    {
+        self::assertNotNull($this->origin);
+        $origin = clone $this->origin;
+        $origin->setRateLifetime($rateLifetime);
+        $origin->setRateRetention($rateRetention);
+
+        return $origin;
+    }
+
+    private function shipment(string $postcode = '98101', string $currencyCode = 'USD', string $channelCode = 'WEB'): Shipment
     {
         $channel = new Channel();
-        $channel->setCode('WEB');
+        $channel->setCode($channelCode);
 
         $address = new Address();
         $address->setStreet('500 Pine St');

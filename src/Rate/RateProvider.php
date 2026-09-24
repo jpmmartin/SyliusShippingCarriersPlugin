@@ -76,7 +76,8 @@ final class RateProvider implements RateProviderInterface, ResetInterface
         }
 
         // As with an origin that is missing: no carrier is asked and the method is not offered.
-        $settings = $this->settings->defaults();
+        $channel = $order instanceof OrderInterface ? $order->getChannel() : null;
+        $settings = $this->settings->forChannel($channel);
 
         try {
             $settings->assertRatesUsable();
@@ -94,7 +95,7 @@ final class RateProvider implements RateProviderInterface, ResetInterface
             return RateResult::carrierFailed(null);
         }
 
-        $key = RateCacheKey::for($carrier, self::pricingConfiguration($credentials), $request, $currencyCode);
+        $key = RateCacheKey::for($carrier, self::pricingConfiguration($credentials), $request, $currencyCode, $channel?->getCode());
         $item = $this->cache->getItem($key);
         $now = $this->clock->now()->getTimestamp();
 

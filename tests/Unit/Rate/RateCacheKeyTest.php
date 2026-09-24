@@ -63,6 +63,15 @@ final class RateCacheKeyTest extends TestCase
     }
 
     /**
+     * Each channel keeps rates for as long as it says, so none of them shares a stored rate with another.
+     */
+    public function testTwoChannelsDoNotShareARate(): void
+    {
+        self::assertNotSame($this->key(channelCode: 'WEB'), $this->key(channelCode: 'MOBILE'));
+        self::assertSame($this->key(channelCode: 'WEB'), $this->key(channelCode: 'WEB'));
+    }
+
+    /**
      * @param array<string, string|null>|null $carrierConfiguration
      */
     private function key(
@@ -72,6 +81,7 @@ final class RateCacheKeyTest extends TestCase
         ?Address $destination = null,
         ?Package $package = null,
         string $currencyCode = 'USD',
+        ?string $channelCode = 'WEB',
     ): string {
         return RateCacheKey::for(
             $carrier,
@@ -82,6 +92,7 @@ final class RateCacheKeyTest extends TestCase
                 [$package ?? new Package('Medium', 13.0, 11.0, 9.0, 'in', 5.5, 'lb', [])],
             ),
             $currencyCode,
+            $channelCode,
         );
     }
 }
