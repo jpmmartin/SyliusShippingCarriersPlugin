@@ -153,7 +153,9 @@ a `JpmMartin\SyliusShippingCarriersPlugin\Tracking\TrackingInfo` with its
 with a `JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentResult` holding each
 `JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\IssuedLabel` and any
 `JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsDocument`; and a
-`JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\VoidResult` for a cancellation.
+`JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\VoidResult` for a cancellation. The label carriers ask for
+the format the `ShipmentRequest` carries in `labelFormat`, which the plugin fills in with what the
+order's channel prints that carrier's labels as.
 
 A carrier that cannot answer throws a `JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException`:
 `JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException` when it

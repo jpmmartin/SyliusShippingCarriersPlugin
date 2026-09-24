@@ -181,6 +181,11 @@ origin uses, and whether a delivery counts as a home or a business when the buye
 
 A channel with no shipping origin offers no carrier shipping method at all, and says so in the log.
 
+The origin is also where a channel says what it wants in place of the configuration: how long a
+carrier is waited for, how long rates, statuses and documents are kept, what labels are printed as,
+and the services it adds. Every one of those is optional, and each shows what applies when it is left
+empty; see [docs/configuration.md](docs/configuration.md#settings-per-channel).
+
 ### 3. Package boxes
 
 **Configuration → Package boxes.** The boxes the store actually ships in, with their inner and outer
@@ -204,7 +209,8 @@ as the calculator, then the service, and what the method does when the carrier d
 - **Offer it at a flat amount** — the amount is set per channel and is charged only when there is no
   rate and no last known rate to fall back on.
 
-The services on offer are the ones the plugin ships with plus any your configuration adds; see
+The services on offer are the ones the plugin ships with, plus any your configuration or a channel's
+shipping origin adds. A method offered in several channels needs a service each of them has; see
 [docs/configuration.md](docs/configuration.md).
 
 ### 5. Weights and measures
@@ -277,8 +283,8 @@ and neither reason lasts forever. They are stored outside the published director
 only by the admin — see [docs/configuration.md](docs/configuration.md) for where, and how to point
 them elsewhere.
 
-Nothing is deleted on its own. A command deletes what is past the retention — 180 days by default —
-and is meant for cron:
+Nothing is deleted on its own. A command deletes what is past the retention — 180 days by default,
+or what the order's channel says on its shipping origin — and is meant for cron:
 
 ```bash
 bin/console jpmmartin:carrier:purge-documents

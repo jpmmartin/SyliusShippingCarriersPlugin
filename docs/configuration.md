@@ -127,6 +127,45 @@ applied if it would have been refused written:
 
 Every case is logged as an error naming the setting and its value.
 
+## Settings per channel
+
+A channel can say, on its shipping origin, what it wants in place of the configuration:
+
+- **`carrier_timeout`**: how long a carrier is waited for.
+- **`rate_lifetime` and `rate_retention`**: how long a rate is quoted for, and kept as the last known
+  rate.
+- **`tracking_lifetime`**: how long the status of a shipment is kept.
+- **`documents_retention`**: how long labels and customs documents are kept.
+- **Label formats**: what UPS and FedEx print labels as.
+- **Services**: the services the channel adds to each carrier's list.
+
+**Where:** **Configuration → Shipping origins**, on the channel's origin.
+
+**What applies.** For each order, what its channel says, and for whatever the channel leaves empty
+the configuration's, written or from a variable. Each field shows under it the value that applies
+when it is left empty.
+
+**Checked when saved.** A channel's values are held to the same limits as the configuration's: a
+carrier waited for at least 0.1 seconds, every other setting at least one second, a retention of
+rates no shorter than the lifetime the channel will have (its own or the configuration's), and only
+a format the carrier prints. Nothing refused is saved.
+
+**What stays the whole store's.** Two settings stay in the configuration only:
+
+- **`documents_dir`**, because the storage is built before any channel is known.
+- **`temporary_documents_retention`**, because the files it applies to belong to no order, and so
+  to no channel.
+
+**Services per channel.** A channel writes its own one a line, as `CODE = Name`. Its list is the
+configuration's plus those: they add services, or rename one. A shipping method may be offered in
+several channels, so it is chosen from every list, and saving one whose service is missing from one
+of its channels is refused, naming that channel. The configuration's services are in every
+channel's list.
+
+**Rates are kept per channel.** Two channels quoting the same cart each ask the carrier once. A
+channel that kept rates for less would otherwise drop the last known rate of one that keeps it for
+longer.
+
 ## Where the rates and the statuses are kept
 
 Both are ordinary Symfony cache pools, declared with the filesystem adapter so that the plugin works

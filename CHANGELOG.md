@@ -8,6 +8,27 @@ here, and what counts as a breaking change, are written down in [RELEASING.md](R
 
 ## [Unreleased]
 
+### Added
+
+- **Carrier settings per channel.** A channel's shipping origin can now set its own carrier
+  timeout, rate lifetime and retention, tracking lifetime, documents retention, label format for
+  each carrier and the services it adds to each carrier's list. Each is optional: left empty, the
+  configuration's applies, and the form shows which. They are checked when saved with the
+  configuration's limits, and each part of the plugin uses the values of the order's channel. The
+  documents directory and the retention of files no order names stay the whole store's. See
+  [docs/configuration.md](docs/configuration.md#settings-per-channel).
+- A shipping method offered in several channels is refused when its service is missing from the
+  list of one of them, naming that channel.
+- `CarrierChannelSettingsInterface`, which the shipping origin's model implements. A store whose own
+  origin model does not implement it keeps working, with every channel on the configuration. See
+  [docs/extending.md](docs/extending.md).
+
+### Changed
+
+- The UPS and FedEx label carriers print the format the `ShipmentRequest` carries, which the plugin
+  fills in with the order's channel's, instead of reading the configuration again.
+- Rates are stored per channel, so two channels quoting the same cart each ask the carrier once.
+
 ### Fixed
 
 - **A setting given by an environment variable no longer stops the container from compiling.** In
