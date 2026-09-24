@@ -8,6 +8,8 @@ jpmmartin_carrier:
             same_as_other_origins: Every shipping origin must use the same units. The others use {{ unit }}.
         dimension_unit:
             same_as_other_origins: Every shipping origin must use the same units. The others use {{ unit }}.
+        services:
+            invalid: Write each service on a line of its own, as CODE = Name.
     shipping_method:
         service:
             invalid: Choose one of the services of this carrier.

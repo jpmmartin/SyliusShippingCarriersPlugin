@@ -301,6 +301,63 @@ final class ShippingOriginAdminTest extends WebTestCase
         self::assertSame('Large', $box->getName());
     }
 
+    /**
+     * One service a line, blank lines left out, and the form draws them back the same way.
+     */
+    public function testTheServicesAChannelAddsAreWrittenOneALine(): void
+    {
+        $channel = $this->createChannel('web-admin-services');
+        $this->createCountry('US');
+
+        $this->submitCreateForm($this->originIn('web-admin-services') + [
+            self::FORM . '[upsServices]' => "02 = UPS 2nd Day Air\n\n  14 =  UPS Next Day Air Early \n",
+        ]);
+        self::assertResponseRedirects();
+
+        $origin = $this->findOriginOf($channel);
+        self::assertSame(['02' => 'UPS 2nd Day Air', '14' => 'UPS Next Day Air Early'], $origin->getServices('ups'));
+        self::assertSame([], $origin->getServices('fedex'));
+
+        $crawler = $this->client->request('GET', sprintf('/admin/shipping-origins/%d/edit', (int) $origin->getId()));
+        self::assertSame("02 = UPS 2nd Day Air\n14 = UPS Next Day Air Early", $crawler->filter(sprintf('#%s_upsServices', self::FORM))->text(null, false));
+    }
+
+    /**
+     * A line that is not a code and a name is an answer for the administrator, never a broken admin.
+     */
+    public function testALineThatIsNotAServiceIsAFormError(): void
+    {
+        $channel = $this->createChannel('web-admin-bad-services');
+        $this->createCountry('US');
+
+        $this->submitCreateForm($this->originIn('web-admin-bad-services') + [
+            self::FORM . '[upsServices]' => "02 = UPS 2nd Day Air\nUPS Next Day Air Early",
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Write each service on a line of its own, as CODE = Name.');
+        $this->entityManager->clear();
+        self::assertNull($this->entityManager->getRepository(CarrierShippingOrigin::class)->findOneBy(['channel' => $channel->getId()]));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function originIn(string $channelCode): array
+    {
+        return [
+            self::FORM . '[channel]' => $channelCode,
+            self::FORM . '[companyName]' => 'Swaypc',
+            self::FORM . '[contactName]' => 'Juan Pablo Moreno Martin',
+            self::FORM . '[phone]' => '13057800955',
+            self::FORM . '[street]' => '1 Main St',
+            self::FORM . '[city]' => 'Chicago',
+            self::FORM . '[postcode]' => '60601',
+            self::FORM . '[countryCode]' => 'US',
+            self::FORM . '[defaultDestinationType]' => 'commercial',
+        ];
+    }
+
     /** @param array<string, string|list<string>> $values */
     private function submitCreateForm(array $values): void
     {

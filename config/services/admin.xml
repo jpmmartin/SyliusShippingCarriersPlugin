@@ -12,6 +12,7 @@
                 <argument>sylius</argument>
             </argument>
             <argument>%jpmmartin_carrier.model.package_box.class%</argument>
+            <argument type="service" id="jpmmartin_carrier.settings" />
             <tag name="form.type" />
         </service>
 

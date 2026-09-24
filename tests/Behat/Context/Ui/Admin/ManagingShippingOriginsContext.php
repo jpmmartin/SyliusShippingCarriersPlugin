@@ -7,23 +7,133 @@ namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Admin;
 use Behat\Behat\Context\Context;
 use Behat\Step\Then;
 use Behat\Step\When;
+use Doctrine\Persistence\ObjectManager;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierChannelSettingsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettings;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
 use Sylius\Behat\Page\Admin\Crud\IndexPageInterface;
+use Sylius\Component\Channel\Model\ChannelInterface;
+use Sylius\Component\Channel\Repository\ChannelRepositoryInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Page\Admin\ShippingOrigin\CreatePage;
+use Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Page\Admin\ShippingOrigin\UpdatePage;
 use Webmozart\Assert\Assert;
 
 final readonly class ManagingShippingOriginsContext implements Context
 {
     /**
      * @param RepositoryInterface<CarrierShippingOriginInterface> $originRepository
+     * @param ChannelRepositoryInterface<ChannelInterface> $channelRepository
      */
     public function __construct(
         private CreatePage $createPage,
         private IndexPageInterface $indexPage,
         private RepositoryInterface $originRepository,
+        private UpdatePage $updatePage,
+        private CarrierSettingsProvider $settings,
+        private ChannelRepositoryInterface $channelRepository,
+        private ObjectManager $originManager,
     ) {
+    }
+
+    #[When('I want to modify the shipping origin of the :channelName channel')]
+    public function iWantToModifyTheShippingOriginOfTheChannel(string $channelName): void
+    {
+        $origin = $this->originRepository->findOneBy(['channel' => $this->channel($channelName)]);
+        Assert::isInstanceOf($origin, CarrierShippingOriginInterface::class);
+
+        $this->updatePage->open(['id' => $origin->getId()]);
+    }
+
+    #[When('I quote its rates for :seconds seconds')]
+    public function iQuoteItsRatesForSeconds(string $seconds): void
+    {
+        $this->updatePage->fillSetting('rate_lifetime', $seconds);
+    }
+
+    #[When('I keep the documents of its orders for :seconds seconds')]
+    public function iKeepTheDocumentsOfItsOrdersForSeconds(string $seconds): void
+    {
+        $this->updatePage->fillSetting('documents_retention', $seconds);
+    }
+
+    #[When('I print its :carrier labels as :format')]
+    public function iPrintItsLabelsAs(string $carrier, string $format): void
+    {
+        $this->updatePage->chooseLabelFormat(strtolower($carrier), $format);
+    }
+
+    #[When('I add to it the :carrier service :code named :name')]
+    public function iAddToItTheServiceNamed(string $carrier, string $code, string $name): void
+    {
+        $this->updatePage->fillSetting(strtolower($carrier) . '_services', sprintf('%s = %s', $code, $name));
+    }
+
+    #[When('I write its :carrier services as :text')]
+    public function iWriteItsServicesAs(string $carrier, string $text): void
+    {
+        $this->updatePage->fillSetting(strtolower($carrier) . '_services', $text);
+    }
+
+    #[When('I save my changes to the shipping origin')]
+    public function iSaveMyChangesToTheShippingOrigin(): void
+    {
+        $this->updatePage->saveChanges();
+    }
+
+    #[Then('I should be told that an empty rate lifetime means the configuration\'s :value')]
+    public function iShouldBeToldThatAnEmptyRateLifetimeMeansTheConfigurations(string $value): void
+    {
+        Assert::contains($this->updatePage->getHelp('rate_lifetime'), sprintf('the configuration\'s: %s', $value));
+    }
+
+    #[Then('I should be told that an empty :carrier label format means the configuration\'s :format')]
+    public function iShouldBeToldThatAnEmptyLabelFormatMeansTheConfigurations(string $carrier, string $format): void
+    {
+        Assert::contains($this->updatePage->getHelp(strtolower($carrier) . '_label_format'), sprintf('the configuration\'s: %s', $format));
+    }
+
+    #[Then('the :channelName channel should quote rates for :seconds seconds')]
+    public function theChannelShouldQuoteRatesForSeconds(string $channelName, int $seconds): void
+    {
+        Assert::same($this->settingsOf($channelName)->rateLifetime, $seconds);
+    }
+
+    #[Then('the :channelName channel should keep the status of a shipment for :seconds seconds')]
+    public function theChannelShouldKeepTheStatusOfAShipmentForSeconds(string $channelName, int $seconds): void
+    {
+        Assert::same($this->settingsOf($channelName)->trackingLifetime, $seconds);
+    }
+
+    #[Then('the :channelName channel should print :carrier labels as :format')]
+    public function theChannelShouldPrintLabelsAs(string $channelName, string $carrier, string $format): void
+    {
+        Assert::same($this->settingsOf($channelName)->labelFormat(strtolower($carrier)), $format);
+    }
+
+    #[Then('the :channelName channel should add the :carrier service :code named :name')]
+    public function theChannelShouldAddTheServiceNamed(string $channelName, string $carrier, string $code, string $name): void
+    {
+        Assert::same($this->savedOrigin($channelName)->getServices(strtolower($carrier)), [$code => $name]);
+    }
+
+    #[Then('the shipping origin of the :channelName channel should say nothing in place of the configuration')]
+    public function theShippingOriginOfTheChannelShouldSayNothingInPlaceOfTheConfiguration(string $channelName): void
+    {
+        $origin = $this->savedOrigin($channelName);
+
+        Assert::null($origin->getRateLifetime());
+        Assert::null($origin->getDocumentsRetention());
+        Assert::null($origin->getLabelFormat('ups'));
+        Assert::same($origin->getServices('ups'), []);
+    }
+
+    #[Then('I should be told to write each service as :format')]
+    public function iShouldBeToldToWriteEachServiceAs(string $format): void
+    {
+        Assert::contains($this->updatePage->getValidationMessage('ups_services'), $format);
     }
 
     #[When('I want to add a new shipping origin')]
@@ -135,6 +245,38 @@ final readonly class ManagingShippingOriginsContext implements Context
     public function thereShouldBeOnlyOneShippingOrigin(): void
     {
         Assert::count($this->originRepository->findAll(), 1);
+    }
+
+    /**
+     * What the shop uses for the channel now, read afresh: the admin request that saved it ran in another kernel.
+     */
+    private function settingsOf(string $channelName): CarrierSettings
+    {
+        $this->savedOrigin($channelName);
+        $this->settings->reset();
+
+        return $this->settings->forChannel($this->channel($channelName));
+    }
+
+    /**
+     * The origin as the admin saved it. Saved by a request served by another kernel, so the one this context runs
+     * in still holds it as it was before, until it is read again.
+     */
+    private function savedOrigin(string $channelName): CarrierChannelSettingsInterface
+    {
+        $origin = $this->originRepository->findOneBy(['channel' => $this->channel($channelName)]);
+        Assert::isInstanceOf($origin, CarrierChannelSettingsInterface::class);
+        $this->originManager->refresh($origin);
+
+        return $origin;
+    }
+
+    private function channel(string $channelName): ChannelInterface
+    {
+        $channel = $this->channelRepository->findOneBy(['name' => $channelName]);
+        Assert::isInstanceOf($channel, ChannelInterface::class);
+
+        return $channel;
     }
 
     private function onlyOrigin(): CarrierShippingOriginInterface

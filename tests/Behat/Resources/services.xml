@@ -105,6 +105,10 @@
             <argument type="string">jpmmartin_carrier_admin_shipping_origin_index</argument>
         </service>
 
+        <service id="jpmmartin_carrier.behat.page.admin.shipping_origin.update" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Page\Admin\ShippingOrigin\UpdatePage" parent="sylius.behat.page.admin.crud.update" public="false">
+            <argument type="string">jpmmartin_carrier_admin_shipping_origin_update</argument>
+        </service>
+
         <!-- Sylius' own page of an order, with what this plugin adds to the shipment on it. -->
         <service id="jpmmartin_carrier.behat.page.admin.order.show" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Page\Admin\Order\ShowPage" parent="sylius.behat.page.admin.order.show" public="false" />
 
@@ -136,6 +140,10 @@
             <argument type="service" id="jpmmartin_carrier.behat.page.admin.shipping_origin.create" />
             <argument type="service" id="jpmmartin_carrier.behat.page.admin.shipping_origin.index" />
             <argument type="service" id="jpmmartin_carrier.repository.shipping_origin" />
+            <argument type="service" id="jpmmartin_carrier.behat.page.admin.shipping_origin.update" />
+            <argument type="service" id="jpmmartin_carrier.settings" />
+            <argument type="service" id="sylius.repository.channel" />
+            <argument type="service" id="jpmmartin_carrier.manager.shipping_origin" />
         </service>
 
         <service id="jpmmartin_carrier.behat.context.ui.admin.managing_carrier_labels" class="Tests\JpmMartin\SyliusShippingCarriersPlugin\Behat\Context\Ui\Admin\ManagingCarrierLabelsContext">

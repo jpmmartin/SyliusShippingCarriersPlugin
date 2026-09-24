@@ -4,14 +4,22 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Form\Type;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierChannelSettingsInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
 use Sylius\Bundle\AddressingBundle\Form\Type\CountryCodeChoiceType;
 use Sylius\Bundle\ChannelBundle\Form\Type\ChannelChoiceType;
 use Sylius\Bundle\ResourceBundle\Form\Type\AbstractResourceType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Form\CallbackTransformer;
+use Symfony\Component\Form\Exception\TransformationFailedException;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
@@ -28,6 +36,7 @@ final class CarrierShippingOriginType extends AbstractResourceType
         string $dataClass,
         array $validationGroups,
         private readonly string $boxClass,
+        private readonly CarrierSettingsProvider $settings,
     ) {
         parent::__construct($dataClass, $validationGroups);
     }
@@ -109,6 +118,136 @@ final class CarrierShippingOriginType extends AbstractResourceType
             ])
             ->addEventListener(FormEvents::PRE_SUBMIT, self::keepTheDefaultMaximumInTheChosenUnit(...))
         ;
+
+        // A store whose own origin model knows nothing of these settings keeps the form it had.
+        if (is_a($this->dataClass, CarrierChannelSettingsInterface::class, true)) {
+            $this->addChannelSettings($builder);
+        }
+    }
+
+    /**
+     * What the channel says in place of the configuration. Every field is optional, and each one says what applies
+     * when it is left empty, so nobody has to go and read the configuration to know.
+     */
+    private function addChannelSettings(FormBuilderInterface $builder): void
+    {
+        $defaults = $this->settings->defaults();
+
+        $builder
+            ->add('carrierTimeout', NumberType::class, [
+                'label' => 'jpmmartin_carrier.form.shipping_origin.carrier_timeout',
+                'help' => 'jpmmartin_carrier.form.shipping_origin.seconds_help',
+                'help_translation_parameters' => ['%value%' => $defaults->carrierTimeout],
+                'required' => false,
+            ])
+            ->add('rateLifetime', IntegerType::class, [
+                'label' => 'jpmmartin_carrier.form.shipping_origin.rate_lifetime',
+                'help' => 'jpmmartin_carrier.form.shipping_origin.seconds_help',
+                'help_translation_parameters' => ['%value%' => $defaults->rateLifetime],
+                'required' => false,
+            ])
+            ->add('rateRetention', IntegerType::class, [
+                'label' => 'jpmmartin_carrier.form.shipping_origin.rate_retention',
+                'help' => 'jpmmartin_carrier.form.shipping_origin.seconds_help',
+                'help_translation_parameters' => ['%value%' => $defaults->rateRetention],
+                'required' => false,
+            ])
+            ->add('trackingLifetime', IntegerType::class, [
+                'label' => 'jpmmartin_carrier.form.shipping_origin.tracking_lifetime',
+                'help' => 'jpmmartin_carrier.form.shipping_origin.seconds_help',
+                'help_translation_parameters' => ['%value%' => $defaults->trackingLifetime],
+                'required' => false,
+            ])
+            ->add('documentsRetention', IntegerType::class, [
+                'label' => 'jpmmartin_carrier.form.shipping_origin.documents_retention',
+                'help' => 'jpmmartin_carrier.form.shipping_origin.seconds_help',
+                'help_translation_parameters' => ['%value%' => $defaults->documentsRetention],
+                'required' => false,
+            ])
+        ;
+
+        foreach ([CarrierCredentialsInterface::CARRIER_UPS, CarrierCredentialsInterface::CARRIER_FEDEX] as $carrier) {
+            $builder
+                ->add($carrier . 'LabelFormat', ChoiceType::class, [
+                    'label' => sprintf('jpmmartin_carrier.form.shipping_origin.%s_label_format', $carrier),
+                    'help' => 'jpmmartin_carrier.form.shipping_origin.label_format_help',
+                    'help_translation_parameters' => ['%value%' => $defaults->labelFormat($carrier)],
+                    'placeholder' => 'jpmmartin_carrier.form.shipping_origin.as_configured',
+                    'choices' => array_combine(LabelFormats::SUPPORTED[$carrier], LabelFormats::SUPPORTED[$carrier]),
+                    'choice_translation_domain' => false,
+                    'required' => false,
+                    'getter' => static fn (CarrierChannelSettingsInterface $origin): ?string => $origin->getLabelFormat($carrier),
+                    'setter' => static function (CarrierChannelSettingsInterface $origin, ?string $format) use ($carrier): void {
+                        $origin->setLabelFormat($carrier, $format);
+                    },
+                ])
+                ->add($carrier . 'Services', TextareaType::class, [
+                    'label' => sprintf('jpmmartin_carrier.form.shipping_origin.%s_services', $carrier),
+                    'help' => 'jpmmartin_carrier.form.shipping_origin.services_help',
+                    'invalid_message' => 'jpmmartin_carrier.shipping_origin.services.invalid',
+                    'required' => false,
+                    'getter' => static fn (CarrierChannelSettingsInterface $origin): array => $origin->getServices($carrier),
+                    'setter' => self::servicesSetter($carrier),
+                ])
+            ;
+
+            $builder->get($carrier . 'Services')->addModelTransformer(new CallbackTransformer(
+                self::servicesAsText(...),
+                self::servicesFromText(...),
+            ));
+        }
+    }
+
+    /**
+     * Always given a list, even an empty one: the text is turned into one before it gets here.
+     *
+     * @return \Closure(CarrierChannelSettingsInterface, array<string, string>): void
+     */
+    private static function servicesSetter(string $carrier): \Closure
+    {
+        /** @param array<string, string> $services */
+        return static function (CarrierChannelSettingsInterface $origin, array $services) use ($carrier): void {
+            $origin->setServices($carrier, $services);
+        };
+    }
+
+    /**
+     * @param array<string, string>|null $services
+     */
+    private static function servicesAsText(?array $services): string
+    {
+        $lines = [];
+        foreach ($services ?? [] as $code => $name) {
+            $lines[] = sprintf('%s = %s', $code, $name);
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * One service a line, as `CODE = Name`. Blank lines are left out; any other line without both is refused.
+     *
+     * @return array<string, string>
+     */
+    private static function servicesFromText(?string $text): array
+    {
+        $services = [];
+        foreach (preg_split('/\R/', (string) $text) ?: [] as $line) {
+            if ('' === trim($line)) {
+                continue;
+            }
+
+            $parts = explode('=', $line, 2);
+            $code = trim($parts[0]);
+            $name = trim($parts[1] ?? '');
+            if ('' === $code || '' === $name) {
+                throw new TransformationFailedException(sprintf('"%s" is not a service written as CODE = Name.', trim($line)));
+            }
+
+            $services[$code] = $name;
+        }
+
+        return $services;
     }
 
     /**

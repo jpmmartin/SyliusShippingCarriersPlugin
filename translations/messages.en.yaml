@@ -52,6 +52,19 @@ jpmmartin_carrier:
             default_destination_type: Default destination type
             default_destination_type_help: Used when the buyer has not said whether the delivery goes to a home or a business.
             choose_default_destination_type: Choose a default destination type
+            carrier_timeout: Seconds a carrier is waited for
+            rate_lifetime: Seconds a rate is quoted for
+            rate_retention: Seconds a rate is kept as the last known rate
+            tracking_lifetime: Seconds the status of a shipment is kept
+            documents_retention: Seconds labels and customs documents are kept
+            seconds_help: 'Leave it empty to use the configuration''s: %value%.'
+            ups_label_format: UPS label format
+            fedex_label_format: FedEx label format
+            label_format_help: 'Leave it empty to use the configuration''s: %value%.'
+            as_configured: As in the configuration
+            ups_services: UPS services of this channel
+            fedex_services: FedEx services of this channel
+            services_help: 'One a line, as CODE = Name. Added to the ones the configuration gives, or renaming one of them.'
             unit:
                 lb: Pounds (lb)
                 kg: Kilograms (kg)
