@@ -8,6 +8,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\NotIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelVoiderInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -76,7 +77,7 @@ final readonly class VoidCarrierLabelsAction
 
         try {
             $result = $this->labelVoider->void($export, $this->who());
-        } catch (NotIssuedException | CarrierException $exception) {
+        } catch (NotIssuedException | InvalidCarrierSettingException | CarrierException $exception) {
             $flashes?->add('error', $exception->getMessage());
 
             return $this->back($shipment);

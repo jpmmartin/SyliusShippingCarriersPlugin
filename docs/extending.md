@@ -178,7 +178,10 @@ rate, whether the carrier failed, and the last known rate. `JpmMartin\SyliusShip
 is one shipment of a batch. `JpmMartin\SyliusShippingCarriersPlugin\Packaging\Exception\UnpackableShipmentException`
 is what a packaging strategy throws for a shipment it cannot pack.
 `JpmMartin\SyliusShippingCarriersPlugin\Encryption\Exception\EncryptionException` is what the
-encrypter throws.
+encrypter throws. `JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException`
+is what issuing and cancelling labels throw, before anything is recorded or sent, when a setting they
+need has a value the plugin cannot work with; only a setting given by an environment variable can have
+one, because the container refuses to compile a written one.
 
 `JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType` holds the two destination types,
 `residential` and `commercial`, as the shop API takes them.

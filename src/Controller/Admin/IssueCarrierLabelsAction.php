@@ -8,6 +8,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AlreadyIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AmbiguousShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelIssuerInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -70,7 +71,7 @@ final readonly class IssueCarrierLabelsAction
 
         try {
             $export = $this->labelIssuer->issue($shipment, $this->who());
-        } catch (AlreadyIssuedException | AmbiguousShipmentException | \InvalidArgumentException $exception) {
+        } catch (AlreadyIssuedException | AmbiguousShipmentException | InvalidCarrierSettingException | \InvalidArgumentException $exception) {
             // The shipment is in no state to be issued. Saying so is an answer, not a failure of the admin.
             $flashes?->add('error', $exception->getMessage());
 

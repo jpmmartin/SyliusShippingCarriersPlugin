@@ -8,6 +8,8 @@ use Doctrine\Persistence\ObjectManager;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabelInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierShipmentExportRepositoryInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use League\Flysystem\FilesystemException;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -35,8 +37,6 @@ final readonly class DocumentPurger
 
     /**
      * @param CarrierShipmentExportRepositoryInterface<CarrierShipmentExportInterface> $exportRepository
-     * @param int $retention Seconds a file is kept for, counted from the moment the labels were issued
-     * @param int $temporaryRetention Seconds a file waiting to be named by a row is left alone
      */
     public function __construct(
         private CarrierShipmentExportRepositoryInterface $exportRepository,
@@ -44,18 +44,33 @@ final readonly class DocumentPurger
         private ObjectManager $exportManager,
         private ClockInterface $clock,
         private LoggerInterface $logger,
-        private int $retention,
-        private int $temporaryRetention,
+        private CarrierSettingsProvider $settings,
     ) {
     }
 
     /**
      * A file the storage refuses to delete is left where it is, with its record untouched: the record has to
      * keep saying the file exists for as long as it does, and the next run tries again.
+     *
+     * @throws InvalidCarrierSettingException When a retention cannot be used, before anything is deleted
      */
     public function purge(): PurgeReport
     {
-        $expiredBefore = $this->clock->now()->sub(new \DateInterval(sprintf('PT%dS', $this->retention)));
+        // Checked before the first file goes: a retention of zero would delete every document there is.
+        $settings = $this->settings->defaults();
+
+        try {
+            $settings->assertPurgeUsable();
+        } catch (InvalidCarrierSettingException $exception) {
+            $this->logger->error('Nothing is purged, because a setting cannot be used: {reason}', [
+                'reason' => $exception->getMessage(),
+                'exception' => $exception,
+            ]);
+
+            throw $exception;
+        }
+
+        $expiredBefore = $this->clock->now()->sub(new \DateInterval(sprintf('PT%dS', $settings->documentsRetention)));
 
         $deleted = 0;
         $failed = 0;
@@ -79,7 +94,7 @@ final readonly class DocumentPurger
         }
 
         // Collected first and passed after, because the collection is what counts the last of the failures.
-        $temporaries = $this->collectTemporaries($failed);
+        $temporaries = $this->collectTemporaries($settings->temporaryDocumentsRetention, $failed);
 
         return new PurgeReport($deleted, $failed, $shipments, $temporaries);
     }
@@ -92,9 +107,9 @@ final readonly class DocumentPurger
      *
      * @return int How many were collected
      */
-    private function collectTemporaries(int &$failed): int
+    private function collectTemporaries(int $temporaryRetention, int &$failed): int
     {
-        $untouchedSince = $this->clock->now()->getTimestamp() - $this->temporaryRetention;
+        $untouchedSince = $this->clock->now()->getTimestamp() - $temporaryRetention;
 
         try {
             $abandoned = $this->labelStorage->abandonedTemporaries($untouchedSince);

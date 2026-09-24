@@ -14,12 +14,15 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExport;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\NotIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelVoider;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Sylius\Component\Core\Model\Order;
 use Sylius\Component\Core\Model\Shipment;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\DependencyInjection\ServiceLocator;
+use Tests\JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsFactory;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
 
 /**
@@ -134,6 +137,26 @@ final class LabelVoiderTest extends TestCase
         self::assertNull($export->getVoidedAt());
     }
 
+    /**
+     * A timeout below the minimum can only arrive through an environment variable. The carrier is not asked, and the
+     * labels stay issued, because nothing was cancelled.
+     */
+    public function testATimeoutTooShortToWaitForTheCarrierIsRefusedAndTheLabelsStayIssued(): void
+    {
+        $export = $this->issuedExport();
+
+        try {
+            $this->voider(CarrierSettingsFactory::provider(carrierTimeout: 0.05))->void($export, 'warehouse@example.com');
+            self::fail('The carrier was asked with a timeout below the minimum.');
+        } catch (InvalidCarrierSettingException $exception) {
+            self::assertStringContainsString('carrier_timeout is 0.05', $exception->getMessage());
+        }
+
+        self::assertSame([], $this->cancelled);
+        self::assertSame(CarrierShipmentExportInterface::STATE_ISSUED, $export->getState());
+        self::assertSame(LogLevel::ERROR, $this->logger->records[0][0] ?? null);
+    }
+
     public function testAShipmentWithNoIssuedLabelsIsNotCancelled(): void
     {
         $export = new CarrierShipmentExport();
@@ -173,13 +196,14 @@ final class LabelVoiderTest extends TestCase
         $this->voider()->void($export, 'warehouse@example.com');
     }
 
-    private function voider(): LabelVoider
+    private function voider(?CarrierSettingsProvider $settings = null): LabelVoider
     {
         return new LabelVoider(
             new ServiceLocator(['ups' => fn (): LabelCarrierInterface => $this->carrier()]),
             $this->createStub(ObjectManager::class),
             new MockClock('2026-09-21 10:00:00'),
             $this->logger,
+            $settings ?? CarrierSettingsFactory::provider(),
         );
     }
 

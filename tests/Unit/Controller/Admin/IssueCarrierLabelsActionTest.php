@@ -11,6 +11,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabel;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AlreadyIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AmbiguousShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelIssuerInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Sylius\Component\Core\Model\Order;
@@ -142,6 +143,7 @@ final class IssueCarrierLabelsActionTest extends TestCase
         yield 'already issued' => [new AlreadyIssuedException('The shipment already has its labels.'), 'already has its labels'];
         yield 'waiting to be checked' => [new AmbiguousShipmentException('Nobody knows whether ups issued them.'), 'Nobody knows whether'];
         yield 'not a carrier of this plugin' => [new \InvalidArgumentException('The shipment is not sent by a carrier of this plugin.'), 'not sent by a carrier'];
+        yield 'a setting that cannot be used' => [new InvalidCarrierSettingException('label_formats.ups is "PDF", which the carrier does not print labels as.'), 'label_formats.ups is "PDF"'];
     }
 
     /**

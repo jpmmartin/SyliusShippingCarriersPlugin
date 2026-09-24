@@ -12,7 +12,7 @@
             <argument type="tagged_locator" tag="jpmmartin_carrier.carrier" index-by="carrier" />
             <argument type="service" id="jpmmartin_carrier.cache.tracking" />
             <argument type="service" id="logger" />
-            <argument>%jpmmartin_carrier.tracking_lifetime%</argument>
+            <argument type="service" id="jpmmartin_carrier.settings" />
             <!-- A failure of a carrier is remembered for one request only. -->
             <tag name="kernel.reset" method="reset" />
         </service>

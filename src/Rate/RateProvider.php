@@ -8,6 +8,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Container\ContainerInterface;
@@ -42,10 +44,11 @@ final class RateProvider implements RateProviderInterface, ResetInterface
      */
     private array $carriersLoggedWithoutCredentials = [];
 
+    /** Whether the store was told in this request that the settings cannot be used. */
+    private bool $unusableSettingsLogged = false;
+
     /**
      * @param ContainerInterface $carriers The carrier adapters, by carrier code
-     * @param int $lifetime Seconds a stored rate is quoted for
-     * @param int $retention Seconds a stored rate is kept as the last known rate
      */
     public function __construct(
         private readonly RateRequestFactory $requestFactory,
@@ -55,8 +58,7 @@ final class RateProvider implements RateProviderInterface, ResetInterface
         private readonly RateCurrencyConverter $currencyConverter,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
-        private readonly int $lifetime,
-        private readonly int $retention,
+        private readonly CarrierSettingsProvider $settings,
     ) {
     }
 
@@ -73,6 +75,17 @@ final class RateProvider implements RateProviderInterface, ResetInterface
             return RateResult::unavailable();
         }
 
+        // As with an origin that is missing: no carrier is asked and the method is not offered.
+        $settings = $this->settings->defaults();
+
+        try {
+            $settings->assertRatesUsable();
+        } catch (InvalidCarrierSettingException $exception) {
+            $this->logUnusableSettings($exception);
+
+            return RateResult::unavailable();
+        }
+
         try {
             $credentials = $this->credentialsProvider->get($carrier);
         } catch (CarrierException $exception) {
@@ -86,11 +99,11 @@ final class RateProvider implements RateProviderInterface, ResetInterface
         $now = $this->clock->now()->getTimestamp();
 
         $stored = $item->isHit() ? StoredRates::fromCacheValue($item->get()) : null;
-        if (null !== $stored && $now - $stored->fetchedAt >= $this->retention) {
+        if (null !== $stored && $now - $stored->fetchedAt >= $settings->rateRetention) {
             $stored = null;
         }
 
-        if (null !== $stored && $now - $stored->fetchedAt < $this->lifetime) {
+        if (null !== $stored && $now - $stored->fetchedAt < $settings->rateLifetime) {
             return $this->quote($stored->rates, $serviceCode, $currencyCode);
         }
 
@@ -120,7 +133,7 @@ final class RateProvider implements RateProviderInterface, ResetInterface
         }
 
         $item->set((new StoredRates($rates, $now))->toCacheValue());
-        $item->expiresAfter($this->retention);
+        $item->expiresAfter($settings->rateRetention);
         $this->cache->save($item);
 
         return $this->quote($rates, $serviceCode, $currencyCode);
@@ -130,6 +143,20 @@ final class RateProvider implements RateProviderInterface, ResetInterface
     {
         $this->failedKeys = [];
         $this->carriersLoggedWithoutCredentials = [];
+        $this->unusableSettingsLogged = false;
+    }
+
+    private function logUnusableSettings(InvalidCarrierSettingException $exception): void
+    {
+        if ($this->unusableSettingsLogged) {
+            return;
+        }
+
+        $this->logger->error('No carrier is asked for rates, and no shipping method of the plugin is offered, because a setting cannot be used: {reason}', [
+            'reason' => $exception->getMessage(),
+            'exception' => $exception,
+        ]);
+        $this->unusableSettingsLogged = true;
     }
 
     private function logCredentialsFailure(string $carrier, string $serviceCode, CarrierException $exception): void

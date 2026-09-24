@@ -7,6 +7,7 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Label;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AlreadyIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AmbiguousShipmentException;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use Sylius\Component\Core\Model\ShipmentInterface;
 
 /**
@@ -21,6 +22,7 @@ interface LabelIssuerInterface
      * @throws \InvalidArgumentException When the shipment is not one of a carrier of this plugin
      * @throws AlreadyIssuedException When the shipment already has its labels
      * @throws AmbiguousShipmentException When nobody knows yet whether a previous attempt was issued
+     * @throws InvalidCarrierSettingException When a setting the issue needs cannot be used; nothing is recorded or sent
      */
     public function issue(ShipmentInterface $shipment, string $issuedBy): CarrierShipmentExportInterface;
 

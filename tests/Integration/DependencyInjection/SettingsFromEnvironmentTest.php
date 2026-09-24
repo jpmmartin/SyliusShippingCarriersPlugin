@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Integration\DependencyInjection;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettings;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -40,24 +42,24 @@ final class SettingsFromEnvironmentTest extends KernelTestCase
 
     public function testThePurgeKeepsDocumentsForWhatTheVariablesSay(): void
     {
-        $purger = $this->service('jpmmartin_carrier.label.document_purger');
+        $settings = $this->settingsOf($this->service('jpmmartin_carrier.label.document_purger'));
 
         // Thirty days, through the store's own processor.
-        self::assertSame(30 * 24 * 60 * 60, $this->property($purger, 'retention'));
-        self::assertSame(3600, $this->property($purger, 'temporaryRetention'));
+        self::assertSame(30 * 24 * 60 * 60, $settings->documentsRetention);
+        self::assertSame(3600, $settings->temporaryDocumentsRetention);
     }
 
     public function testRatesAreQuotedAndKeptForWhatTheVariablesSay(): void
     {
-        $rates = $this->service('jpmmartin_carrier.rate_provider');
+        $settings = $this->settingsOf($this->service('jpmmartin_carrier.rate_provider'));
 
-        self::assertSame(600, $this->property($rates, 'lifetime'));
-        self::assertSame(7200, $this->property($rates, 'retention'));
+        self::assertSame(600, $settings->rateLifetime);
+        self::assertSame(7200, $settings->rateRetention);
     }
 
     public function testTheStatusOfAShipmentIsKeptForWhatTheVariableSays(): void
     {
-        self::assertSame(120, $this->property($this->service('jpmmartin_carrier.tracking_provider'), 'lifetime'));
+        self::assertSame(120, $this->settingsOf($this->service('jpmmartin_carrier.tracking_provider'))->trackingLifetime);
     }
 
     public function testACarrierIsWaitedForAsLongAsTheVariableSays(): void
@@ -72,7 +74,7 @@ final class SettingsFromEnvironmentTest extends KernelTestCase
     {
         $_ENV['CARRIER_RATE_LIFETIME'] = $_SERVER['CARRIER_RATE_LIFETIME'] = '1200';
 
-        self::assertSame(1200, $this->property($this->service('jpmmartin_carrier.rate_provider'), 'lifetime'));
+        self::assertSame(1200, $this->settingsOf($this->service('jpmmartin_carrier.rate_provider'))->rateLifetime);
     }
 
     private function service(string $id): object
@@ -86,8 +88,16 @@ final class SettingsFromEnvironmentTest extends KernelTestCase
     }
 
     /**
-     * What the service was built with. Read from the service itself, because that is what the setting is for.
+     * The settings the service works with, read from the service itself, because that is what they are for.
      */
+    private function settingsOf(object $service): CarrierSettings
+    {
+        $provider = $this->property($service, 'settings');
+        self::assertInstanceOf(CarrierSettingsProvider::class, $provider);
+
+        return $provider->defaults();
+    }
+
     private function property(object $service, string $name): mixed
     {
         return (new \ReflectionProperty($service, $name))->getValue($service);

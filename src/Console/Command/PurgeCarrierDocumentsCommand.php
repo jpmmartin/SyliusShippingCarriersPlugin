@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JpmMartin\SyliusShippingCarriersPlugin\Console\Command;
 
 use JpmMartin\SyliusShippingCarriersPlugin\Label\DocumentPurger;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -35,7 +36,13 @@ final class PurgeCarrierDocumentsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $report = $this->purger->purge();
+        try {
+            $report = $this->purger->purge();
+        } catch (InvalidCarrierSettingException $exception) {
+            $io->error(sprintf('Nothing was deleted: %s', $exception->getMessage()));
+
+            return Command::FAILURE;
+        }
 
         if (0 === $report->deletedFiles && 0 === $report->failedFiles && 0 === $report->temporaryFiles) {
             $io->success('There was nothing kept for longer than allowed.');

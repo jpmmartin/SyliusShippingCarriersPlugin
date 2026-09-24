@@ -25,6 +25,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierPackageBoxRepository;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierShipmentExportRepository;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettings;
 use Sylius\Bundle\ResourceBundle\Controller\ResourceController;
 use Sylius\Bundle\ResourceBundle\SyliusResourceBundle;
 use Sylius\Resource\Factory\Factory;
@@ -49,17 +50,17 @@ final class Configuration implements ConfigurationInterface
                 ->floatNode('carrier_timeout')
                     ->info('Seconds a request to a carrier may take before it counts as a failure of the carrier.')
                     ->defaultValue(10.0)
-                    ->min(0.1)
+                    ->min(CarrierSettings::MIN_CARRIER_TIMEOUT)
                 ->end()
                 ->integerNode('rate_lifetime')
                     ->info('Seconds a stored rate is quoted for before the carrier is asked again.')
                     ->defaultValue(900)
-                    ->min(1)
+                    ->min(CarrierSettings::MIN_SECONDS)
                 ->end()
                 ->integerNode('rate_retention')
                     ->info('Seconds a stored rate is kept as the last known rate, charged when the carrier fails. Not less than rate_lifetime.')
                     ->defaultValue(86400)
-                    ->min(1)
+                    ->min(CarrierSettings::MIN_SECONDS)
                 ->end()
                 ->scalarNode('documents_dir')
                     ->info('Where the labels and the customs documents the plugin issues are kept. Outside the published directory on purpose.')
@@ -69,17 +70,17 @@ final class Configuration implements ConfigurationInterface
                 ->integerNode('documents_retention')
                     ->info('Seconds a label or a customs document is kept before the purge deletes the file. Defaults to 180 days, the longest a shipment can be cancelled for.')
                     ->defaultValue(180 * 24 * 60 * 60)
-                    ->min(1)
+                    ->min(CarrierSettings::MIN_SECONDS)
                 ->end()
                 ->integerNode('temporary_documents_retention')
                     ->info('Seconds a document waiting to be named by a row is left alone before the purge collects it. Defaults to a day, far longer than issuing takes.')
                     ->defaultValue(24 * 60 * 60)
-                    ->min(1)
+                    ->min(CarrierSettings::MIN_SECONDS)
                 ->end()
                 ->integerNode('tracking_lifetime')
                     ->info('Seconds the status of a shipment is kept before the carrier is asked again.')
                     ->defaultValue(300)
-                    ->min(1)
+                    ->min(CarrierSettings::MIN_SECONDS)
                 ->end()
                 ->arrayNode('label_formats')
                     ->info('What to ask each carrier to print its labels as. The two carriers share no format: UPS does not issue PDF.')

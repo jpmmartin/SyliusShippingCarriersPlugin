@@ -10,6 +10,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableE
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateProviderInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShippingChargeResolver;
@@ -26,7 +27,9 @@ use Sylius\Component\Shipping\Calculator\CalculatorInterface;
 use Sylius\Component\Shipping\Calculator\FlatRateCalculator;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\DependencyInjection\ServiceLocator;
+use Tests\JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsFactory;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
 
 final class TrackingProviderTest extends TestCase
@@ -34,6 +37,8 @@ final class TrackingProviderTest extends TestCase
     private const LIFETIME = 300;
 
     private ArrayAdapter $cache;
+
+    private MockClock $clock;
 
     private RecordingLogger $logger;
 
@@ -45,7 +50,10 @@ final class TrackingProviderTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cache = new ArrayAdapter();
+        // On a clock of its own, so a lifetime can run out without the test waiting for it. Started now, because a
+        // cache item counts its expiry from the real time and the pool compares it with this clock.
+        $this->clock = new MockClock();
+        $this->cache = new ArrayAdapter(clock: $this->clock);
         $this->logger = new RecordingLogger();
         $this->ups = new TrackingCarrier(new TrackingInfo('1Z999AA10123456784', 'Delivered', [
             new TrackingEvent(new \DateTimeImmutable('2026-09-17 10:15:00'), 'Delivered', 'Seattle, WA, US'),
@@ -147,17 +155,37 @@ final class TrackingProviderTest extends TestCase
     }
 
     /**
+     * A lifetime of zero can only arrive through an environment variable. The buyer sees a status that is not
+     * available, the way a carrier that does not answer is shown, and the store is told which setting.
+     */
+    public function testALifetimeBelowTheMinimumShowsNoStatusAndAsksNoCarrier(): void
+    {
+        $provider = $this->provider(settings: CarrierSettingsFactory::provider(trackingLifetime: 0));
+
+        self::assertNull($provider->track($this->shipment()));
+        self::assertNull($provider->track($this->shipment()));
+        self::assertSame([], $this->ups->enquiries);
+
+        self::assertCount(1, $this->logger->records);
+        self::assertSame(LogLevel::ERROR, $this->logger->records[0][0]);
+        $reason = $this->logger->records[0][2]['reason'] ?? null;
+        self::assertIsString($reason);
+        self::assertStringContainsString('tracking_lifetime is 0', $reason);
+    }
+
+    /**
      * Emptying the pool by hand would pass whatever the configured lifetime was, even one that never expired.
      * This asks the same shipment twice under a lifetime that is over by the time the second one arrives, so
      * what it proves is that the configured value is the one that governs.
      */
     public function testAStatusOlderThanItsLifetimeIsAskedAgain(): void
     {
-        $expiringAtOnce = $this->provider(lifetime: 0);
+        $provider = $this->provider(lifetime: 60);
 
-        $expiringAtOnce->track($this->shipment());
-        $expiringAtOnce->reset();
-        $expiringAtOnce->track($this->shipment());
+        $provider->track($this->shipment());
+        $this->clock->sleep(61);
+        $provider->reset();
+        $provider->track($this->shipment());
 
         self::assertCount(2, $this->ups->enquiries);
     }
@@ -227,7 +255,7 @@ final class TrackingProviderTest extends TestCase
         self::assertCount(2, $this->logger->records);
     }
 
-    private function provider(?int $lifetime = null): TrackingProvider
+    private function provider(?int $lifetime = null, ?CarrierSettingsProvider $settings = null): TrackingProvider
     {
         $calculators = new ServiceRegistry(CalculatorInterface::class);
         $chargeResolver = new ShippingChargeResolver($this->createStub(RateProviderInterface::class));
@@ -248,7 +276,7 @@ final class TrackingProviderTest extends TestCase
             ]),
             $this->cache,
             $this->logger,
-            $lifetime ?? self::LIFETIME,
+            $settings ?? CarrierSettingsFactory::provider(trackingLifetime: $lifetime ?? self::LIFETIME),
         );
     }
 

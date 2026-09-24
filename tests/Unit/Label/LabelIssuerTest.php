@@ -40,6 +40,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelIssuer;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelStorage;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\ShipmentRequestFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateProviderInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShippingChargeResolver;
@@ -69,6 +71,7 @@ use Sylius\Resource\Factory\Factory;
 use Sylius\Resource\Factory\FactoryInterface;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\DependencyInjection\ServiceLocator;
+use Tests\JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsFactory;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
 
 /**
@@ -99,6 +102,9 @@ final class LabelIssuerTest extends TestCase
 
     /** @var list<string> The references the carrier was asked about. */
     private array $recovered = [];
+
+    /** @var list<object> What the issuer handed to the manager to be stored */
+    private array $persisted = [];
 
     private ?CarrierShipmentPackagingInterface $packaging = null;
 
@@ -277,6 +283,38 @@ final class LabelIssuerTest extends TestCase
         self::assertSame(CarrierShipmentExportInterface::STATE_FAILED, $export->getState());
         self::assertStringContainsString('The variant "MUG" has no weight declared.', (string) $export->getFailureReason());
         self::assertSame([], $this->requests);
+    }
+
+    /**
+     * A format the carrier does not print can only arrive through an environment variable: written, the container
+     * refuses it. The carrier is not asked, and nothing is left to say it was.
+     */
+    public function testALabelFormatTheCarrierDoesNotPrintIsRefusedBeforeAnythingIsRecordedOrSent(): void
+    {
+        try {
+            $this->issuer(CarrierSettingsFactory::provider(labelFormats: ['ups' => 'PDF']))->issue($this->shipment(), 'warehouse@example.com');
+            self::fail('A label was issued in a format UPS does not print.');
+        } catch (InvalidCarrierSettingException $exception) {
+            self::assertStringContainsString('label_formats.ups is "PDF"', $exception->getMessage());
+            self::assertStringContainsString('GIF, ZPL, EPL, SPL', $exception->getMessage());
+        }
+
+        self::assertSame([], $this->requests);
+        self::assertSame([], $this->persisted);
+        self::assertSame([], $this->storedFiles());
+        self::assertSame(LogLevel::ERROR, $this->logger->records[0][0] ?? null);
+    }
+
+    public function testATimeoutTooShortToWaitForTheCarrierIsRefusedBeforeAnythingIsSent(): void
+    {
+        $this->expectException(InvalidCarrierSettingException::class);
+        $this->expectExceptionMessage('carrier_timeout is 0.05');
+
+        try {
+            $this->issuer(CarrierSettingsFactory::provider(carrierTimeout: 0.05))->issue($this->shipment(), 'warehouse@example.com');
+        } finally {
+            self::assertSame([], $this->requests);
+        }
     }
 
     public function testWithoutStoredCredentialsNothingIsAskedOfTheCarrier(): void
@@ -806,7 +844,7 @@ final class LabelIssuerTest extends TestCase
         return $paths;
     }
 
-    private function issuer(): LabelIssuer
+    private function issuer(?CarrierSettingsProvider $settings = null): LabelIssuer
     {
         $calculators = new ServiceRegistry(CalculatorInterface::class);
         $chargeResolver = new ShippingChargeResolver($this->createStub(RateProviderInterface::class));
@@ -858,6 +896,7 @@ final class LabelIssuerTest extends TestCase
             $this->manager(),
             new MockClock('2026-09-21 10:00:00'),
             $this->logger,
+            $settings ?? CarrierSettingsFactory::provider(),
         );
     }
 
@@ -892,6 +931,9 @@ final class LabelIssuerTest extends TestCase
     private function manager(): ObjectManager
     {
         $manager = $this->createMock(ObjectManager::class);
+        $manager->method('persist')->willReturnCallback(function (object $object): void {
+            $this->persisted[] = $object;
+        });
         $manager->method('flush')->willReturnCallback(function (): void {
             if (null !== $this->whileCommitting) {
                 ($this->whileCommitting)();

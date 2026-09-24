@@ -7,6 +7,8 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Tracking;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
@@ -38,9 +40,11 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
      */
     private array $carriersLoggedWithoutCredentials = [];
 
+    /** Whether the store was told in this request that the settings cannot be used. */
+    private bool $unusableSettingsLogged = false;
+
     /**
      * @param ContainerInterface $carriers The carrier adapters, by carrier code
-     * @param int $lifetime Seconds a stored status is given before the carrier is asked again
      */
     public function __construct(
         private readonly ShipmentCarrier $shipmentCarrier,
@@ -48,7 +52,7 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
         private readonly ContainerInterface $carriers,
         private readonly CacheItemPoolInterface $cache,
         private readonly LoggerInterface $logger,
-        private readonly int $lifetime,
+        private readonly CarrierSettingsProvider $settings,
     ) {
     }
 
@@ -57,6 +61,17 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
         $trackingNumber = $shipment->getTracking();
         $carrier = $this->shipmentCarrier->of($shipment);
         if (null === $trackingNumber || '' === trim($trackingNumber) || null === $carrier) {
+            return null;
+        }
+
+        // Shown as a status that is not available, the way a carrier that does not answer is.
+        $settings = $this->settings->defaults();
+
+        try {
+            $settings->assertTrackingUsable();
+        } catch (InvalidCarrierSettingException $exception) {
+            $this->logUnusableSettings($exception);
+
             return null;
         }
 
@@ -105,7 +120,7 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
         }
 
         $item->set(StoredTracking::toCacheValue($tracking));
-        $item->expiresAfter($this->lifetime);
+        $item->expiresAfter($settings->trackingLifetime);
         $this->cache->save($item);
 
         return $tracking;
@@ -115,6 +130,20 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
     {
         $this->failedKeys = [];
         $this->carriersLoggedWithoutCredentials = [];
+        $this->unusableSettingsLogged = false;
+    }
+
+    private function logUnusableSettings(InvalidCarrierSettingException $exception): void
+    {
+        if ($this->unusableSettingsLogged) {
+            return;
+        }
+
+        $this->logger->error('No carrier is asked where a shipment is, because a setting cannot be used: {reason}', [
+            'reason' => $exception->getMessage(),
+            'exception' => $exception,
+        ]);
+        $this->unusableSettingsLogged = true;
     }
 
     private function logCredentialsFailure(string $carrier, string $trackingNumber, CarrierException $exception): void

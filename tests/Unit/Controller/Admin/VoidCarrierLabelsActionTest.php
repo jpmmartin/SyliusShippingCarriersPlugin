@@ -11,6 +11,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExport;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\NotIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelVoiderInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Sylius\Component\Core\Model\Order;
@@ -122,6 +123,7 @@ final class VoidCarrierLabelsActionTest extends TestCase
     {
         yield 'nothing to cancel' => [new NotIssuedException('The shipment has no issued labels to cancel: it is failed.'), 'no issued labels'];
         yield 'carrier out of reach' => [new CarrierUnavailableException('UPS could not be reached: the request timed out.'), 'could not be reached'];
+        yield 'a setting that cannot be used' => [new InvalidCarrierSettingException('carrier_timeout is 0, and it cannot be less than 0.1 seconds.'), 'carrier_timeout is 0'];
     }
 
     /**

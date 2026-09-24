@@ -10,6 +10,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelCarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\VoidResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\NotIssuedException;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use Psr\Clock\ClockInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -33,6 +35,7 @@ final readonly class LabelVoider implements LabelVoiderInterface
         private ObjectManager $exportManager,
         private ClockInterface $clock,
         private LoggerInterface $logger,
+        private CarrierSettingsProvider $settings,
     ) {
     }
 
@@ -54,6 +57,18 @@ final readonly class LabelVoider implements LabelVoiderInterface
         $labelCarrier = $this->labelCarriers->has($carrier) ? $this->labelCarriers->get($carrier) : null;
         if (!$labelCarrier instanceof LabelCarrierInterface) {
             throw new \LogicException(sprintf('The carrier "%s" does not issue labels, so it cancels none.', $carrier));
+        }
+
+        try {
+            $this->settings->defaults()->assertCarrierCallsUsable();
+        } catch (InvalidCarrierSettingException $exception) {
+            $this->logger->error('The carrier is not told to cancel anything, because a setting cannot be used: {reason}', [
+                'shipment' => $export->getShipment()?->getId(),
+                'reason' => $exception->getMessage(),
+                'exception' => $exception,
+            ]);
+
+            throw $exception;
         }
 
         try {

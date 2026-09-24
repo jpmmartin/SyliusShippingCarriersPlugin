@@ -22,6 +22,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateRequestFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\RateSet;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -39,6 +40,7 @@ use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\DependencyInjection\ServiceLocator;
+use Tests\JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsFactory;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
 
 final class RateProviderTest extends TestCase
@@ -205,6 +207,36 @@ final class RateProviderTest extends TestCase
 
         self::assertTrue($result->carrierFailed);
         self::assertNull($result->lastKnownRate);
+    }
+
+    /**
+     * A retention below the lifetime can only arrive through an environment variable: written, the container refuses
+     * it. No carrier is asked, the method is not offered, and the store is told once, naming both settings.
+     */
+    #[DataProvider('unusableRateSettings')]
+    public function testSettingsThatCannotBeUsedLeaveTheMethodUnavailableWithoutAskingTheCarrier(CarrierSettingsProvider $settings, string $named): void
+    {
+        $provider = $this->provider(settings: $settings);
+
+        self::assertEquals(RateResult::unavailable(), $provider->rateFor($this->shipment(), 'ups', '03'));
+        self::assertEquals(RateResult::unavailable(), $provider->rateFor($this->shipment(), 'ups', '02'));
+        self::assertSame([], $this->ups->requests);
+
+        self::assertCount(1, $this->logger->records);
+        self::assertSame(LogLevel::ERROR, $this->logger->records[0][0]);
+        $reason = $this->logger->records[0][2]['reason'] ?? null;
+        self::assertIsString($reason);
+        self::assertStringContainsString($named, $reason);
+    }
+
+    /**
+     * @return iterable<string, array{CarrierSettingsProvider, string}>
+     */
+    public static function unusableRateSettings(): iterable
+    {
+        yield 'retention below the lifetime' => [CarrierSettingsFactory::provider(rateLifetime: 900, rateRetention: 600), 'rate_retention is 600 and rate_lifetime is 900'];
+        yield 'lifetime of zero' => [CarrierSettingsFactory::provider(rateLifetime: 0), 'rate_lifetime is 0'];
+        yield 'timeout of zero' => [CarrierSettingsFactory::provider(carrierTimeout: 0.0), 'carrier_timeout is 0'];
     }
 
     public function testTheLifetimeAndTheRetentionAreTheConfiguredOnes(): void
@@ -433,7 +465,7 @@ final class RateProviderTest extends TestCase
         $this->provider()->rateFor($this->shipment(), 'dhl', '03');
     }
 
-    private function provider(int $lifetime = self::LIFETIME, int $retention = self::RETENTION): RateProvider
+    private function provider(int $lifetime = self::LIFETIME, int $retention = self::RETENTION, ?CarrierSettingsProvider $settings = null): RateProvider
     {
         /** @var RepositoryInterface<CarrierShippingOriginInterface>&Stub $originRepository */
         $originRepository = $this->createStub(RepositoryInterface::class);
@@ -462,8 +494,7 @@ final class RateProviderTest extends TestCase
             new RateCurrencyConverter($exchangeRateRepository, new CurrencyConverter($exchangeRateRepository), $this->logger),
             $this->clock,
             $this->logger,
-            $lifetime,
-            $retention,
+            $settings ?? CarrierSettingsFactory::provider(rateLifetime: $lifetime, rateRetention: $retention),
         );
     }
 

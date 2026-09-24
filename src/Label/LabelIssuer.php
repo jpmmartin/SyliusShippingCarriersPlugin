@@ -17,6 +17,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabelInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AlreadyIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\AmbiguousShipmentException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\UnissuableShipmentException;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\ShipmentCarrier;
 use League\Flysystem\FilesystemException;
 use Psr\Clock\ClockInterface;
@@ -57,6 +59,7 @@ final readonly class LabelIssuer implements LabelIssuerInterface
         private ObjectManager $exportManager,
         private ClockInterface $clock,
         private LoggerInterface $logger,
+        private CarrierSettingsProvider $settings,
     ) {
     }
 
@@ -76,6 +79,20 @@ final readonly class LabelIssuer implements LabelIssuerInterface
         $carrier = $this->shipmentCarrier->of($shipment);
         if (null === $carrier) {
             throw new \InvalidArgumentException('The shipment is not sent by a carrier of this plugin, so no label is issued for it.');
+        }
+
+        // Refused before anything is recorded or sent: the carrier would be asked for a format it does not print,
+        // or with a timeout that lets it take as long as it likes.
+        try {
+            $this->settings->defaults()->assertLabelsUsable($carrier);
+        } catch (InvalidCarrierSettingException $exception) {
+            $this->logger->error('No label is issued, because a setting cannot be used: {reason}', [
+                'shipment' => $shipment->getId(),
+                'reason' => $exception->getMessage(),
+                'exception' => $exception,
+            ]);
+
+            throw $exception;
         }
 
         $export = $this->export($shipment, $carrier);

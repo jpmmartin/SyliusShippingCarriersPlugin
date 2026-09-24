@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container
+        xmlns="http://symfony.com/schema/dic/services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+        <!-- Built when the store runs, so a setting given by an environment variable holds what the variable holds then. -->
+        <service id="jpmmartin_carrier.settings.defaults" class="JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettings">
+            <argument>%jpmmartin_carrier.carrier_timeout%</argument>
+            <argument>%jpmmartin_carrier.rate_lifetime%</argument>
+            <argument>%jpmmartin_carrier.rate_retention%</argument>
+            <argument>%jpmmartin_carrier.tracking_lifetime%</argument>
+            <argument>%jpmmartin_carrier.documents_retention%</argument>
+            <argument>%jpmmartin_carrier.temporary_documents_retention%</argument>
+            <argument>%jpmmartin_carrier.label_formats%</argument>
+        </service>
+
+        <service id="jpmmartin_carrier.settings" class="JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider">
+            <argument type="service" id="jpmmartin_carrier.settings.defaults" />
+        </service>
+    </services>
+</container>

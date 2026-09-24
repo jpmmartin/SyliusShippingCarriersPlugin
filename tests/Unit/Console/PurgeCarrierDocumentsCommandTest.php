@@ -12,6 +12,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabel;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\DocumentPurger;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelStorage;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierShipmentExportRepositoryInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\UnableToDeleteFile;
 use PHPUnit\Framework\MockObject\Stub;
@@ -20,6 +21,7 @@ use Psr\Log\NullLogger;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
+use Tests\JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsFactory;
 
 /**
  * What the command says and, above all, what it returns: a cron only ever reads the exit code, so a purge that
@@ -76,12 +78,27 @@ final class PurgeCarrierDocumentsCommandTest extends TestCase
         self::assertStringContainsString('1 file(s) could not be deleted', $tester->getDisplay());
     }
 
+    /**
+     * A cron has to notice this one too: nothing was deleted, and the output says which setting stopped it.
+     */
+    public function testItFailsAndDeletesNothingWhenARetentionCannotBeUsed(): void
+    {
+        $this->expired();
+        $tester = new CommandTester(new PurgeCarrierDocumentsCommand($this->purger(CarrierSettingsFactory::provider(documentsRetention: 0))));
+
+        $tester->execute([], ['interactive' => false]);
+
+        self::assertSame(Command::FAILURE, $tester->getStatusCode());
+        self::assertStringContainsString('Nothing was deleted', $tester->getDisplay());
+        self::assertStringContainsString('documents_retention is 0', $tester->getDisplay());
+    }
+
     private function tester(): CommandTester
     {
         return new CommandTester(new PurgeCarrierDocumentsCommand($this->purger()));
     }
 
-    private function purger(): DocumentPurger
+    private function purger(?CarrierSettingsProvider $settings = null): DocumentPurger
     {
         return new DocumentPurger(
             $this->exportRepository(),
@@ -89,8 +106,7 @@ final class PurgeCarrierDocumentsCommandTest extends TestCase
             $this->createStub(ObjectManager::class),
             new MockClock('2026-09-22 10:00:00'),
             new NullLogger(),
-            180 * 24 * 60 * 60,
-            24 * 60 * 60,
+            $settings ?? CarrierSettingsFactory::provider(),
         );
     }
 

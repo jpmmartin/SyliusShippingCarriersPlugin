@@ -12,15 +12,19 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabelInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\DocumentPurger;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelStorage;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierShipmentExportRepositoryInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use League\Flysystem\DirectoryListing;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\UnableToDeleteFile;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Symfony\Component\Clock\MockClock;
+use Tests\JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsFactory;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
 
 /**
@@ -93,6 +97,39 @@ final class DocumentPurgerTest extends TestCase
         self::assertSame(3, $report->deletedFiles);
         self::assertSame(0, $report->failedFiles);
         self::assertSame(1, $report->shipments);
+    }
+
+    /**
+     * A retention of zero can only arrive through an environment variable, and it would delete every document there
+     * is. The purge does not start, and says which setting and why.
+     */
+    #[DataProvider('retentionsBelowTheMinimum')]
+    public function testARetentionBelowTheMinimumDeletesNothing(int $documentsRetention, int $temporaryDocumentsRetention, string $named): void
+    {
+        $this->export(1, self::EXPIRED, ['labels/1/1Z9991-0.gif'], 'labels/1/customs-1Z9991.pdf');
+
+        try {
+            $this->purger(CarrierSettingsFactory::provider(documentsRetention: $documentsRetention, temporaryDocumentsRetention: $temporaryDocumentsRetention))->purge();
+            self::fail('The purge went ahead with a retention below the minimum.');
+        } catch (InvalidCarrierSettingException $exception) {
+            self::assertStringContainsString($named, $exception->getMessage());
+        }
+
+        self::assertTrue($this->storage->fileExists('labels/1/1Z9991-0.gif'));
+        self::assertTrue($this->storage->fileExists('labels/1/customs-1Z9991.pdf'));
+        self::assertSame(LogLevel::ERROR, $this->logger->records[0][0] ?? null);
+        $reason = $this->logger->records[0][2]['reason'] ?? null;
+        self::assertIsString($reason);
+        self::assertStringContainsString($named, $reason);
+    }
+
+    /**
+     * @return iterable<string, array{int, int, string}>
+     */
+    public static function retentionsBelowTheMinimum(): iterable
+    {
+        yield 'documents' => [0, 24 * 60 * 60, 'documents_retention is 0'];
+        yield 'temporary documents' => [180 * 24 * 60 * 60, 0, 'temporary_documents_retention is 0'];
     }
 
     /**
@@ -269,7 +306,7 @@ final class DocumentPurgerTest extends TestCase
         self::assertSame(1, $report->failedFiles);
     }
 
-    private function purger(): DocumentPurger
+    private function purger(?CarrierSettingsProvider $settings = null): DocumentPurger
     {
         return new DocumentPurger(
             $this->exportRepository(),
@@ -277,8 +314,7 @@ final class DocumentPurgerTest extends TestCase
             $this->manager(),
             new MockClock(self::NOW),
             $this->logger,
-            self::RETENTION,
-            self::TEMPORARY_RETENTION,
+            $settings ?? CarrierSettingsFactory::provider(documentsRetention: self::RETENTION, temporaryDocumentsRetention: self::TEMPORARY_RETENTION),
         );
     }
 
