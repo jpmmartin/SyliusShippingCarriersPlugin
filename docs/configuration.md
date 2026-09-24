@@ -55,6 +55,78 @@ The plugin ships with UPS `01` and `03`, and FedEx `FEDEX_GROUND`, `PRIORITY_OVE
 `STANDARD_OVERNIGHT`. Carriers publish many more, and their codes differ by account, so add the ones
 your account sells.
 
+## Settings from environment variables
+
+Every setting takes an environment variable, the Symfony way, so each server can have its own value
+without a change to the configuration. A number needs a processor of its type: `int:` for the whole
+seconds, `float:` for `carrier_timeout`, or a processor of the store's own that declares the type.
+
+```yaml
+# config/packages/jpmmartin_shipping_carriers.yaml
+
+jpm_martin_sylius_shipping_carriers:
+    carrier_timeout: '%env(float:CARRIER_TIMEOUT)%'
+    rate_lifetime: '%env(int:CARRIER_RATE_LIFETIME)%'
+    rate_retention: '%env(int:CARRIER_RATE_RETENTION)%'
+    tracking_lifetime: '%env(int:CARRIER_TRACKING_LIFETIME)%'
+    documents_retention: '%env(days:CARRIER_DOCUMENTS_RETENTION_DAYS)%'
+    temporary_documents_retention: '%env(int:CARRIER_TEMPORARY_DOCUMENTS_RETENTION)%'
+```
+
+```dotenv
+# .env
+
+CARRIER_TIMEOUT=10
+CARRIER_RATE_LIFETIME=900
+CARRIER_RATE_RETENTION=86400
+CARRIER_TRACKING_LIFETIME=300
+CARRIER_DOCUMENTS_RETENTION_DAYS=180
+CARRIER_TEMPORARY_DOCUMENTS_RETENTION=86400
+```
+
+`days:` above is not Symfony's: it is a processor a store writes for itself, and the plugin takes it
+because it declares that what it hands over is an `int`:
+
+```php
+// src/EnvVarProcessor/DaysEnvVarProcessor.php
+
+final class DaysEnvVarProcessor implements EnvVarProcessorInterface
+{
+    public function getEnv(string $prefix, string $name, \Closure $getEnv): int
+    {
+        return (int) $getEnv($name) * 24 * 60 * 60;
+    }
+
+    public static function getProvidedTypes(): array
+    {
+        return ['days' => 'int'];
+    }
+}
+```
+
+`documents_dir` and the two label formats are text, so they take a variable as it is:
+`'%env(CARRIER_DOCUMENTS_DIR)%'`.
+
+**What a variable cannot do.**
+
+- **A number without a processor.** A variable without one is text, and the container refuses to
+  compile a number setting given text, naming the setting.
+- **The whole list of `services`.** Symfony takes no variable for a list. Each name in it can be
+  one: `'02': '%env(CARRIER_UPS_02_NAME)%'`.
+
+**What is checked, and when.** A value written in the file is checked when the container compiles:
+a timeout under 0.1 seconds, any other setting under 1 second, a `rate_retention` under the
+`rate_lifetime`, or a format the carrier does not print, and the container refuses to compile. A
+value from a variable is only known when the store runs, so it is checked where it is used, and never
+applied if it would have been refused written:
+
+- **Rates.** No carrier is asked, and the plugin's shipping methods are not offered.
+- **Tracking.** The buyer sees that the status is not available.
+- **Labels.** Issuing and cancelling refuse before anything is recorded or sent, and the admin says why.
+- **The purge.** It deletes nothing, and the command fails.
+
+Every case is logged as an error naming the setting and its value.
+
 ## Where the rates and the statuses are kept
 
 Both are ordinary Symfony cache pools, declared with the filesystem adapter so that the plugin works

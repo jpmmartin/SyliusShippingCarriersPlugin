@@ -8,6 +8,22 @@ here, and what counts as a breaking change, are written down in [RELEASING.md](R
 
 ## [Unreleased]
 
+### Fixed
+
+- **A setting given by an environment variable no longer stops the container from compiling.** In
+  1.0.0 any number of the plugin's configuration given as `%env(int:…)%` failed with `Invalid type
+  … Expected "int", but got "string"`. Every setting now takes a variable: `int:` or `float:` for
+  the numbers, or a processor of the store's own that declares the type. `documents_dir` still
+  reaches the document storage, however the application sets it. See
+  [docs/configuration.md](docs/configuration.md#settings-from-environment-variables).
+- **Two checks no longer compare a variable as if it were its value.** A `rate_lifetime` given by a
+  variable made a valid `rate_retention` fail, and a label format given by a variable was checked
+  against an empty string. Written, both are refused as before.
+- **A value from a variable that could not have been written is not applied.** Checked where it is
+  used, and logged naming the setting: rates are not asked and the methods not offered, tracking
+  shows no status, issuing and cancelling refuse, and the purge deletes nothing instead of every
+  document.
+
 ## [1.0.0] - 2026-09-23
 
 The first release. It requires PHP 8.2 and Sylius 2.2.6 or newer.
