@@ -208,6 +208,12 @@ The plugin's nine resources are Sylius resources configured under
 | `shipment_packaging` | `JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackagingInterface` | `JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackaging` |
 | `shipment_package` | `JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackageInterface` | `JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackage` |
 
+The shipping origin's model also implements
+`JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierChannelSettingsInterface`: what its channel
+says in place of the plugin's configuration, each value optional. A store that replaces the model
+keeps those settings by extending the plugin's; one whose model implements only
+`CarrierShippingOriginInterface` goes on working, with every channel on the configuration.
+
 Each has its repository at `jpmmartin_carrier.repository.` followed by the resource's name —
 `jpmmartin_carrier.repository.shipping_origin`, for instance. Two have a repository of their own,
 which a store's replacement extends: `JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierPackageBoxRepository`,

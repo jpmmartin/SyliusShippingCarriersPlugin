@@ -15,7 +15,7 @@ use Sylius\Component\Core\Model\ChannelInterface;
 // index gets a hash-based name that the migration cannot know, and every diff
 // then proposes renaming it back and forth forever.
 #[ORM\UniqueConstraint(name: 'uniq_jpmmartin_carrier_origin_channel', columns: ['channel_id'])]
-class CarrierShippingOrigin implements CarrierShippingOriginInterface
+class CarrierShippingOrigin implements CarrierShippingOriginInterface, CarrierChannelSettingsInterface
 {
     /**
      * IDENTITY, not AUTO. AUTO lets Doctrine pick the generation strategy per
@@ -95,6 +95,33 @@ class CarrierShippingOrigin implements CarrierShippingOriginInterface
     #[ORM\JoinColumn(name: 'origin_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     #[ORM\InverseJoinColumn(name: 'box_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     protected Collection $boxes;
+
+    // What the channel says in place of the plugin's configuration. Null leaves the configuration's in force.
+
+    #[ORM\Column(name: 'carrier_timeout', type: 'float', nullable: true)]
+    protected ?float $carrierTimeout = null;
+
+    #[ORM\Column(name: 'rate_lifetime', type: 'integer', nullable: true)]
+    protected ?int $rateLifetime = null;
+
+    #[ORM\Column(name: 'rate_retention', type: 'integer', nullable: true)]
+    protected ?int $rateRetention = null;
+
+    #[ORM\Column(name: 'tracking_lifetime', type: 'integer', nullable: true)]
+    protected ?int $trackingLifetime = null;
+
+    #[ORM\Column(name: 'documents_retention', type: 'integer', nullable: true)]
+    protected ?int $documentsRetention = null;
+
+    #[ORM\Column(name: 'ups_label_format', type: 'string', length: 8, nullable: true)]
+    protected ?string $upsLabelFormat = null;
+
+    #[ORM\Column(name: 'fedex_label_format', type: 'string', length: 8, nullable: true)]
+    protected ?string $fedexLabelFormat = null;
+
+    /** @var array<string, array<string, string>>|null By carrier, then by service code */
+    #[ORM\Column(name: 'services', type: 'json', nullable: true)]
+    protected ?array $services = null;
 
     public function __construct()
     {
@@ -275,5 +302,93 @@ class CarrierShippingOrigin implements CarrierShippingOriginInterface
     public function removeBox(CarrierPackageBoxInterface $box): void
     {
         $this->boxes->removeElement($box);
+    }
+
+    public function getCarrierTimeout(): ?float
+    {
+        return $this->carrierTimeout;
+    }
+
+    public function setCarrierTimeout(?float $carrierTimeout): void
+    {
+        $this->carrierTimeout = $carrierTimeout;
+    }
+
+    public function getRateLifetime(): ?int
+    {
+        return $this->rateLifetime;
+    }
+
+    public function setRateLifetime(?int $rateLifetime): void
+    {
+        $this->rateLifetime = $rateLifetime;
+    }
+
+    public function getRateRetention(): ?int
+    {
+        return $this->rateRetention;
+    }
+
+    public function setRateRetention(?int $rateRetention): void
+    {
+        $this->rateRetention = $rateRetention;
+    }
+
+    public function getTrackingLifetime(): ?int
+    {
+        return $this->trackingLifetime;
+    }
+
+    public function setTrackingLifetime(?int $trackingLifetime): void
+    {
+        $this->trackingLifetime = $trackingLifetime;
+    }
+
+    public function getDocumentsRetention(): ?int
+    {
+        return $this->documentsRetention;
+    }
+
+    public function setDocumentsRetention(?int $documentsRetention): void
+    {
+        $this->documentsRetention = $documentsRetention;
+    }
+
+    public function getLabelFormat(string $carrier): ?string
+    {
+        return match ($carrier) {
+            CarrierCredentialsInterface::CARRIER_UPS => $this->upsLabelFormat,
+            CarrierCredentialsInterface::CARRIER_FEDEX => $this->fedexLabelFormat,
+            default => null,
+        };
+    }
+
+    public function setLabelFormat(string $carrier, ?string $labelFormat): void
+    {
+        match ($carrier) {
+            CarrierCredentialsInterface::CARRIER_UPS => $this->upsLabelFormat = $labelFormat,
+            CarrierCredentialsInterface::CARRIER_FEDEX => $this->fedexLabelFormat = $labelFormat,
+            default => throw new \InvalidArgumentException(sprintf('There is no carrier "%s".', $carrier)),
+        };
+    }
+
+    public function getServices(string $carrier): array
+    {
+        return $this->services[$carrier] ?? [];
+    }
+
+    public function setServices(string $carrier, array $services): void
+    {
+        if (!in_array($carrier, [CarrierCredentialsInterface::CARRIER_UPS, CarrierCredentialsInterface::CARRIER_FEDEX], true)) {
+            throw new \InvalidArgumentException(sprintf('There is no carrier "%s".', $carrier));
+        }
+
+        $this->services ??= [];
+        $this->services[$carrier] = $services;
+
+        // Nothing of its own for any carrier is stored as nothing, the same as a channel that never had any.
+        if ([] === array_filter($this->services)) {
+            $this->services = null;
+        }
     }
 }

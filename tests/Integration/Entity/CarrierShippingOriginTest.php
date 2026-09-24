@@ -8,6 +8,7 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Sylius\Component\Core\Model\Channel;
 use Sylius\Component\Core\Model\ChannelInterface;
 use Sylius\Component\Currency\Model\Currency;
@@ -117,6 +118,94 @@ final class CarrierShippingOriginTest extends KernelTestCase
         self::assertSame('Juan Pablo Moreno Martin', $stored->getContactName());
         self::assertSame('13057800955', $stored->getPhone());
         self::assertTrue($stored->hasContact());
+    }
+
+    /**
+     * A new origin, like every one that existed before these settings did, leaves its channel on the configuration.
+     */
+    public function testANewOriginSaysNothingInPlaceOfTheConfiguration(): void
+    {
+        $origin = new CarrierShippingOrigin();
+
+        self::assertNull($origin->getCarrierTimeout());
+        self::assertNull($origin->getRateLifetime());
+        self::assertNull($origin->getRateRetention());
+        self::assertNull($origin->getTrackingLifetime());
+        self::assertNull($origin->getDocumentsRetention());
+        self::assertNull($origin->getLabelFormat('ups'));
+        self::assertNull($origin->getLabelFormat('fedex'));
+        self::assertSame([], $origin->getServices('ups'));
+        self::assertSame([], $origin->getServices('fedex'));
+    }
+
+    public function testItKeepsWhatItsChannelSaysInPlaceOfTheConfiguration(): void
+    {
+        $origin = $this->createOrigin($this->createChannel('web-settings'));
+        $origin->setCarrierTimeout(4.5);
+        $origin->setRateLifetime(1800);
+        $origin->setRateRetention(7200);
+        $origin->setTrackingLifetime(120);
+        $origin->setDocumentsRetention(30 * 24 * 60 * 60);
+        $origin->setLabelFormat('ups', 'ZPL');
+        $origin->setLabelFormat('fedex', 'ZPLII');
+        $origin->setServices('ups', ['02' => 'UPS 2nd Day Air']);
+        $origin->setServices('fedex', ['FEDEX_EXPRESS_SAVER' => 'FedEx Express Saver']);
+
+        $this->entityManager->persist($origin);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $stored = $this->entityManager->getRepository(CarrierShippingOrigin::class)->find((int) $origin->getId());
+        self::assertInstanceOf(CarrierShippingOrigin::class, $stored);
+        self::assertSame(4.5, $stored->getCarrierTimeout());
+        self::assertSame(1800, $stored->getRateLifetime());
+        self::assertSame(7200, $stored->getRateRetention());
+        self::assertSame(120, $stored->getTrackingLifetime());
+        self::assertSame(30 * 24 * 60 * 60, $stored->getDocumentsRetention());
+        self::assertSame('ZPL', $stored->getLabelFormat('ups'));
+        self::assertSame('ZPLII', $stored->getLabelFormat('fedex'));
+        self::assertSame(['02' => 'UPS 2nd Day Air'], $stored->getServices('ups'));
+        self::assertSame(['FEDEX_EXPRESS_SAVER' => 'FedEx Express Saver'], $stored->getServices('fedex'));
+    }
+
+    /**
+     * Taking back every service of its own leaves the channel as if it never had one.
+     */
+    public function testAChannelThatTakesBackEveryServiceOfItsOwnStoresNone(): void
+    {
+        $origin = $this->createOrigin($this->createChannel('web-services'));
+        $origin->setServices('ups', ['02' => 'UPS 2nd Day Air']);
+        $origin->setServices('ups', []);
+
+        $this->entityManager->persist($origin);
+        $this->entityManager->flush();
+
+        $stored = $this->entityManager->getConnection()->fetchOne(
+            'SELECT services FROM jpmmartin_carrier_shipping_origin WHERE id = ?',
+            [$origin->getId()],
+        );
+        self::assertNull($stored);
+    }
+
+    /**
+     * @param \Closure(CarrierShippingOrigin): void $set
+     */
+    #[DataProvider('settingsForACarrierThePluginDoesNotHave')]
+    public function testASettingForACarrierThePluginDoesNotHaveIsRefused(\Closure $set): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('There is no carrier "dhl".');
+
+        $set(new CarrierShippingOrigin());
+    }
+
+    /**
+     * @return iterable<string, array{\Closure(CarrierShippingOrigin): void}>
+     */
+    public static function settingsForACarrierThePluginDoesNotHave(): iterable
+    {
+        yield 'label format' => [static fn (CarrierShippingOrigin $origin) => $origin->setLabelFormat('dhl', 'PDF')];
+        yield 'services' => [static fn (CarrierShippingOrigin $origin) => $origin->setServices('dhl', ['X' => 'Express'])];
     }
 
     /**
