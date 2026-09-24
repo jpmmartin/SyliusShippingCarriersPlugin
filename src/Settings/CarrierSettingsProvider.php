@@ -4,15 +4,38 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Settings;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierChannelSettingsInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
+use Sylius\Component\Channel\Model\ChannelInterface;
+use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
+use Symfony\Contracts\Service\ResetInterface;
+
 /**
  * Where every part of the plugin asks for the settings it works with, instead of each reading its own parameters.
  *
+ * A channel's settings are what its shipping origin says, and the configuration's for whatever the origin leaves
+ * empty. Nothing is checked here: each part checks the values it is about to use, so a value that is wrong for one
+ * of them stops that one and no other.
+ *
  * @internal
  */
-final class CarrierSettingsProvider
+final class CarrierSettingsProvider implements ResetInterface
 {
+    /**
+     * Resolved once per channel and request: rates ask once for every service of a shipment. Forgotten between
+     * requests, because an administrator may have changed them.
+     *
+     * @var array<string, CarrierSettings>
+     */
+    private array $byChannel = [];
+
+    /**
+     * @param RepositoryInterface<CarrierShippingOriginInterface> $originRepository
+     */
     public function __construct(
         private readonly CarrierSettings $defaults,
+        private readonly RepositoryInterface $originRepository,
     ) {
     }
 
@@ -22,5 +45,51 @@ final class CarrierSettingsProvider
     public function defaults(): CarrierSettings
     {
         return $this->defaults;
+    }
+
+    /**
+     * The settings a channel works with. Without a channel, or without an origin that says anything, the
+     * configuration's.
+     */
+    public function forChannel(?ChannelInterface $channel): CarrierSettings
+    {
+        $code = $channel?->getCode();
+        if (null === $channel || null === $code) {
+            return $this->defaults;
+        }
+
+        return $this->byChannel[$code] ??= $this->resolve($channel);
+    }
+
+    public function reset(): void
+    {
+        $this->byChannel = [];
+    }
+
+    private function resolve(ChannelInterface $channel): CarrierSettings
+    {
+        $origin = $this->originRepository->findOneBy(['channel' => $channel]);
+        if (!$origin instanceof CarrierChannelSettingsInterface) {
+            return $this->defaults;
+        }
+
+        $labelFormats = $this->defaults->labelFormats;
+        foreach (array_keys(LabelFormats::DEFAULTS) as $carrier) {
+            $labelFormat = $origin->getLabelFormat($carrier);
+            if (null !== $labelFormat) {
+                $labelFormats[$carrier] = $labelFormat;
+            }
+        }
+
+        return new CarrierSettings(
+            $origin->getCarrierTimeout() ?? $this->defaults->carrierTimeout,
+            $origin->getRateLifetime() ?? $this->defaults->rateLifetime,
+            $origin->getRateRetention() ?? $this->defaults->rateRetention,
+            $origin->getTrackingLifetime() ?? $this->defaults->trackingLifetime,
+            $origin->getDocumentsRetention() ?? $this->defaults->documentsRetention,
+            // Store-wide: a file no row names belongs to no channel.
+            $this->defaults->temporaryDocumentsRetention,
+            $labelFormats,
+        );
     }
 }
