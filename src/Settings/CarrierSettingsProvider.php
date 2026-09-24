@@ -7,6 +7,7 @@ namespace JpmMartin\SyliusShippingCarriersPlugin\Settings;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierChannelSettingsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
 use Sylius\Component\Channel\Model\ChannelInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Contracts\Service\ResetInterface;
@@ -59,6 +60,36 @@ final class CarrierSettingsProvider implements ResetInterface
         }
 
         return $this->byChannel[$code] ??= $this->resolve($channel);
+    }
+
+    /**
+     * The shortest time any channel keeps documents for, the configuration's included: where the purge starts
+     * looking from, before it asks each document's own channel.
+     *
+     * @throws InvalidCarrierSettingException When a channel keeps them for less than the minimum
+     */
+    public function shortestDocumentsRetention(): int
+    {
+        $shortest = $this->defaults->documentsRetention;
+
+        foreach ($this->originRepository->findAll() as $origin) {
+            if (!$origin instanceof CarrierChannelSettingsInterface || null === $own = $origin->getDocumentsRetention()) {
+                continue;
+            }
+
+            if ($own < CarrierSettings::MIN_SECONDS) {
+                throw new InvalidCarrierSettingException(sprintf(
+                    'documents_retention of the channel "%s" is %d, and it cannot be less than %d second.',
+                    (string) $origin->getChannel()?->getCode(),
+                    $own,
+                    CarrierSettings::MIN_SECONDS,
+                ));
+            }
+
+            $shortest = min($shortest, $own);
+        }
+
+        return $shortest;
     }
 
     public function reset(): void

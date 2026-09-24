@@ -13,6 +13,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSett
 use League\Flysystem\FilesystemException;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
+use Sylius\Component\Core\Model\OrderInterface;
 
 /**
  * Throws away the labels and the customs documents that have been kept long enough.
@@ -61,6 +62,7 @@ final readonly class DocumentPurger
 
         try {
             $settings->assertPurgeUsable();
+            $shortest = $this->settings->shortestDocumentsRetention();
         } catch (InvalidCarrierSettingException $exception) {
             $this->logger->error('Nothing is purged, because a setting cannot be used: {reason}', [
                 'reason' => $exception->getMessage(),
@@ -70,7 +72,10 @@ final readonly class DocumentPurger
             throw $exception;
         }
 
-        $expiredBefore = $this->clock->now()->sub(new \DateInterval(sprintf('PT%dS', $settings->documentsRetention)));
+        // Every channel keeps documents for as long as it says. The shortest of them says where to start looking;
+        // each document is then held to the retention of its own order's channel.
+        $now = $this->clock->now();
+        $expiredBefore = self::before($now, $shortest);
 
         $deleted = 0;
         $failed = 0;
@@ -80,6 +85,10 @@ final readonly class DocumentPurger
         while ([] !== $exports = $this->exportRepository->findWithDocumentsIssuedBefore($expiredBefore, $afterId, self::BATCH)) {
             foreach ($exports as $export) {
                 $afterId = (int) $export->getId();
+                if (!$this->isDue($export, $now)) {
+                    continue;
+                }
+
                 $gone = $this->purgeExport($export, $failed);
 
                 if (0 === $gone) {
@@ -97,6 +106,27 @@ final readonly class DocumentPurger
         $temporaries = $this->collectTemporaries($settings->temporaryDocumentsRetention, $failed);
 
         return new PurgeReport($deleted, $failed, $shipments, $temporaries);
+    }
+
+    /**
+     * Whether the documents of an export have been kept for as long as its order's channel says.
+     */
+    private function isDue(CarrierShipmentExportInterface $export, \DateTimeImmutable $now): bool
+    {
+        $issuedAt = $export->getIssuedAt();
+        if (null === $issuedAt) {
+            return false;
+        }
+
+        $order = $export->getShipment()?->getOrder();
+        $retention = $this->settings->forChannel($order instanceof OrderInterface ? $order->getChannel() : null)->documentsRetention;
+
+        return $issuedAt < self::before($now, $retention);
+    }
+
+    private static function before(\DateTimeImmutable $now, int $seconds): \DateTimeImmutable
+    {
+        return $now->sub(new \DateInterval(sprintf('PT%dS', $seconds)));
     }
 
     /**

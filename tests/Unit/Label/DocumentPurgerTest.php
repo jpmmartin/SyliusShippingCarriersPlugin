@@ -9,6 +9,8 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExport;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabel;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentLabelInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\DocumentPurger;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelStorage;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierShipmentExportRepositoryInterface;
@@ -23,6 +25,10 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
+use Sylius\Component\Core\Model\Channel;
+use Sylius\Component\Core\Model\Order;
+use Sylius\Component\Core\Model\Shipment;
+use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Clock\MockClock;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsFactory;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\RecordingLogger;
@@ -136,6 +142,55 @@ final class DocumentPurgerTest extends TestCase
      * Deleting the file is not deleting the shipment: what went out, who sent it and when has to survive the
      * purge, or the purge costs the shop its own record of what it did.
      */
+    /**
+     * Each document is kept for as long as its own order's channel says. Sixty days old, a document of a channel
+     * that keeps them for thirty is gone, and one of a channel that keeps them for a hundred and eighty is not.
+     */
+    public function testEachDocumentIsKeptForAsLongAsItsOrdersChannelSays(): void
+    {
+        $sixtyDaysAgo = (new \DateTimeImmutable(self::NOW))->modify('-60 days')->format('Y-m-d H:i:s');
+        $this->export(1, $sixtyDaysAgo, ['labels/1/1Z9991-0.gif'], null, 'SHORT');
+        $this->export(2, $sixtyDaysAgo, ['labels/2/1Z9992-0.gif'], null, 'LONG');
+
+        $report = $this->purger($this->settingsOfChannels(['SHORT' => 30 * 24 * 60 * 60, 'LONG' => self::RETENTION]))->purge();
+
+        self::assertFalse($this->storage->fileExists('labels/1/1Z9991-0.gif'));
+        self::assertTrue($this->storage->fileExists('labels/2/1Z9992-0.gif'));
+        self::assertSame(1, $report->deletedFiles);
+    }
+
+    /**
+     * A channel that says nothing keeps them for as long as the configuration says, whatever another channel says.
+     */
+    public function testAChannelThatSaysNothingKeepsDocumentsForTheConfigurationsRetention(): void
+    {
+        $sixtyDaysAgo = (new \DateTimeImmutable(self::NOW))->modify('-60 days')->format('Y-m-d H:i:s');
+        $this->export(1, $sixtyDaysAgo, ['labels/1/1Z9991-0.gif'], null, 'QUIET');
+        $this->export(2, $sixtyDaysAgo, ['labels/2/1Z9992-0.gif'], null, 'SHORT');
+
+        $this->purger($this->settingsOfChannels(['SHORT' => 30 * 24 * 60 * 60]))->purge();
+
+        self::assertTrue($this->storage->fileExists('labels/1/1Z9991-0.gif'));
+        self::assertFalse($this->storage->fileExists('labels/2/1Z9992-0.gif'));
+    }
+
+    /**
+     * A channel's retention below the minimum would delete every document of that channel. The purge does not start.
+     */
+    public function testAChannelsRetentionBelowTheMinimumDeletesNothing(): void
+    {
+        $this->export(1, self::EXPIRED, ['labels/1/1Z9991-0.gif'], null, 'BROKEN');
+
+        try {
+            $this->purger($this->settingsOfChannels(['BROKEN' => 0]))->purge();
+            self::fail('The purge went ahead with a channel keeping documents for no time.');
+        } catch (InvalidCarrierSettingException $exception) {
+            self::assertStringContainsString('documents_retention of the channel "BROKEN" is 0', $exception->getMessage());
+        }
+
+        self::assertTrue($this->storage->fileExists('labels/1/1Z9991-0.gif'));
+    }
+
     public function testWhatWasShippedIsStillOnRecordAfterThePurge(): void
     {
         $export = $this->export(1, self::EXPIRED, ['labels/1/1Z9991-0.gif'], 'labels/1/customs-1Z9991.pdf');
@@ -306,6 +361,35 @@ final class DocumentPurgerTest extends TestCase
         self::assertSame(1, $report->failedFiles);
     }
 
+    /**
+     * The configuration's settings, with the retention each channel named here keeps documents for.
+     *
+     * @param array<string, int> $retentions By channel code
+     */
+    private function settingsOfChannels(array $retentions): CarrierSettingsProvider
+    {
+        $origins = [];
+        foreach ($retentions as $code => $retention) {
+            $channel = new Channel();
+            $channel->setCode($code);
+            $origin = new CarrierShippingOrigin();
+            $origin->setChannel($channel);
+            $origin->setDocumentsRetention($retention);
+            $origins[$code] = $origin;
+        }
+
+        /** @var RepositoryInterface<CarrierShippingOriginInterface>&Stub $originRepository */
+        $originRepository = $this->createStub(RepositoryInterface::class);
+        $originRepository->method('findAll')->willReturn(array_values($origins));
+        $originRepository->method('findOneBy')->willReturnCallback(static function (array $criteria) use ($origins): ?CarrierShippingOrigin {
+            $channel = $criteria['channel'] ?? null;
+
+            return $channel instanceof Channel ? ($origins[(string) $channel->getCode()] ?? null) : null;
+        });
+
+        return CarrierSettingsFactory::provider(documentsRetention: self::RETENTION, temporaryDocumentsRetention: self::TEMPORARY_RETENTION, originRepository: $originRepository);
+    }
+
     private function purger(?CarrierSettingsProvider $settings = null): DocumentPurger
     {
         return new DocumentPurger(
@@ -411,9 +495,19 @@ final class DocumentPurgerTest extends TestCase
     /**
      * @param list<string> $labelPaths
      */
-    private function export(int $id, string $issuedAt, array $labelPaths, ?string $customsDocumentPath): CarrierShipmentExportInterface
+    private function export(int $id, string $issuedAt, array $labelPaths, ?string $customsDocumentPath, ?string $channelCode = null): CarrierShipmentExportInterface
     {
         $export = new CarrierShipmentExport();
+        if (null !== $channelCode) {
+            $channel = new Channel();
+            $channel->setCode($channelCode);
+            $order = new Order();
+            $order->setChannel($channel);
+            $shipment = new Shipment();
+            $order->addShipment($shipment);
+            $export->setShipment($shipment);
+        }
+
         self::identify($export, CarrierShipmentExport::class, $id);
         $export->setState(CarrierShipmentExportInterface::STATE_ISSUED);
         $export->setCarrier('ups');
