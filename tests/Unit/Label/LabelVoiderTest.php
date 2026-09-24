@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\Label;
 
 use Doctrine\Persistence\ObjectManager;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelCarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
@@ -12,14 +13,19 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\VoidResult;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExport;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentExportInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\Exception\NotIssuedException;
 use JpmMartin\SyliusShippingCarriersPlugin\Label\LabelVoider;
 use JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSettingException;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
+use Sylius\Component\Core\Model\Channel;
 use Sylius\Component\Core\Model\Order;
 use Sylius\Component\Core\Model\Shipment;
+use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Tests\JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsFactory;
@@ -38,6 +44,11 @@ final class LabelVoiderTest extends TestCase
 
     /** @var list<string> The references the carrier was told to cancel */
     private array $cancelled = [];
+
+    private ?CarrierCallScope $scope = null;
+
+    /** @var list<float|null> How long each call to the carrier was allowed to take */
+    private array $timeouts = [];
 
     protected function setUp(): void
     {
@@ -157,6 +168,30 @@ final class LabelVoiderTest extends TestCase
         self::assertSame(LogLevel::ERROR, $this->logger->records[0][0] ?? null);
     }
 
+    /**
+     * The carrier is told within the settings of the order's channel, so the request gives up when that channel
+     * says.
+     */
+    public function testTheCarrierIsToldWithTheTimeoutOfTheOrdersChannel(): void
+    {
+        $export = $this->issuedExport();
+        $channel = new Channel();
+        $channel->setCode('WEB');
+        $order = $export->getShipment()?->getOrder();
+        self::assertInstanceOf(Order::class, $order);
+        $order->setChannel($channel);
+
+        $origin = new CarrierShippingOrigin();
+        $origin->setCarrierTimeout(2.5);
+        /** @var RepositoryInterface<CarrierShippingOriginInterface>&Stub $originRepository */
+        $originRepository = $this->createStub(RepositoryInterface::class);
+        $originRepository->method('findOneBy')->willReturn($origin);
+
+        $this->voider(CarrierSettingsFactory::provider(originRepository: $originRepository))->void($export, 'warehouse@example.com');
+
+        self::assertSame([2.5], $this->timeouts);
+    }
+
     public function testAShipmentWithNoIssuedLabelsIsNotCancelled(): void
     {
         $export = new CarrierShipmentExport();
@@ -204,6 +239,7 @@ final class LabelVoiderTest extends TestCase
             new MockClock('2026-09-21 10:00:00'),
             $this->logger,
             $settings ?? CarrierSettingsFactory::provider(),
+            $this->scope ??= new CarrierCallScope(),
         );
     }
 
@@ -211,6 +247,7 @@ final class LabelVoiderTest extends TestCase
     {
         return new class(function (string $reference): void {
             $this->cancelled[] = $reference;
+            $this->timeouts[] = $this->scope?->carrierTimeout();
         }, $this->answer) implements LabelCarrierInterface {
             /**
              * @param \Closure(string): void $record

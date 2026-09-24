@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JpmMartin\SyliusShippingCarriersPlugin\Label;
 
 use Doctrine\Persistence\ObjectManager;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierCredentialsException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
@@ -24,6 +25,7 @@ use League\Flysystem\FilesystemException;
 use Psr\Clock\ClockInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Sylius\Resource\Factory\FactoryInterface;
@@ -60,6 +62,7 @@ final readonly class LabelIssuer implements LabelIssuerInterface
         private ClockInterface $clock,
         private LoggerInterface $logger,
         private CarrierSettingsProvider $settings,
+        private CarrierCallScope $scope,
     ) {
     }
 
@@ -83,8 +86,11 @@ final readonly class LabelIssuer implements LabelIssuerInterface
 
         // Refused before anything is recorded or sent: the carrier would be asked for a format it does not print,
         // or with a timeout that lets it take as long as it likes.
+        $order = $shipment->getOrder();
+        $settings = $this->settings->forChannel($order instanceof OrderInterface ? $order->getChannel() : null);
+
         try {
-            $this->settings->defaults()->assertLabelsUsable($carrier);
+            $settings->assertLabelsUsable($carrier);
         } catch (InvalidCarrierSettingException $exception) {
             $this->logger->error('No label is issued, because a setting cannot be used: {reason}', [
                 'shipment' => $shipment->getId(),
@@ -138,14 +144,14 @@ final readonly class LabelIssuer implements LabelIssuerInterface
         }
 
         try {
-            $result = $labelCarrier->ship($request);
+            $result = $this->scope->within($settings, static fn (): ShipmentResult => $labelCarrier->ship($request));
         } catch (CarrierRejectedRequestException | CarrierCredentialsException $exception) {
             // The carrier answered, and the answer was no.
             return $this->failed($export, $shipment, $carrier, $exception->getMessage());
         } catch (CarrierException $exception) {
             // No usable answer came back. Whether the carrier issued the labels is exactly what nobody knows,
             // so the carrier is asked straight away about the name the plugin gave it.
-            $recovered = $this->recover($labelCarrier, $ownReference, $shipment, $carrier);
+            $recovered = $this->scope->within($settings, fn (): ?ShipmentResult => $this->recover($labelCarrier, $ownReference, $shipment, $carrier));
             if (null === $recovered) {
                 return $this->needsCheck($export, $shipment, $carrier, $exception->getMessage());
             }

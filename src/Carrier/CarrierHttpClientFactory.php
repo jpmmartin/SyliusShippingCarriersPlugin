@@ -16,17 +16,13 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class CarrierHttpClientFactory
 {
-    public static function create(HttpClientInterface $httpClient, float $timeout): ClientInterface
+    /**
+     * @param float $timeout The configuration's, which a call made within a channel's settings replaces
+     */
+    public static function create(HttpClientInterface $httpClient, float $timeout, ?CarrierCallScope $scope = null): ClientInterface
     {
         $psr17Factory = new Psr17Factory();
 
-        return new CarrierHttpClient(
-            $httpClient->withOptions([
-                'timeout' => $timeout,
-                'max_duration' => $timeout,
-            ]),
-            $psr17Factory,
-            $psr17Factory,
-        );
+        return new CarrierHttpClient($httpClient, $psr17Factory, $psr17Factory, $timeout, $scope);
     }
 }

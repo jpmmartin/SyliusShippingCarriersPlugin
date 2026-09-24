@@ -12,11 +12,17 @@
             <argument type="service" id="jpmmartin_carrier.repository.credentials" />
         </service>
 
-        <!-- PSR-18 over Symfony's client, with the carrier timeout. -->
+        <!-- The settings of the call to a carrier being made now, for the channel it is made for. -->
+        <service id="jpmmartin_carrier.carrier.call_scope" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope">
+            <tag name="kernel.reset" method="reset" />
+        </service>
+
+        <!-- PSR-18 over Symfony's client, with the carrier timeout of the channel the call is made for. -->
         <service id="jpmmartin_carrier.carrier.http_client" class="Psr\Http\Client\ClientInterface">
             <factory class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierHttpClientFactory" method="create" />
             <argument type="service" id="http_client" />
             <argument>%jpmmartin_carrier.carrier_timeout%</argument>
+            <argument type="service" id="jpmmartin_carrier.carrier.call_scope" />
         </service>
 
         <!-- Shared by every process, so a carrier's access token is requested once per lifetime. -->
@@ -57,6 +63,7 @@
             <argument type="service" id="jpmmartin_carrier.encrypter" />
             <argument type="service" id="lock.factory" />
             <argument>%jpmmartin_carrier.carrier_timeout%</argument>
+            <argument type="service" id="jpmmartin_carrier.carrier.call_scope" />
         </service>
 
         <service id="jpmmartin_carrier.carrier.fedex" class="JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexCarrier">

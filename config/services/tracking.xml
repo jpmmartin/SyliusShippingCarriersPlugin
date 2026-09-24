@@ -13,6 +13,7 @@
             <argument type="service" id="jpmmartin_carrier.cache.tracking" />
             <argument type="service" id="logger" />
             <argument type="service" id="jpmmartin_carrier.settings" />
+            <argument type="service" id="jpmmartin_carrier.carrier.call_scope" />
             <!-- A failure of a carrier is remembered for one request only. -->
             <tag name="kernel.reset" method="reset" />
         </service>

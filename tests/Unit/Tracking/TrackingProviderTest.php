@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\Tracking;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
@@ -203,6 +204,23 @@ final class TrackingProviderTest extends TestCase
         self::assertCount(2, $this->ups->enquiries);
     }
 
+    /**
+     * The carrier is asked within the settings of the order's channel, so the request gives up when that channel
+     * says.
+     */
+    public function testTheCarrierIsAskedWithTheTimeoutOfTheOrdersChannel(): void
+    {
+        $origin = new CarrierShippingOrigin();
+        $origin->setCarrierTimeout(3.0);
+        /** @var RepositoryInterface<CarrierShippingOriginInterface>&Stub $originRepository */
+        $originRepository = $this->createStub(RepositoryInterface::class);
+        $originRepository->method('findOneBy')->willReturn($origin);
+
+        $this->provider(settings: CarrierSettingsFactory::provider(originRepository: $originRepository))->track($this->shipment(channelCode: 'WEB'));
+
+        self::assertSame([3.0], $this->ups->timeouts);
+    }
+
     public function testAStatusOlderThanItsLifetimeIsAskedAgain(): void
     {
         $provider = $this->provider(lifetime: 60);
@@ -302,6 +320,7 @@ final class TrackingProviderTest extends TestCase
             $this->cache,
             $this->logger,
             $settings ?? CarrierSettingsFactory::provider(trackingLifetime: $lifetime ?? self::LIFETIME),
+            $this->ups->scope = $this->fedex->scope = new CarrierCallScope(),
         );
     }
 

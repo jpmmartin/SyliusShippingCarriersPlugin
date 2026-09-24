@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\Tracking;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
@@ -18,6 +19,11 @@ final class TrackingCarrier implements CarrierInterface
     /** @var list<string> */
     public array $enquiries = [];
 
+    /** @var list<float|null> How long each call was allowed to take, as the scope said when it was made */
+    public array $timeouts = [];
+
+    public ?CarrierCallScope $scope = null;
+
     public function __construct(
         public TrackingInfo|CarrierException $answer,
     ) {
@@ -31,6 +37,7 @@ final class TrackingCarrier implements CarrierInterface
     public function track(string $trackingNumber): TrackingInfo
     {
         $this->enquiries[] = $trackingNumber;
+        $this->timeouts[] = $this->scope?->carrierTimeout();
 
         if ($this->answer instanceof CarrierException) {
             throw $this->answer;

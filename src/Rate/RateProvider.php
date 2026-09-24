@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Rate;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
@@ -59,6 +60,7 @@ final class RateProvider implements RateProviderInterface, ResetInterface
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
         private readonly CarrierSettingsProvider $settings,
+        private readonly CarrierCallScope $scope,
     ) {
     }
 
@@ -118,7 +120,7 @@ final class RateProvider implements RateProviderInterface, ResetInterface
         }
 
         try {
-            $rates = $carrierAdapter->rate($request);
+            $rates = $this->scope->within($settings, static fn (): RateSet => $carrierAdapter->rate($request));
         } catch (CarrierException $exception) {
             // Inside the catch, so a failure remembered for the rest of the request is told once and not once per
             // service asked. The adapters do not log it: they only translate the exception.

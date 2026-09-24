@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JpmMartin\SyliusShippingCarriersPlugin\Label;
 
 use Doctrine\Persistence\ObjectManager;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelCarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\VoidResult;
@@ -15,6 +16,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Settings\Exception\InvalidCarrierSett
 use Psr\Clock\ClockInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Sylius\Component\Core\Model\OrderInterface;
 
 /**
  * Cancels the labels of a shipment with the carrier that issued them.
@@ -36,6 +38,7 @@ final readonly class LabelVoider implements LabelVoiderInterface
         private ClockInterface $clock,
         private LoggerInterface $logger,
         private CarrierSettingsProvider $settings,
+        private CarrierCallScope $scope,
     ) {
     }
 
@@ -59,8 +62,11 @@ final readonly class LabelVoider implements LabelVoiderInterface
             throw new \LogicException(sprintf('The carrier "%s" does not issue labels, so it cancels none.', $carrier));
         }
 
+        $order = $export->getShipment()?->getOrder();
+        $settings = $this->settings->forChannel($order instanceof OrderInterface ? $order->getChannel() : null);
+
         try {
-            $this->settings->defaults()->assertCarrierCallsUsable();
+            $settings->assertCarrierCallsUsable();
         } catch (InvalidCarrierSettingException $exception) {
             $this->logger->error('The carrier is not told to cancel anything, because a setting cannot be used: {reason}', [
                 'shipment' => $export->getShipment()?->getId(),
@@ -72,7 +78,7 @@ final readonly class LabelVoider implements LabelVoiderInterface
         }
 
         try {
-            $result = $labelCarrier->void($reference);
+            $result = $this->scope->within($settings, static fn (): VoidResult => $labelCarrier->void($reference));
         } catch (CarrierException $exception) {
             // The carrier could not even be asked, so nothing is known and nothing is recorded.
             $this->logger->error('The carrier {carrier} could not be told to cancel the shipment {shipment} it calls {reference}: {reason}', [

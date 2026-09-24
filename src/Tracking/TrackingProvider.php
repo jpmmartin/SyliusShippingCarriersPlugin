@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JpmMartin\SyliusShippingCarriersPlugin\Tracking;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
@@ -54,6 +55,7 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
         private readonly CacheItemPoolInterface $cache,
         private readonly LoggerInterface $logger,
         private readonly CarrierSettingsProvider $settings,
+        private readonly CarrierCallScope $scope,
     ) {
     }
 
@@ -105,7 +107,7 @@ final class TrackingProvider implements TrackingProviderInterface, ResetInterfac
         }
 
         try {
-            $tracking = $adapter->track($trackingNumber);
+            $tracking = $this->scope->within($settings, static fn (): TrackingInfo => $adapter->track($trackingNumber));
         } catch (CarrierException $exception) {
             // Inside the catch, so a failure remembered for the rest of the request is told once and not once per
             // shipment of the page. The adapters do not log it: they only translate the exception.

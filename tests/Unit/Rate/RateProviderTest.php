@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\Rate;
 
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\AddressFactory;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
 use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType;
@@ -281,6 +282,26 @@ final class RateProviderTest extends TestCase
         self::assertNull($result->lastKnownRate, 'The channel keeps it for 120 seconds, and 121 have gone by.');
     }
 
+    /**
+     * The carrier is asked within the settings of the order's channel, so the request gives up when that channel
+     * says.
+     */
+    public function testTheCarrierIsAskedWithTheTimeoutOfTheOrdersChannel(): void
+    {
+        $this->originsByChannel['WEB'] = $this->originOfItsOwn(carrierTimeout: 2.5);
+
+        $this->provider()->rateFor($this->shipment(), 'ups', '03');
+
+        self::assertSame([2.5], $this->ups->timeouts);
+    }
+
+    public function testAChannelThatSaysNothingIsAskedWithTheConfigurationsTimeout(): void
+    {
+        $this->provider()->rateFor($this->shipment(), 'ups', '03');
+
+        self::assertSame([10.0], $this->ups->timeouts);
+    }
+
     public function testTheLifetimeAndTheRetentionAreTheConfiguredOnes(): void
     {
         $this->provider(lifetime: 60, retention: 120)->rateFor($this->shipment(), 'ups', '03');
@@ -542,15 +563,17 @@ final class RateProviderTest extends TestCase
             $this->clock,
             $this->logger,
             $settings ?? CarrierSettingsFactory::provider(rateLifetime: $lifetime, rateRetention: $retention, originRepository: $originRepository),
+            $this->ups->scope = new CarrierCallScope(),
         );
     }
 
-    private function originOfItsOwn(?int $rateLifetime = null, ?int $rateRetention = null): CarrierShippingOrigin
+    private function originOfItsOwn(?int $rateLifetime = null, ?int $rateRetention = null, ?float $carrierTimeout = null): CarrierShippingOrigin
     {
         self::assertNotNull($this->origin);
         $origin = clone $this->origin;
         $origin->setRateLifetime($rateLifetime);
         $origin->setRateRetention($rateRetention);
+        $origin->setCarrierTimeout($carrierTimeout);
 
         return $origin;
     }

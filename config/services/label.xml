@@ -43,6 +43,7 @@
             <argument type="service" id="clock" />
             <argument type="service" id="logger" />
             <argument type="service" id="jpmmartin_carrier.settings" />
+            <argument type="service" id="jpmmartin_carrier.carrier.call_scope" />
         </service>
         <service id="JpmMartin\SyliusShippingCarriersPlugin\Label\LabelIssuerInterface" alias="jpmmartin_carrier.label.issuer" />
 
@@ -78,6 +79,7 @@
             <argument type="service" id="clock" />
             <argument type="service" id="logger" />
             <argument type="service" id="jpmmartin_carrier.settings" />
+            <argument type="service" id="jpmmartin_carrier.carrier.call_scope" />
         </service>
         <service id="JpmMartin\SyliusShippingCarriersPlugin\Label\LabelVoiderInterface" alias="jpmmartin_carrier.label.voider" />
 

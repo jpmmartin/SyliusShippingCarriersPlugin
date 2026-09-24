@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex;
 
 use GuzzleHttp\RequestOptions;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\EncrypterInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -28,6 +29,7 @@ final class FedexConnectorFactory
         EncrypterInterface $encrypter,
         private readonly LockFactory $lockFactory,
         private readonly float $timeout,
+        private readonly ?CarrierCallScope $scope = null,
     ) {
         FedexTokenCache::configure($accessTokenPool, $encrypter);
     }
@@ -41,23 +43,22 @@ final class FedexConnectorFactory
 
         $key = hash('sha256', implode("\0", [$clientId, $clientSecret, $endpoint->value]));
 
-        if (!isset($this->connectors[$key])) {
-            $connector = new FedEx(
-                clientId: $clientId,
-                clientSecret: $clientSecret,
-                endpoint: $endpoint,
-                tokenCache: new FedexTokenCache(),
-                tokenLock: new FedexTokenLock($this->lockFactory),
-            );
-            // Saloon passes the connector's config to Guzzle with every request, the token request included.
-            $connector->config()->merge([
-                RequestOptions::CONNECT_TIMEOUT => $this->timeout,
-                RequestOptions::TIMEOUT => $this->timeout,
-            ]);
+        $connector = $this->connectors[$key] ??= new FedEx(
+            clientId: $clientId,
+            clientSecret: $clientSecret,
+            endpoint: $endpoint,
+            tokenCache: new FedexTokenCache(),
+            tokenLock: new FedexTokenLock($this->lockFactory),
+        );
 
-            $this->connectors[$key] = $connector;
-        }
+        // Set on every call, the connector kept or not: the channel the call is made for says how long it may take.
+        // Saloon passes the connector's config to Guzzle with every request, the token request included.
+        $timeout = $this->scope?->carrierTimeout() ?? $this->timeout;
+        $connector->config()->merge([
+            RequestOptions::CONNECT_TIMEOUT => $timeout,
+            RequestOptions::TIMEOUT => $timeout,
+        ]);
 
-        return $this->connectors[$key];
+        return $connector;
     }
 }

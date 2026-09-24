@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\Rate;
 
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
@@ -18,6 +19,11 @@ final class RecordingCarrier implements CarrierInterface
     /** @var list<RateRequest> */
     public array $requests = [];
 
+    /** @var list<float|null> How long each call was allowed to take, as the scope said when it was made */
+    public array $timeouts = [];
+
+    public ?CarrierCallScope $scope = null;
+
     public function __construct(
         public RateSet|CarrierException $answer,
     ) {
@@ -26,6 +32,7 @@ final class RecordingCarrier implements CarrierInterface
     public function rate(RateRequest $request): RateSet
     {
         $this->requests[] = $request;
+        $this->timeouts[] = $this->scope?->carrierTimeout();
 
         if ($this->answer instanceof CarrierException) {
             throw $this->answer;

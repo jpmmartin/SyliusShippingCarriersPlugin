@@ -28,6 +28,8 @@ final readonly class CarrierHttpClient implements ClientInterface
         private HttpClientInterface $httpClient,
         private ResponseFactoryInterface $responseFactory,
         private StreamFactoryInterface $streamFactory,
+        private float $timeout,
+        private ?CarrierCallScope $scope = null,
     ) {
     }
 
@@ -39,9 +41,14 @@ final readonly class CarrierHttpClient implements ClientInterface
                 $body->rewind();
             }
 
+            // Per request, because the channel the call is made for says how long it may take, whether the carrier
+            // stays silent or keeps sending slowly.
+            $timeout = $this->scope?->carrierTimeout() ?? $this->timeout;
             $response = $this->httpClient->request($request->getMethod(), (string) $request->getUri(), [
                 'headers' => $request->getHeaders(),
                 'body' => $body->getContents(),
+                'timeout' => $timeout,
+                'max_duration' => $timeout,
             ]);
 
             $content = $response->getContent(false);

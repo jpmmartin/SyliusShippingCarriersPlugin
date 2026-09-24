@@ -6,6 +6,7 @@ namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Unit\Label;
 
 use Doctrine\Persistence\ObjectManager;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\AddressFactory;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CarrierCallScope;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierUnavailableException;
@@ -105,6 +106,11 @@ final class LabelIssuerTest extends TestCase
 
     /** @var list<object> What the issuer handed to the manager to be stored */
     private array $persisted = [];
+
+    private ?CarrierCallScope $scope = null;
+
+    /** @var array<string, list<float|null>> How long each call to the carrier was allowed to take, by call */
+    private array $timeouts = ['ship' => [], 'recover' => []];
 
     private ?CarrierShipmentPackagingInterface $packaging = null;
 
@@ -315,6 +321,21 @@ final class LabelIssuerTest extends TestCase
         } finally {
             self::assertSame([], $this->requests);
         }
+    }
+
+    /**
+     * Issuing, and asking afterwards whether an unanswered issue went through, are both made within the settings of
+     * the order's channel: each request gives up when that channel says.
+     */
+    public function testTheCarrierIsAskedWithTheTimeoutOfTheOrdersChannel(): void
+    {
+        self::assertInstanceOf(CarrierShippingOrigin::class, $this->origin);
+        $this->origin->setCarrierTimeout(3.5);
+        $this->answer = new CarrierUnavailableException('UPS could not be reached: the request timed out.');
+
+        $this->issuer()->issue($this->shipment(), 'warehouse@example.com');
+
+        self::assertSame(['ship' => [3.5], 'recover' => [3.5]], $this->timeouts);
     }
 
     public function testWithoutStoredCredentialsNothingIsAskedOfTheCarrier(): void
@@ -896,7 +917,8 @@ final class LabelIssuerTest extends TestCase
             $this->manager(),
             new MockClock('2026-09-21 10:00:00'),
             $this->logger,
-            $settings ?? CarrierSettingsFactory::provider(),
+            $settings ?? CarrierSettingsFactory::provider(originRepository: $originRepository),
+            $this->scope ??= new CarrierCallScope(),
         );
     }
 
@@ -950,8 +972,10 @@ final class LabelIssuerTest extends TestCase
     {
         return new class(function (ShipmentRequest $request): void {
             $this->requests[] = $request;
+            $this->timeouts['ship'][] = $this->scope?->carrierTimeout();
         }, $this->answer, $this->recovery, function (string $ownReference): void {
             $this->recovered[] = $ownReference;
+            $this->timeouts['recover'][] = $this->scope?->carrierTimeout();
         }) implements LabelCarrierInterface {
             /**
              * @param \Closure(ShipmentRequest): void $record
