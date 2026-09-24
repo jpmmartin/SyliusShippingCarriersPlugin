@@ -136,21 +136,38 @@ final class JpmMartinSyliusShippingCarriersExtension extends AbstractResourceExt
             return;
         }
 
-        // The directory is resolved here and not left as a parameter reference: `prepend` runs before `load`,
-        // so a parameter of ours does not exist yet when Flysystem's extension is loaded.
-        /** @var array{documents_dir: string} $config */
-        $config = $this->processConfiguration(new Configuration(), $container->getExtensionConfig($this->getAlias()));
-
         $container->prependExtensionConfig('flysystem', [
             'storages' => [
                 self::DOCUMENT_STORAGE => [
                     'adapter' => 'local',
-                    'options' => ['directory' => $config['documents_dir']],
+                    'options' => ['directory' => $this->documentsDir($container)],
                     'visibility' => 'private',
                     'directory_visibility' => 'private',
                 ],
             ],
         ]);
+    }
+
+    /**
+     * The directory as the application wrote it, and nothing else of the configuration.
+     *
+     * Read here and not left as a parameter reference: `prepend` runs before `load`, so a parameter of ours does
+     * not exist yet when Flysystem's extension is loaded. Read raw and not by processing the configuration: at
+     * this point an environment variable is still the text `%env(...)%`, which a numeric setting refuses. A
+     * variable or a parameter in the directory reaches Flysystem as written, and is resolved with its configuration.
+     */
+    private function documentsDir(ContainerBuilder $container): string
+    {
+        $directory = Configuration::DEFAULT_DOCUMENTS_DIR;
+
+        // In the order they are merged: the last configuration that sets it decides it.
+        foreach ($container->getExtensionConfig($this->getAlias()) as $config) {
+            if (is_string($config['documents_dir'] ?? null)) {
+                $directory = $config['documents_dir'];
+            }
+        }
+
+        return $directory;
     }
 
     /**

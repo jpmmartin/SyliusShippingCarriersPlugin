@@ -35,6 +35,8 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 /** @internal */
 final class Configuration implements ConfigurationInterface
 {
+    public const DEFAULT_DOCUMENTS_DIR = '%kernel.project_dir%/var/jpmmartin_carrier/documents';
+
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('jpm_martin_sylius_shipping_carriers');
@@ -61,7 +63,7 @@ final class Configuration implements ConfigurationInterface
                 ->end()
                 ->scalarNode('documents_dir')
                     ->info('Where the labels and the customs documents the plugin issues are kept. Outside the published directory on purpose.')
-                    ->defaultValue('%kernel.project_dir%/var/jpmmartin_carrier/documents')
+                    ->defaultValue(self::DEFAULT_DOCUMENTS_DIR)
                     ->cannotBeEmpty()
                 ->end()
                 ->integerNode('documents_retention')
@@ -83,17 +85,20 @@ final class Configuration implements ConfigurationInterface
                     ->info('What to ask each carrier to print its labels as. The two carriers share no format: UPS does not issue PDF.')
                     ->addDefaultsIfNotSet()
                     ->children()
+                        // An environment variable is checked against an empty string when the container is
+                        // compiled, so the empty string passes here and a written one is refused below, where the
+                        // variable is still a placeholder. What a variable holds is checked when a label is issued.
                         ->scalarNode('ups')
                             ->defaultValue(LabelFormats::DEFAULTS[CarrierCredentialsInterface::CARRIER_UPS])
                             ->validate()
-                                ->ifNotInArray(LabelFormats::SUPPORTED[CarrierCredentialsInterface::CARRIER_UPS])
+                                ->ifTrue(static fn (mixed $format): bool => self::isUnsupportedLabelFormat(CarrierCredentialsInterface::CARRIER_UPS, $format))
                                 ->thenInvalid('UPS does not print labels as %s. It offers GIF, ZPL, EPL and SPL.')
                             ->end()
                         ->end()
                         ->scalarNode('fedex')
                             ->defaultValue(LabelFormats::DEFAULTS[CarrierCredentialsInterface::CARRIER_FEDEX])
                             ->validate()
-                                ->ifNotInArray(LabelFormats::SUPPORTED[CarrierCredentialsInterface::CARRIER_FEDEX])
+                                ->ifTrue(static fn (mixed $format): bool => self::isUnsupportedLabelFormat(CarrierCredentialsInterface::CARRIER_FEDEX, $format))
                                 ->thenInvalid('FedEx is not known to print labels as %s. It offers PDF and ZPLII.')
                             ->end()
                         ->end()
@@ -116,15 +121,27 @@ final class Configuration implements ConfigurationInterface
                     ->end()
                 ->end()
             ->end()
+            // Only when both are written. A setting given by an environment variable is a placeholder here, and a
+            // placeholder compared with a number is a comparison of two strings, which fails or passes by accident.
+            // Values that come from variables are compared when they are used.
             ->validate()
-                ->ifTrue(static fn (array $config): bool => $config['rate_retention'] < $config['rate_lifetime'])
+                ->ifTrue(static fn (array $config): bool => is_int($config['rate_retention']) && is_int($config['rate_lifetime']) && $config['rate_retention'] < $config['rate_lifetime'])
                 ->thenInvalid('rate_retention cannot be less than rate_lifetime: a rate would be gone before it expired.')
+            ->end()
+            ->validate()
+                ->ifTrue(static fn (array $config): bool => '' === ($config['label_formats'][CarrierCredentialsInterface::CARRIER_UPS] ?? null) || '' === ($config['label_formats'][CarrierCredentialsInterface::CARRIER_FEDEX] ?? null))
+                ->thenInvalid('A label format cannot be empty. UPS offers GIF, ZPL, EPL and SPL; FedEx offers PDF and ZPLII.')
             ->end()
         ;
 
         $this->addResourcesSection($rootNode);
 
         return $treeBuilder;
+    }
+
+    private static function isUnsupportedLabelFormat(string $carrier, mixed $format): bool
+    {
+        return '' !== $format && !in_array($format, LabelFormats::SUPPORTED[$carrier], true);
     }
 
     private function addResourcesSection(ArrayNodeDefinition $node): void
