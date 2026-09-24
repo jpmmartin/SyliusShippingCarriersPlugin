@@ -33,3 +33,17 @@ Feature: Giving a channel its own carrier settings
         And the shipping origin of the "United States" channel should say nothing in place of the configuration
         And the "United States" channel should quote rates for "900" seconds
         And the "United States" channel should print "UPS" labels as "GIF"
+
+    Scenario: Trying to keep documents for no time at all
+        When I want to modify the shipping origin of the "United States" channel
+        And I keep the documents of its orders for "0" seconds
+        And I save my changes to the shipping origin
+        Then I should be told that the documents retention cannot be less than "1" seconds
+        And the shipping origin of the "United States" channel should say nothing in place of the configuration
+
+    Scenario: Trying to keep rates for less than the configuration quotes them for
+        When I want to modify the shipping origin of the "United States" channel
+        And I keep its rates as the last known rate for "600" seconds
+        And I save my changes to the shipping origin
+        Then I should be told that a rate cannot be kept for less than the "900" seconds it is quoted for
+        And the shipping origin of the "United States" channel should say nothing in place of the configuration

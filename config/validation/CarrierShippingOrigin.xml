@@ -18,6 +18,11 @@
             <option name="groups">sylius</option>
         </constraint>
 
+        <!-- What the channel says in place of the configuration, held to the configuration's limits. -->
+        <constraint name="JpmMartin\SyliusShippingCarriersPlugin\Validator\Constraints\ChannelCarrierSettings">
+            <option name="groups">sylius</option>
+        </constraint>
+
         <property name="channel">
             <constraint name="NotBlank">
                 <option name="groups">sylius</option>

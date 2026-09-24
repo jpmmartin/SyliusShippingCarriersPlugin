@@ -341,6 +341,25 @@ final class ShippingOriginAdminTest extends WebTestCase
     }
 
     /**
+     * The form offers only what each carrier prints, and a request that sends something else anyway is refused.
+     */
+    public function testALabelFormatTheCarrierDoesNotPrintIsNotSaved(): void
+    {
+        $channel = $this->createChannel('web-admin-format');
+        $this->createCountry('US');
+
+        $crawler = $this->client->request('GET', '/admin/shipping-origins/new');
+        $form = $crawler->filter(sprintf('form[name="%s"]', self::FORM))->form();
+        $form->disableValidation();
+        $form->setValues($this->originIn('web-admin-format') + [self::FORM . '[upsLabelFormat]' => 'PDF']);
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        $this->entityManager->clear();
+        self::assertNull($this->entityManager->getRepository(CarrierShippingOrigin::class)->findOneBy(['channel' => $channel->getId()]));
+    }
+
+    /**
      * @return array<string, string>
      */
     private function originIn(string $channelCode): array

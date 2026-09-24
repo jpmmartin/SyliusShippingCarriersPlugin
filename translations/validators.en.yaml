@@ -10,6 +10,11 @@ jpmmartin_carrier:
             same_as_other_origins: Every shipping origin must use the same units. The others use {{ unit }}.
         services:
             invalid: Write each service on a line of its own, as CODE = Name.
+        carrier_settings:
+            too_short: This cannot be less than {{ minimum }} seconds.
+            rate_retention_below_lifetime: A rate cannot be kept as the last known rate for less than it is quoted for, which is {{ lifetime }} seconds here.
+            rate_lifetime_above_retention: A rate cannot be quoted for longer than it is kept as the last known rate, which the configuration makes {{ retention }} seconds.
+            unsupported_label_format: The carrier does not print labels as {{ format }}. It offers {{ formats }}.
     shipping_method:
         service:
             invalid: Choose one of the services of this carrier.

@@ -59,6 +59,24 @@ final readonly class ManagingShippingOriginsContext implements Context
         $this->updatePage->fillSetting('documents_retention', $seconds);
     }
 
+    #[When('I keep its rates as the last known rate for :seconds seconds')]
+    public function iKeepItsRatesAsTheLastKnownRateForSeconds(string $seconds): void
+    {
+        $this->updatePage->fillSetting('rate_retention', $seconds);
+    }
+
+    #[Then('I should be told that the documents retention cannot be less than :minimum seconds')]
+    public function iShouldBeToldThatTheDocumentsRetentionCannotBeLessThanSeconds(string $minimum): void
+    {
+        Assert::contains($this->updatePage->getValidationMessage('documents_retention'), sprintf('cannot be less than %s seconds', $minimum));
+    }
+
+    #[Then('I should be told that a rate cannot be kept for less than the :lifetime seconds it is quoted for')]
+    public function iShouldBeToldThatARateCannotBeKeptForLessThanTheSecondsItIsQuotedFor(string $lifetime): void
+    {
+        Assert::contains($this->updatePage->getValidationMessage('rate_retention'), sprintf('which is %s seconds here', $lifetime));
+    }
+
     #[When('I print its :carrier labels as :format')]
     public function iPrintItsLabelsAs(string $carrier, string $format): void
     {
