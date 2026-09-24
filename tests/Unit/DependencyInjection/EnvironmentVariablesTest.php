@@ -156,6 +156,26 @@ final class EnvironmentVariablesTest extends TestCase
         self::assertSame('PDF', $formats['fedex'] ?? null);
     }
 
+    public function testTheNameOfAServiceCanComeFromAVariable(): void
+    {
+        $container = $this->compile([['services' => ['ups' => ['02' => '%env(CARRIER_UPS_02_NAME)%']]]]);
+
+        $services = $container->getParameter('jpmmartin_carrier.services');
+        self::assertIsArray($services);
+        self::assertIsArray($services['ups'] ?? null);
+        self::assertSame('%env(CARRIER_UPS_02_NAME)%', $container->resolveEnvPlaceholders($services['ups']['02'] ?? null, '%%env(%s)%%'));
+    }
+
+    /**
+     * Symfony takes no variable for a list, which the documentation says. This keeps it saying the truth.
+     */
+    public function testTheWholeListOfServicesCannotComeFromAVariable(): void
+    {
+        $this->expectException(InvalidTypeException::class);
+
+        $this->compile([['services' => ['ups' => '%env(json:CARRIER_UPS_SERVICES)%']]]);
+    }
+
     /** @var array<array-key, mixed> The configurations the storage bundle was loaded with */
     private array $flysystemConfigs = [];
 
