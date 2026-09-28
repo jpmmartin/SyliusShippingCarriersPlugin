@@ -580,8 +580,9 @@ jobs:
                   done
                   grep -q 'Carrier credentials' page.html \
                       || { echo 'The credentials page does not say what it is.'; exit 1; }
-                  # The upgrade leg's own data, edited with this commit's code: a stored key or a calculator
-                  # it no longer understands shows up here.
+                  # The upgrade leg's own data, edited with this commit's code: a calculator this commit no
+                  # longer has, or a stored value its form can no longer load, shows up here. A key renamed
+                  # without a migration does not: the form ignores what it does not know.
                   if [ -f ../extra-pages.txt ]; then
                       while IFS= read -r page; do
                           status=$(curl -s -o page.html -w '%{http_code}' -b "$jar" "http://127.0.0.1:8000$page")
