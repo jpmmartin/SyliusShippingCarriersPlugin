@@ -405,6 +405,18 @@ still present alongside the plugin's own code.
   to `recipe/**`; dispatched with `recipe_source: contrib`, it installs from contrib instead. What a store
   receives is the copy in symfony/recipes-contrib, so a change to `recipe/` reaches nobody until a pull
   request there is merged. The two YAML files it copies are the README's blocks, byte for byte.
+- **Upgrading from the previous release is executed too.** The `upgrade` leg of *Install* starts from the
+  last tag before the commit under test (`git describe --tags --abbrev=0 HEAD^`), so a release run starts
+  from the release before it; with no tag the leg fails rather than passing without an upgrade. It installs
+  that release from Packagist with contrib's recipe, gives the store a configuration file of its own, a
+  shipping origin and a `ups_rate` shipping method, then requires the commit through a path repository and
+  migrates. It fails when a column the store had is gone, when a row it had in the plugin's tables or in
+  `sylius_shipping_method` has changed, when the configuration no longer applies (`debug:config`), or when
+  the admin cannot open the origin or the method. A configuration the new code rejects fails already at the
+  `composer require`, because Sylius Standard runs `cache:clear` as a Composer script. What it does not
+  prove is that new code reads old data correctly: a stored key renamed without a migration leaves the rows
+  identical and the edit page at 200, since a form ignores data it does not know. `RELEASING.md` calls that
+  change breaking anyway.
 - **How a release is cut, and what counts as breaking in this package, is in `RELEASING.md`.** The
   consumer's side is `docs/upgrading.md`.
 

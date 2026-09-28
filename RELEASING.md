@@ -47,7 +47,8 @@ finds out what to do, and by the time they read it the upgrade has already faile
 
 ## Cutting a release
 
-1. `composer check` is green locally, and the *Build* workflow is green on `main`.
+1. `composer check` is green locally, and the *Build* workflow is green on `main`. So is *Install*,
+   dispatched by hand on `main`: a push does not run it.
 2. Move the `## [Unreleased]` section of `CHANGELOG.md` under the new version heading with today's
    date, and open a fresh empty `## [Unreleased]`. Update the link definitions at the foot of the
    file.
@@ -56,9 +57,21 @@ finds out what to do, and by the time they read it the upgrade has already faile
 5. Packagist publishes from the tag. There is nothing to upload; the first release only needs the
    repository submitted to Packagist once.
 
-Publishing the release on GitHub runs the *Install* workflow, which installs that version into a
-store that has never seen it by running the commands its README gives. A red *Install* on a release
-means the README is wrong for everyone who reads it from then on, and is fixed before anything else.
+*Install* has three legs, and a red one means something different in each:
+
+- **`readme`** installs into a store that has never seen the plugin, by running the commands the README
+  gives. Red means the README is wrong for everyone who reads it.
+- **`recipe`** installs the same way through the Flex recipe in `recipe/`. Red means that recipe does
+  not install this version. Dispatching with `recipe_source: contrib` checks the copy stores actually get.
+- **`upgrade`** installs the release before this commit, gives it a configuration and data of its own,
+  and upgrades it to this commit. Red means a store on that release cannot upgrade without changing what
+  it wrote or losing what it stored. Either that gets fixed, or it is a breaking change and follows the
+  rules above. Then, and only then, a red `upgrade` is expected, and the step it stops at is what the
+  migration note has to cover.
+
+Publishing the release on GitHub runs *Install* again, on the tag. By then the version is on Packagist,
+which is why step 1 asks for it on `main` first. A red *Install* on a release is fixed before anything
+else.
 
 ## The development branch alias
 
