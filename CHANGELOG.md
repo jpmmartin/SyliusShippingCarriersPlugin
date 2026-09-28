@@ -8,6 +8,14 @@ here, and what counts as a breaking change, are written down in [RELEASING.md](R
 
 ## [Unreleased]
 
+### Added
+
+- **A Symfony Flex recipe, in symfony/recipes-contrib.** On a store with Flex, `composer require`
+  registers the bundle, imports the plugin's configuration and its admin routes, adds the ignore
+  rule for the encryption key and declares its path in `.env`. It prints the two steps it leaves on
+  purpose: generating the key and running the migrations. The README now starts the installation
+  with it and keeps the edits by hand for a store without Flex or without the recipe.
+
 ## [1.1.0] - 2026-09-25
 
 ### Added

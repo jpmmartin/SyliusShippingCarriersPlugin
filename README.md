@@ -59,9 +59,11 @@ Not in your hands, so worth starting before anything else:
 
 ## Installation
 
-Five steps. **On a store with Symfony Flex — Sylius Standard has it — step 1 also does step 2**:
-Composer registers the bundle itself and says *Configuring jpmmartin/sylius-shipping-carriers-plugin
-… From auto-generated recipe*. A store without Flex does all five by hand.
+**On a store with Symfony Flex — Sylius Standard has it — installing is three commands.** The
+plugin's recipe in [symfony/recipes-contrib](https://github.com/symfony/recipes-contrib) does the file
+edits while Composer installs the package. A store without Flex, or one that answered *no* to the
+recipe, makes those edits by hand: see
+[By hand, without Flex or without the recipe](#by-hand-without-flex-or-without-the-recipe).
 
 ### 1. Require the package
 
@@ -69,11 +71,58 @@ Composer registers the bundle itself and says *Configuring jpmmartin/sylius-ship
 composer require jpmmartin/sylius-shipping-carriers-plugin
 ```
 
-Nothing else works until this is done, and Composer will say so plainly. **On a store with Flex, do
-step 3 straight after**: from this moment the bundle is registered, its admin menu links to routes
-that do not exist yet, and every admin page answers 500 until they do. The shop keeps working.
+Composer says *Configuring jpmmartin/sylius-shipping-carriers-plugin (>=1.0): From
+github.com/symfony/recipes-contrib:main*. The recipe does four things:
 
-### 2. Register the bundle
+- registers the bundle;
+- imports the plugin's configuration and its admin routes;
+- adds the ignore rule for the encryption key to `.gitignore`;
+- declares `JPMMARTIN_CARRIER_ENCRYPTION_KEY_PATH` in `.env`.
+
+Then it prints the two steps below, which it does not do on purpose. A recipe could only run them on
+every `composer install` and `composer update`, and a key generated again on every deployment would
+leave the stored credentials unreadable. Migrating a database is not a recipe's job either.
+
+If Composer says *From auto-generated recipe* instead, the store does not take recipes from
+symfony/recipes-contrib (`extra.symfony.allow-contrib` in its `composer.json`), and only the bundle
+was registered. Make the other edits by hand before step 2.
+
+### 2. Generate the key that encrypts the carrier credentials
+
+A carrier's credentials are stored encrypted, with a key of their own, separate from Sylius's payment
+key. It lives at `config/encryption/jpmmartin_carrier.key` unless `JPMMARTIN_CARRIER_ENCRYPTION_KEY_PATH`
+points somewhere else.
+
+```bash
+bin/console jpmmartin:carrier:generate-key
+```
+
+Skip this and the first set of credentials you save fails with *Invalid encryption key.*, which does
+not say that the file is missing. Run again, the command asks before replacing the key, and answers
+*no* by itself when nobody is there to ask; `--overwrite` replaces it without asking. Either way,
+replacing it leaves every credential already stored unreadable, and they have to be typed again.
+Keep the file across deployments the way you keep your other secrets.
+
+### 3. Run the migrations
+
+The plugin adds eleven tables, all named `jpmmartin_carrier_*`.
+
+```bash
+bin/console doctrine:migrations:migrate
+```
+
+**Skip this and every buyer's checkout fails at the address step**, whether or not any shipping
+method uses a carrier yet — on PostgreSQL, with *relation "jpmmartin_carrier_order_destination" does
+not exist*. So do the screens the plugin adds, and the edit page of every product variant.
+
+### By hand, without Flex or without the recipe
+
+Three edits, made after step 1 and before step 2. **On a store with Flex that did not take the
+recipe, make them straight after step 1**: from that moment the bundle is registered, its admin menu
+links to routes that do not exist yet, and every admin page answers 500 until they do. The shop keeps
+working.
+
+**Register the bundle.**
 
 ```php
 # config/bundles.php
@@ -86,13 +135,13 @@ return [
 
 With Flex the line is already there.
 
-Skip this with step 3 done and the store does not start: every page and every console command fails
-with *Bundle "JpmMartinSyliusShippingCarriersPlugin" does not exist or it is not enabled*, which at
-least names the cause. Skip both, and the plugin is installed but not loaded — **UPS rates** and
-**FedEx rates** never appear among the calculators of a shipping method, which looks like a package
-that failed to install.
+Skip this with the imports below in place and the store does not start: every page and every console
+command fails with *Bundle "JpmMartinSyliusShippingCarriersPlugin" does not exist or it is not
+enabled*, which at least names the cause. Skip both, and the plugin is installed but not loaded —
+**UPS rates** and **FedEx rates** never appear among the calculators of a shipping method, which
+looks like a package that failed to install.
 
-### 3. Import its configuration and routes
+**Import its configuration and routes.**
 
 ```yaml
 # config/packages/jpmmartin_shipping_carriers.yaml
@@ -121,41 +170,13 @@ are simply not there.
 without it the plugin's screens open outside the admin and fail. Its downloads and its label actions
 check that whoever asks is an administrator in any case.
 
-### 4. Generate the key that encrypts the carrier credentials
-
-A carrier's credentials are stored encrypted, with a key of their own, separate from Sylius's payment
-key. It lives at `config/encryption/jpmmartin_carrier.key` unless `JPMMARTIN_CARRIER_ENCRYPTION_KEY_PATH`
-points somewhere else.
-
-**Keep it out of your repository — Sylius Standard's `.gitignore` does not.** It ignores nothing
+**Keep the key out of your repository — Sylius Standard's `.gitignore` does not.** It ignores nothing
 under `config/encryption/`, so a key generated there is committed with the next `git add`:
 
 ```gitignore
 # .gitignore
 /config/encryption/jpmmartin_carrier.key
 ```
-
-```bash
-bin/console jpmmartin:carrier:generate-key
-```
-
-Skip this and the first set of credentials you save fails with *Invalid encryption key.*, which does
-not say that the file is missing. Run again, the command asks before replacing the key, and answers
-*no* by itself when nobody is there to ask; `--overwrite` replaces it without asking. Either way,
-replacing it leaves every credential already stored unreadable, and they have to be typed again.
-Keep the file across deployments the way you keep your other secrets.
-
-### 5. Run the migrations
-
-The plugin adds eleven tables, all named `jpmmartin_carrier_*`.
-
-```bash
-bin/console doctrine:migrations:migrate
-```
-
-**Skip this and every buyer's checkout fails at the address step**, whether or not any shipping
-method uses a carrier yet — on PostgreSQL, with *relation "jpmmartin_carrier_order_destination" does
-not exist*. So do the screens the plugin adds, and the edit page of every product variant.
 
 ## Setting up the store
 

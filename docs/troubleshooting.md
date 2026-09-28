@@ -7,13 +7,29 @@ buyer's address step, a variant without a weight surfaces as a shipping method t
 If you are reading this during an install, the fastest thing you can do is re-read the README's
 install steps in order and check each one — most of what follows is a step that was skipped.
 
+**What the recipe does, and what it leaves.** On a store with Symfony Flex, `composer require` applies
+the plugin's recipe from symfony/recipes-contrib. The recipe:
+
+- registers the bundle;
+- imports the configuration and the routes;
+- adds the ignore rule for the key;
+- declares the key's path in `.env`.
+
+The first four entries below cannot happen after it. It does not generate the key or run the
+migrations, which is why the two after them can.
+
+If one of the first four happens anyway, look at what Composer said while installing:
+*From auto-generated recipe* means the store did not take the recipe, and only the bundle was
+registered. That is the case of a store whose `composer.json` does not allow contrib recipes
+(`extra.symfony.allow-contrib`), or of one that answered *no*.
+
 ## The store does not start: *Bundle "JpmMartinSyliusShippingCarriersPlugin" does not exist*
 
 **What you see:** every page, and every console command including `cache:clear`, fails with *Bundle
 "JpmMartinSyliusShippingCarriersPlugin" does not exist or it is not enabled*.
 
-**What was missed:** README **step 2**. The configuration of step 3 names the bundle, and the bundle
-is not registered.
+**What was missed:** *Register the bundle*, in the README's **By hand** section. The configuration
+import names the bundle, and the bundle is not registered.
 
 **How to confirm:** `config/bundles.php` has no line for
 `JpmMartin\SyliusShippingCarriersPlugin\JpmMartinSyliusShippingCarriersPlugin`. On a store with
@@ -25,16 +41,17 @@ hand, does not have it.
 **What you see:** the dashboard and every other admin page fail with *Unable to generate a URL for the
 named route "jpmmartin_carrier_admin_…" as such route does not exist*. The shop works.
 
-**What was missed:** the routes of README **step 3**. The plugin adds entries to the admin menu, the
-menu is drawn on every admin page, and the routes it links to were never imported. On a store with
-Flex this is the state right after `composer require`, until step 3 is done.
+**What was missed:** the routes of *Import its configuration and routes*, in the README's **By hand**
+section. The plugin adds entries to the admin menu, the menu is drawn on every admin page, and the
+routes it links to were never imported. On a store with Flex that did not take the recipe, this is the
+state right after `composer require`, until they are imported.
 
 **How to confirm:** `bin/console debug:router | grep jpmmartin_carrier_admin` prints nothing. Imported
 as the README shows, it prints the plugin's admin routes, every one of them under `/admin/`.
 
 ## The plugin's screens answer 500 once you open them, and their addresses do not start with `/admin/`
 
-**What was missed:** the `prefix` of the routes in README **step 3**. Sylius's admin firewall is
+**What was missed:** the `prefix` of the routes, in the README's **By hand** section. Sylius's admin firewall is
 defined by the admin path, and the plugin's screens were mounted outside it. Its downloads and label
 actions still refuse anyone who is not an administrator; the screens themselves cannot render.
 
@@ -43,8 +60,8 @@ actions still refuse anyone who is not an administrator; the screens themselves 
 
 ## *UPS rates* and *FedEx rates* are not among the calculators of a shipping method
 
-**What was missed:** README **step 2**, in its quieter form — the bundle is not registered and nothing
-names it either, so the plugin is installed but not loaded.
+**What was missed:** *Register the bundle*, in its quieter form — the bundle is not registered and
+nothing names it either, so the plugin is installed but not loaded.
 
 **How to confirm:** `bin/console debug:container --tag=sylius.shipping_calculator` lists neither
 `ups_rate` nor `fedex_rate`.
@@ -54,7 +71,7 @@ names it either, so the plugin is installed but not loaded.
 **What you see:** nothing wrong at all. The admin works, the plugin's own screens open — but its
 sections inside Sylius's screens are missing.
 
-**What was missed:** the configuration import of README **step 3**. The routes can be imported without
+**What was missed:** the configuration import, in the README's **By hand** section. The routes can be imported without
 it, and then the plugin is reachable but none of its pieces of Sylius's screens are registered.
 
 **How to confirm:** `bin/console debug:config sylius_twig_hooks | grep -c JpmMartinSyliusShippingCarriersPlugin`
@@ -62,8 +79,8 @@ prints `0`.
 
 ## Saving carrier credentials fails with *Invalid encryption key.*
 
-**What was missed:** README **step 4**. There is no key where the store looks for one, and the message
-does not say that the file is missing.
+**What was missed:** README **step 2**, the key. The recipe leaves it to you on purpose. There is no key
+where the store looks for one, and the message does not say that the file is missing.
 
 **How to confirm:** `bin/console debug:container --env-var=JPMMARTIN_CARRIER_ENCRYPTION_KEY_PATH`
 prints the path the store reads, and there is no file at it.
@@ -74,7 +91,7 @@ prints the path the store reads, and there is no file at it.
 method uses a carrier. So do the plugin's admin screens and the edit page of every product variant,
 each naming a table that starts with `jpmmartin_carrier_`.
 
-**What was missed:** README **step 5**, the migrations.
+**What was missed:** README **step 3**, the migrations, which the recipe leaves to you as well.
 
 **How to confirm:** `bin/console doctrine:migrations:list | grep JpmMartin` shows the plugin's
 migrations as not migrated, or shows none at all.

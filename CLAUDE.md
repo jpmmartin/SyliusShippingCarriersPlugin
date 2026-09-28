@@ -400,6 +400,11 @@ still present alongside the plugin's own code.
   `## Setting up the store`, and `bin/apply-readme-edits` mirrors the `php`, `yaml` and `gitignore`
   blocks of that section. A command belongs in a `bash` fence and nothing else does; change the shape
   of one of the mirrored blocks and that script must change with it.
+- **The Flex recipe lives in `recipe/`, laid out the way symfony/recipes-contrib is.** The `recipe` leg of
+  *Install* compiles it with `symfony-tools/recipes-checker` and installs a store from it on every change
+  to `recipe/**`; dispatched with `recipe_source: contrib`, it installs from contrib instead. What a store
+  receives is the copy in symfony/recipes-contrib, so a change to `recipe/` reaches nobody until a pull
+  request there is merged. The two YAML files it copies are the README's blocks, byte for byte.
 - **How a release is cut, and what counts as breaking in this package, is in `RELEASING.md`.** The
   consumer's side is `docs/upgrading.md`.
 
