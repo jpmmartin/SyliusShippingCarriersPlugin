@@ -1,6 +1,7 @@
 # Installs this plugin into a store that has never seen it, two ways — by running the commands the
 # README publishes and mirroring the file edits it shows, and by letting the Flex recipe in `recipe/`
-# do the file edits — and checks that both end in the same working store.
+# do the file edits — and upgrades a third store, which has the release before this one with data and
+# a configuration of its own, to this one. All three end in the same checks of a working store.
 name: Install
 
 on:
@@ -38,7 +39,8 @@ permissions:
 
 jobs:
     install:
-        name: "A store that has never seen this plugin, installed from the ${{ matrix.path }}"
+        # The first two keep the name they always had, which is what a required check would be naming.
+        name: "${{ matrix.path == 'upgrade' && 'A store on the previous release, upgraded to this one' || format('A store that has never seen this plugin, installed from the {0}', matrix.path) }}"
         runs-on: ubuntu-latest
 
         strategy:
@@ -47,8 +49,13 @@ jobs:
                 # `readme`: the README's own commands, extracted, and its file edits, mirrored.
                 # `recipe`: the Flex recipe in `recipe/`, compiled into an endpoint the store is pointed at,
                 # so that `composer require` does the file edits itself — which is what a Sylius Standard
-                # store gets once the recipe is in symfony/recipes-contrib. Both end in the same checks.
-                path: [readme, recipe]
+                # store gets once the recipe is in symfony/recipes-contrib.
+                # `upgrade`: the release before this commit, from Packagist with contrib's recipe, given a
+                # configuration and data of its own, then upgraded to this commit and migrated. What it
+                # proves is what docs/upgrading.md promises of a minor release: nothing written has to
+                # change, and nothing stored is lost or altered.
+                # All three end in the same checks.
+                path: [readme, recipe, upgrade]
 
         services:
             postgres:
@@ -70,10 +77,13 @@ jobs:
             RECIPE_SOURCE: ${{ inputs.recipe_source || 'local' }}
 
         steps:
+            # With its whole history and its tags, which is where the upgrade leg finds the release before
+            # this commit. The repository is small enough that no leg pays for it noticeably.
             - name: Check out the plugin
               uses: actions/checkout@v5
               with:
                   path: plugin
+                  fetch-depth: 0
 
             # 8.4, not the 8.2 the plugin itself supports, and the reason is the store rather than the
             # plugin: Sylius Standard 2.2 requires PHP 8.3. Whether the plugin works on 8.2 is
@@ -107,8 +117,10 @@ jobs:
             - name: Create a throwaway store
               run: composer create-project sylius/sylius-standard store --no-interaction --no-scripts
 
-            # Copied into vendor/, not symlinked, because a copy is what Packagist gives a reader.
+            # Copied into vendor/, not symlinked, because a copy is what Packagist gives a reader. The upgrade
+            # leg does this itself, once the release before this one is installed.
             - name: Point it at the plugin under test
+              if: matrix.path != 'upgrade'
               working-directory: store
               run: |
                   composer config repositories.plugin '{"type": "path", "url": "../plugin", "options": {"symlink": false}}'
@@ -229,10 +241,38 @@ jobs:
                   grep -q '^JPMMARTIN_CARRIER_ENCRYPTION_KEY_PATH=' .env \
                       || { echo 'The recipe did not declare the key path in .env.'; exit 1; }
 
+            # ── The upgrade path, up to the release before this one ─────────────────────────────────
+
+            # HEAD^, not HEAD: on a release run HEAD carries the tag being published, and the store starts
+            # from the one before it. On a pull request HEAD is the merge commit, whose first parent is the
+            # base branch; dispatched, it is the branch's tip. No tag fails rather than skips: a leg that
+            # goes green having upgraded nothing is the failure this workflow guards against elsewhere.
+            - name: Find the release before this commit
+              if: matrix.path == 'upgrade'
+              run: |
+                  set -euo pipefail
+                  previous=$(git -C plugin describe --tags --abbrev=0 HEAD^ 2>/dev/null) \
+                      || { echo 'No release before this commit to upgrade from. Were the tags checked out?'; exit 1; }
+                  echo "Upgrading from $previous."
+                  echo "PREVIOUS_RELEASE=${previous#v}" >> "$GITHUB_ENV"
+
+            # From Packagist, with the recipe the store's own endpoints give it — contrib's, through
+            # `flex://defaults` with `allow-contrib` — which is how a store that has it installed got it.
+            - name: Install that release as a store would
+              if: matrix.path == 'upgrade'
+              working-directory: store
+              run: |
+                  set -euo pipefail
+                  composer require "jpmmartin/sylius-shipping-carriers-plugin:$PREVIOUS_RELEASE" --no-interaction --no-progress 2>&1 | tee ../require.log
+                  grep -qE 'Configuring jpmmartin/sylius-shipping-carriers-plugin \(>=[0-9.]+\): From github.com/symfony/recipes-contrib:main' ../require.log \
+                      || { echo "Flex did not configure $PREVIOUS_RELEASE with the recipe from symfony/recipes-contrib."; exit 1; }
+
+            # ── Both paths that install with the recipe ──────────────────────────────────────────────
+
             # What the recipe printed, done as printed: the commands come out of Composer's own output,
             # so a message that names the wrong command fails here rather than in a reader's store.
             - name: Do what the recipe said was left
-              if: matrix.path == 'recipe'
+              if: matrix.path != 'readme'
               working-directory: store
               run: |
                   set -euo pipefail
@@ -244,6 +284,230 @@ jobs:
                       eval "$command" < /dev/null
                       echo '::endgroup::'
                   done 3< ../left.txt
+
+            # ── The upgrade path, from that release to this commit ───────────────────────────────────
+
+            # Keys every 1.x release takes, at values none of which is a default, so that afterwards a value
+            # that applies can be told from one that was dropped. Compiled with the release it was written
+            # for, so that a mistake in the file is not taken for the upgrade's.
+            - name: Give the store a configuration of its own
+              if: matrix.path == 'upgrade'
+              working-directory: store
+              run: |
+                  set -euo pipefail
+                  cat > config/packages/carrier_settings_of_this_store.yaml <<'YAML'
+                  jpm_martin_sylius_shipping_carriers:
+                      rate_lifetime: 1200
+                      rate_retention: 7200
+                      tracking_lifetime: 600
+                      label_formats:
+                          ups: 'ZPL'
+                      services:
+                          ups:
+                              '02': 'UPS 2nd Day Air'
+                  YAML
+                  bin/console cache:clear
+
+            # Through the plugin's public surface only — the origin's interface, the calculator's name and
+            # the configuration keys docs/extending.md names — so that any earlier 1.x release takes it.
+            # The two pages that edit them are checked once the store is upgraded.
+            - name: Leave what a store has by then
+              if: matrix.path == 'upgrade'
+              working-directory: store
+              run: |
+                  set -euo pipefail
+                  cat > ../leave-data.php <<'PHP'
+                  <?php
+                  use App\Kernel;
+                  use Symfony\Component\Dotenv\Dotenv;
+
+                  require getcwd() . '/vendor/autoload.php';
+                  (new Dotenv())->bootEnv(getcwd() . '/.env');
+                  $kernel = new Kernel($_SERVER['APP_ENV'], (bool) $_SERVER['APP_DEBUG']);
+                  $kernel->boot();
+                  $container = $kernel->getContainer();
+
+                  // The channel and the zone of Sylius's default fixtures.
+                  $channel = $container->get('sylius.repository.channel')->findOneBy(['code' => 'FASHION_WEB'])
+                      ?? throw new RuntimeException('No FASHION_WEB channel. Were the fixtures loaded?');
+                  $zone = $container->get('sylius.repository.zone')->findOneBy(['code' => 'WORLD'])
+                      ?? throw new RuntimeException('No WORLD zone. Were the fixtures loaded?');
+
+                  $origin = $container->get('jpmmartin_carrier.factory.shipping_origin')->createNew();
+                  $origin->setChannel($channel);
+                  $origin->setCompanyName('The store');
+                  $origin->setContactName('Ada Lovelace');
+                  $origin->setPhone('3125550100');
+                  $origin->setStreet('1 Main St');
+                  $origin->setCity('Chicago');
+                  $origin->setPostcode('60601');
+                  $origin->setCountryCode('US');
+                  $origin->setDefaultDestinationType('commercial');
+                  $container->get('jpmmartin_carrier.repository.shipping_origin')->add($origin);
+
+                  // A service the store's own configuration adds, charged at a flat amount when UPS fails.
+                  $method = $container->get('sylius.factory.shipping_method')->createNew();
+                  $method->setCode('ups_2nd_day_air');
+                  $method->setEnabled(true);
+                  $method->setZone($zone);
+                  $method->addChannel($channel);
+                  $method->setCurrentLocale('en_US');
+                  $method->setFallbackLocale('en_US');
+                  $method->setName('UPS 2nd Day Air');
+                  $method->setCalculator('ups_rate');
+                  $method->setConfiguration([
+                      'service' => '02',
+                      'failure_policy' => 'flat',
+                      'flat_amount' => [$channel->getCode() => 1500],
+                  ]);
+                  $container->get('sylius.repository.shipping_method')->add($method);
+
+                  printf("/admin/shipping-origins/%d/edit\n/admin/shipping-methods/%d/edit\n", $origin->getId(), $method->getId());
+                  PHP
+                  php ../leave-data.php | tee ../extra-pages.txt
+                  test "$(wc -l < ../extra-pages.txt)" = '2'
+
+            # Every table of the plugin and the shipping methods, in the columns each has now, one row a
+            # line. Afterwards the same columns are read again: one the upgrade drops or renames is named,
+            # and a value it changes shows in a diff. Columns the upgrade adds are not compared, because
+            # what a new column holds is the new release's decision.
+            - name: Note what the store holds
+              if: matrix.path == 'upgrade'
+              working-directory: store
+              run: |
+                  set -euo pipefail
+                  cat > ../snapshot.php <<'PHP'
+                  <?php
+                  // snapshot.php before <dir>
+                  // snapshot.php after <dir> <before-dir>
+                  use App\Kernel;
+                  use Symfony\Component\Dotenv\Dotenv;
+
+                  require getcwd() . '/vendor/autoload.php';
+                  (new Dotenv())->bootEnv(getcwd() . '/.env');
+                  $kernel = new Kernel($_SERVER['APP_ENV'], (bool) $_SERVER['APP_DEBUG']);
+                  $kernel->boot();
+                  $connection = $kernel->getContainer()->get('doctrine')->getConnection();
+                  $schema = $connection->createSchemaManager();
+                  $columnsOf = static fn (string $table): array => array_values(array_map(
+                      static fn ($column): string => $column->getName(),
+                      $schema->listTableColumns($table),
+                  ));
+
+                  [, $mode, $dir] = $argv;
+                  is_dir($dir) || mkdir($dir, 0777, true);
+
+                  $tables = [];
+                  if ('before' === $mode) {
+                      foreach ($schema->listTableNames() as $table) {
+                          if (str_starts_with($table, 'jpmmartin_carrier_') || 'sylius_shipping_method' === $table) {
+                              $tables[$table] = $columnsOf($table);
+                              file_put_contents("$dir/$table.columns", implode("\n", $tables[$table]) . "\n");
+                          }
+                      }
+                  } else {
+                      $lost = [];
+                      $now = $schema->listTableNames();
+                      foreach (glob($argv[3] . '/*.columns') as $file) {
+                          $table = basename($file, '.columns');
+                          $had = file($file, FILE_IGNORE_NEW_LINES);
+                          if (!in_array($table, $now, true)) {
+                              $lost[] = "the table $table";
+                              continue;
+                          }
+                          foreach (array_diff($had, $columnsOf($table)) as $column) {
+                              $lost[] = "$table.$column";
+                          }
+                          $tables[$table] = $had;
+                      }
+                      if ([] !== $lost) {
+                          fwrite(STDERR, 'The upgrade dropped or renamed what the store had: ' . implode(', ', $lost) . ".\n");
+                          exit(1);
+                      }
+                  }
+
+                  // Sorted here rather than by the database: PostgreSQL cannot order by a json column.
+                  foreach ($tables as $table => $columns) {
+                      $select = implode(', ', array_map($connection->quoteIdentifier(...), $columns));
+                      $rows = array_map(
+                          static fn (array $row): string => json_encode($row, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                          $connection->fetchAllAssociative("SELECT $select FROM " . $connection->quoteIdentifier($table)),
+                      );
+                      sort($rows);
+                      file_put_contents("$dir/$table.rows", implode("\n", $rows) . "\n");
+                  }
+                  PHP
+                  php ../snapshot.php before ../before
+                  ls ../before
+                  grep -q '"city":"Chicago"' ../before/jpmmartin_carrier_shipping_origin.rows \
+                      || { echo 'The origin left for the upgrade is not in the snapshot.'; exit 1; }
+                  grep -q '"calculator":"ups_rate"' ../before/sylius_shipping_method.rows \
+                      || { echo 'The shipping method left for the upgrade is not in the snapshot.'; exit 1; }
+
+            # Whatever version Composer guesses for a detached checkout, the path repository comes first
+            # and is canonical, so it is the only place this package is looked for; `*@dev` is because the
+            # release's own constraint takes no guessed version. Sylius Standard runs cache:clear as a
+            # Composer script here, so a configuration this commit no longer takes fails in this step, with
+            # the container's own message — as it would in a real store.
+            - name: Upgrade to this commit
+              if: matrix.path == 'upgrade'
+              working-directory: store
+              run: |
+                  set -euo pipefail
+                  composer config repositories.plugin '{"type": "path", "url": "../plugin", "options": {"symlink": false}}'
+                  composer config minimum-stability dev
+                  composer require 'jpmmartin/sylius-shipping-carriers-plugin:*@dev' --no-interaction --no-progress 2>&1 | tee ../upgrade.log
+                  # Proven rather than assumed: a store left on the release would pass everything below.
+                  for dir in src config; do
+                      diff -rq "../plugin/$dir" "vendor/jpmmartin/sylius-shipping-carriers-plugin/$dir" \
+                          || { echo "vendor/ does not hold this commit's $dir/. The store was not upgraded to it."; exit 1; }
+                  done
+
+            - name: Its configuration compiles as it was written, and still applies
+              if: matrix.path == 'upgrade'
+              working-directory: store
+              run: |
+                  set -euo pipefail
+                  bin/console cache:clear
+                  bin/console debug:config jpm_martin_sylius_shipping_carriers --format=json > ../config.json
+                  php <<'PHP'
+                  <?php
+                  $config = json_decode(file_get_contents('../config.json'), true, 512, JSON_THROW_ON_ERROR)['jpm_martin_sylius_shipping_carriers'];
+                  $applied = [
+                      'rate_lifetime' => [$config['rate_lifetime'] ?? null, 1200],
+                      'rate_retention' => [$config['rate_retention'] ?? null, 7200],
+                      'tracking_lifetime' => [$config['tracking_lifetime'] ?? null, 600],
+                      'label_formats.ups' => [$config['label_formats']['ups'] ?? null, 'ZPL'],
+                      "services.ups.'02'" => [$config['services']['ups']['02'] ?? null, 'UPS 2nd Day Air'],
+                  ];
+                  foreach ($applied as $key => [$is, $written]) {
+                      if ($is !== $written) {
+                          fwrite(STDERR, sprintf("The store wrote %s: %s, and after the upgrade it is %s.\n", $key, var_export($written, true), var_export($is, true)));
+                          exit(1);
+                      }
+                  }
+                  echo "Every value the store wrote still applies.\n";
+                  PHP
+
+            # The one thing docs/upgrading.md asks of a store after any update.
+            - name: Migrate, as docs/upgrading.md says
+              if: matrix.path == 'upgrade'
+              working-directory: store
+              run: bin/console doctrine:migrations:migrate --no-interaction
+
+            - name: What the store held is as it was
+              if: matrix.path == 'upgrade'
+              working-directory: store
+              run: |
+                  set -euo pipefail
+                  php ../snapshot.php after ../after ../before
+                  changed=''
+                  for rows in ../before/*.rows; do
+                      table=$(basename "$rows" .rows)
+                      diff -u "$rows" "../after/$table.rows" || changed="$changed $table"
+                  done
+                  test -z "$changed" \
+                      || { echo "The upgrade changed rows the store already had, in:$changed."; exit 1; }
 
             # ── What a half-finished install costs ───────────────────────────────────────────────────
             # Each of these fails silently in a real store, and each check names the step it belongs to.
@@ -316,6 +580,15 @@ jobs:
                   done
                   grep -q 'Carrier credentials' page.html \
                       || { echo 'The credentials page does not say what it is.'; exit 1; }
+                  # The upgrade leg's own data, edited with this commit's code: a stored key or a calculator
+                  # it no longer understands shows up here.
+                  if [ -f ../extra-pages.txt ]; then
+                      while IFS= read -r page; do
+                          status=$(curl -s -o page.html -w '%{http_code}' -b "$jar" "http://127.0.0.1:8000$page")
+                          test "$status" = '200' \
+                              || { echo "$page answered $status."; grep -o '<title>[^<]*' page.html | head -1; tail -20 server.log; exit 1; }
+                      done < ../extra-pages.txt
+                  fi
 
             # ── The recipe path, undone ──────────────────────────────────────────────────────────────
 
