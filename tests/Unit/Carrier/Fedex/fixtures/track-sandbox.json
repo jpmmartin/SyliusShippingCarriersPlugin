@@ -1,0 +1,2239 @@
+{
+    "transactionId": "APIF_SV_TRKC_TxID_bfa851cf-7cfb-4b03-8382-9793a717fdf155",
+    "customertransactionId": "APIF_SV_TRKC_TxID_customer test",
+    "output": {
+        "alerts": [
+            {
+                "code": "VIRTUAL.RESPONSE",
+                "message": "This is a Virtual Response.",
+                "alertType": "NOTE"
+            }
+        ],
+        "completeTrackResults": [
+            {
+                "trackingNumber": "123456789012",
+                "trackResults": [
+                    {
+                        "trackingNumberInfo": {
+                            "trackingNumber": "123456789012",
+                            "trackingNumberUniqueId": "2460903000~123456789012~FX",
+                            "carrierCode": "FDXE"
+                        },
+                        "additionalTrackingInfo": {
+                            "nickname": "",
+                            "packageIdentifiers": [
+                                {
+                                    "type": "STANDARD_MPS",
+                                    "values": [
+                                        "123456789012"
+                                    ],
+                                    "trackingNumberUniqueId": "2460903000",
+                                    "carrierCode": ""
+                                }
+                            ],
+                            "hasAssociatedShipments": true
+                        },
+                        "shipperInformation": {
+                            "contact": [],
+                            "address": {
+                                "city": "WEIHAI",
+                                "countryCode": "CN",
+                                "residential": false,
+                                "countryName": "China"
+                            }
+                        },
+                        "recipientInformation": {
+                            "contact": [],
+                            "address": {
+                                "city": "BROOKLYN",
+                                "stateOrProvinceCode": "NY",
+                                "countryCode": "US",
+                                "residential": false,
+                                "countryName": "United States"
+                            }
+                        },
+                        "latestStatusDetail": {
+                            "code": "IT",
+                            "derivedCode": "DF",
+                            "statusByLocale": "Delivery updated",
+                            "description": "On the way",
+                            "scanLocation": {
+                                "city": "MEMPHIS",
+                                "stateOrProvinceCode": "TN",
+                                "countryCode": "US",
+                                "residential": false,
+                                "countryName": "United States"
+                            },
+                            "ancillaryDetails": [
+                                {
+                                    "reason": "54",
+                                    "reasonDescription": "",
+                                    "action": "",
+                                    "actionDescription": ""
+                                }
+                            ]
+                        },
+                        "dateAndTimes": [
+                            {
+                                "type": "ACTUAL_PICKUP",
+                                "dateTime": "2025-09-02T00:12:00+07:00"
+                            },
+                            {
+                                "type": "SHIP",
+                                "dateTime": "2025-09-04T00:00:00+00:00"
+                            },
+                            {
+                                "type": "ACTUAL_TENDER",
+                                "dateTime": "2025-09-02T00:12:00+07:00"
+                            }
+                        ],
+                        "availableImages": [],
+                        "specialHandlings": [
+                            {
+                                "type": "DELIVER_WEEKDAY",
+                                "description": "Deliver Weekday",
+                                "paymentType": "OTHER"
+                            }
+                        ],
+                        "packageDetails": {
+                            "packagingDescription": {
+                                "type": "YOUR_PACKAGING",
+                                "description": "Your Packaging"
+                            },
+                            "sequenceNumber": "1",
+                            "count": "5"
+                        },
+                        "shipmentDetails": {
+                            "possessionStatus": true,
+                            "weight": [
+                                {
+                                    "value": "5.0",
+                                    "unit": "KG"
+                                },
+                                {
+                                    "value": "11.02",
+                                    "unit": "LB"
+                                }
+                            ]
+                        },
+                        "scanEvents": [
+                            {
+                                "date": "2026-03-01T18:02:00-06:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMH",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-02-28T18:06:00-06:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMH",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-02-28T00:47:00-06:00",
+                                "eventType": "AR",
+                                "eventDescription": "Arrived at FedEx hub",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMH",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-02-28T00:37:00-05:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "TALLAHASSEE",
+                                    "stateOrProvinceCode": "FL",
+                                    "postalCode": "32310",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "TLHR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-02-27T11:56:00-05:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ALBANY",
+                                    "stateOrProvinceCode": "GA",
+                                    "postalCode": "31707",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "ABYA",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-02-26T19:28:00-05:00",
+                                "eventType": "AF",
+                                "eventDescription": "At local FedEx facility",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ALBANY",
+                                    "stateOrProvinceCode": "GA",
+                                    "postalCode": "31707",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "ABYA",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-02-26T15:27:00-05:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ALBANY",
+                                    "stateOrProvinceCode": "GA",
+                                    "postalCode": "31707",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "ABYA",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-02-25T16:20:00-06:00",
+                                "eventType": "DP",
+                                "eventDescription": "Departed FedEx hub",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMH",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-02-24T17:20:00-06:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MINNEAPOLIS",
+                                    "stateOrProvinceCode": "MN",
+                                    "postalCode": "55450",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MICA",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-02-10T07:01:00-05:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "CINCINNATI",
+                                    "stateOrProvinceCode": "OH",
+                                    "postalCode": "45246",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "CINCG",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-02-09T13:26:00+01:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "71",
+                                "exceptionDescription": "Package available for clearance",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "OFTRINGEN",
+                                    "stateOrProvinceCode": "AG",
+                                    "postalCode": "4665",
+                                    "countryCode": "CH",
+                                    "residential": false,
+                                    "countryName": "Switzerland"
+                                },
+                                "locationId": "ZDAIP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2025-12-31T11:42:00+01:00",
+                                "eventType": "PU",
+                                "eventDescription": "Picked up",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "LUBLIN",
+                                    "postalCode": "20325",
+                                    "countryCode": "PL",
+                                    "residential": false,
+                                    "countryName": "Poland"
+                                },
+                                "locationId": "QLUA",
+                                "locationType": "PICKUP_LOCATION",
+                                "derivedStatusCode": "PU",
+                                "derivedStatus": "Picked up"
+                            },
+                            {
+                                "date": "2025-11-08T12:38:00-09:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "71",
+                                "exceptionDescription": "Package available for clearance",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ANCHORAGE",
+                                    "stateOrProvinceCode": "AK",
+                                    "postalCode": "99502",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "ANCIP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2025-10-17T22:03:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2025-10-10T21:52:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2025-10-03T22:01:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2025-10-01T21:34:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2025-09-15T11:43:00+02:00",
+                                "eventType": "SE",
+                                "eventDescription": "Shipment exception",
+                                "exceptionCode": "50",
+                                "exceptionDescription": "Improper or missing international paperwork, contact Customer Service",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "WARSAW",
+                                    "postalCode": "02158",
+                                    "countryCode": "PL",
+                                    "residential": false,
+                                    "countryName": "Poland"
+                                },
+                                "locationId": "WAWIP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "SE",
+                                "derivedStatus": "Shipment exception"
+                            },
+                            {
+                                "date": "2025-09-12T12:28:00+02:00",
+                                "eventType": "SE",
+                                "eventDescription": "Shipment exception",
+                                "exceptionCode": "50",
+                                "exceptionDescription": "Improper or missing international paperwork, contact Customer Service",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "WARSAW",
+                                    "postalCode": "02158",
+                                    "countryCode": "PL",
+                                    "residential": false,
+                                    "countryName": "Poland"
+                                },
+                                "locationId": "WAWIP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "SE",
+                                "derivedStatus": "Shipment exception"
+                            },
+                            {
+                                "date": "2025-09-11T12:04:00+02:00",
+                                "eventType": "SE",
+                                "eventDescription": "Shipment exception",
+                                "exceptionCode": "50",
+                                "exceptionDescription": "Improper or missing international paperwork, contact Customer Service",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "WARSAW",
+                                    "postalCode": "02158",
+                                    "countryCode": "PL",
+                                    "residential": false,
+                                    "countryName": "Poland"
+                                },
+                                "locationId": "WAWIP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "SE",
+                                "derivedStatus": "Shipment exception"
+                            },
+                            {
+                                "date": "2025-09-10T11:35:00+02:00",
+                                "eventType": "SE",
+                                "eventDescription": "Shipment exception",
+                                "exceptionCode": "50",
+                                "exceptionDescription": "Improper or missing international paperwork, contact Customer Service",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "WARSAW",
+                                    "postalCode": "02158",
+                                    "countryCode": "PL",
+                                    "residential": false,
+                                    "countryName": "Poland"
+                                },
+                                "locationId": "WAWIP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "SE",
+                                "derivedStatus": "Shipment exception"
+                            },
+                            {
+                                "date": "2025-09-09T11:59:00+02:00",
+                                "eventType": "SE",
+                                "eventDescription": "Shipment exception",
+                                "exceptionCode": "50",
+                                "exceptionDescription": "Improper or missing international paperwork, contact Customer Service",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "WARSAW",
+                                    "postalCode": "02158",
+                                    "countryCode": "PL",
+                                    "residential": false,
+                                    "countryName": "Poland"
+                                },
+                                "locationId": "WAWIP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "SE",
+                                "derivedStatus": "Shipment exception"
+                            },
+                            {
+                                "date": "2025-09-08T15:46:00+02:00",
+                                "eventType": "PU",
+                                "eventDescription": "Picked up",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ZAMOSC",
+                                    "postalCode": "22400",
+                                    "countryCode": "PL",
+                                    "residential": false,
+                                    "countryName": "Poland"
+                                },
+                                "locationId": "QXQA",
+                                "locationType": "PICKUP_LOCATION",
+                                "derivedStatusCode": "PU",
+                                "derivedStatus": "Picked up"
+                            },
+                            {
+                                "date": "2025-09-08T11:56:00+02:00",
+                                "eventType": "SE",
+                                "eventDescription": "Shipment exception",
+                                "exceptionCode": "50",
+                                "exceptionDescription": "Improper or missing international paperwork, contact Customer Service",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "WARSAW",
+                                    "postalCode": "02158",
+                                    "countryCode": "PL",
+                                    "residential": false,
+                                    "countryName": "Poland"
+                                },
+                                "locationId": "WAWIP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "SE",
+                                "derivedStatus": "Shipment exception"
+                            },
+                            {
+                                "date": "2025-09-05T16:00:00+02:00",
+                                "eventType": "SE",
+                                "eventDescription": "Shipment exception",
+                                "exceptionCode": "50",
+                                "exceptionDescription": "Improper or missing international paperwork, contact Customer Service",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "WARSAW",
+                                    "postalCode": "02158",
+                                    "countryCode": "PL",
+                                    "residential": false,
+                                    "countryName": "Poland"
+                                },
+                                "locationId": "WAWIP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "SE",
+                                "derivedStatus": "Shipment exception"
+                            },
+                            {
+                                "date": "2025-09-04T17:18:00+02:00",
+                                "eventType": "PU",
+                                "eventDescription": "Picked up",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ZAMOSC",
+                                    "postalCode": "22400",
+                                    "countryCode": "PL",
+                                    "residential": false,
+                                    "countryName": "Poland"
+                                },
+                                "locationId": "QXQA",
+                                "locationType": "PICKUP_LOCATION",
+                                "derivedStatusCode": "PU",
+                                "derivedStatus": "Picked up"
+                            },
+                            {
+                                "date": "2025-08-15T08:52:54-05:00",
+                                "eventType": "OC",
+                                "eventDescription": "Shipment information sent to FedEx",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "residential": false
+                                },
+                                "locationType": "CUSTOMER",
+                                "derivedStatusCode": "IN",
+                                "derivedStatus": "Label created"
+                            }
+                        ],
+                        "availableNotifications": [
+                            "ON_DELIVERY",
+                            "ON_EXCEPTION",
+                            "ON_ESTIMATED_DELIVERY"
+                        ],
+                        "deliveryDetails": {
+                            "deliveryAttempts": "0",
+                            "deliveryOptionEligibilityDetails": [
+                                {
+                                    "option": "INDIRECT_SIGNATURE_RELEASE",
+                                    "eligibility": "POSSIBLY_ELIGIBLE"
+                                },
+                                {
+                                    "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                                    "eligibility": "POSSIBLY_ELIGIBLE"
+                                },
+                                {
+                                    "option": "REROUTE",
+                                    "eligibility": "POSSIBLY_ELIGIBLE"
+                                },
+                                {
+                                    "option": "RESCHEDULE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "RETURN_TO_SHIPPER",
+                                    "eligibility": "POSSIBLY_ELIGIBLE"
+                                },
+                                {
+                                    "option": "DISPUTE_DELIVERY",
+                                    "eligibility": "POSSIBLY_ELIGIBLE"
+                                },
+                                {
+                                    "option": "SUPPLEMENT_ADDRESS",
+                                    "eligibility": "POSSIBLY_ELIGIBLE"
+                                }
+                            ]
+                        },
+                        "originLocation": {
+                            "locationContactAndAddress": {
+                                "address": {
+                                    "city": "ZAMOSC",
+                                    "countryCode": "PL",
+                                    "residential": false,
+                                    "countryName": "Poland"
+                                }
+                            },
+                            "locationId": "QXQA"
+                        },
+                        "destinationLocation": {
+                            "locationContactAndAddress": {
+                                "address": {
+                                    "city": "BROOKLYN",
+                                    "stateOrProvinceCode": "NY",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                }
+                            },
+                            "locationType": ""
+                        },
+                        "lastUpdatedDestinationAddress": {
+                            "city": "BROOKLYN",
+                            "stateOrProvinceCode": "NY",
+                            "countryCode": "US",
+                            "residential": false,
+                            "countryName": "United States"
+                        },
+                        "serviceDetail": {
+                            "type": "FEDEX_INTERNATIONAL_PRIORITY",
+                            "description": "FedEx International Priority",
+                            "shortDescription": "IPED"
+                        },
+                        "standardTransitTimeWindow": {
+                            "window": {
+                                "ends": "2025-09-05T17:00:00-04:00"
+                            }
+                        },
+                        "estimatedDeliveryTimeWindow": {
+                            "window": []
+                        },
+                        "goodsClassificationCode": "",
+                        "returnDetail": []
+                    },
+                    {
+                        "trackingNumberInfo": {
+                            "trackingNumber": "123456789012",
+                            "trackingNumberUniqueId": "2461032000~123456789012~FX",
+                            "carrierCode": "FDXE"
+                        },
+                        "additionalTrackingInfo": {
+                            "nickname": "",
+                            "packageIdentifiers": [
+                                {
+                                    "type": "STANDARD_MPS",
+                                    "values": [
+                                        "123456789012"
+                                    ],
+                                    "trackingNumberUniqueId": "2461032000",
+                                    "carrierCode": ""
+                                }
+                            ],
+                            "hasAssociatedShipments": true
+                        },
+                        "shipperInformation": {
+                            "contact": [],
+                            "address": {
+                                "city": "Jiaozhou, Qingdao,Shandong",
+                                "countryCode": "CN",
+                                "residential": false,
+                                "countryName": "China"
+                            }
+                        },
+                        "recipientInformation": {
+                            "contact": [],
+                            "address": {
+                                "city": "NEW YORK",
+                                "stateOrProvinceCode": "NY",
+                                "countryCode": "US",
+                                "residential": false,
+                                "countryName": "United States"
+                            }
+                        },
+                        "latestStatusDetail": {
+                            "code": "OC",
+                            "derivedCode": "OC",
+                            "statusByLocale": "Label created",
+                            "description": "Shipment information sent to FedEx",
+                            "scanLocation": {
+                                "residential": false
+                            },
+                            "ancillaryDetails": [
+                                {
+                                    "reason": "IN001",
+                                    "reasonDescription": "Please check back later for shipment status or subscribe for e-mail notifications",
+                                    "action": "",
+                                    "actionDescription": ""
+                                }
+                            ]
+                        },
+                        "dateAndTimes": [
+                            {
+                                "type": "ACTUAL_PICKUP",
+                                "dateTime": "2025-12-24T19:36:00+05:30"
+                            },
+                            {
+                                "type": "ACTUAL_TENDER",
+                                "dateTime": "2025-12-24T19:36:00+05:30"
+                            }
+                        ],
+                        "availableImages": [],
+                        "specialHandlings": [
+                            {
+                                "type": "DELIVER_WEEKDAY",
+                                "description": "Deliver Weekday",
+                                "paymentType": "OTHER"
+                            }
+                        ],
+                        "packageDetails": {
+                            "packagingDescription": {
+                                "type": "YOUR_PACKAGING",
+                                "description": "Your Packaging"
+                            },
+                            "sequenceNumber": "1",
+                            "count": "2",
+                            "weightAndDimensions": {
+                                "dimensions": [
+                                    {
+                                        "length": 30,
+                                        "width": 42,
+                                        "height": 26,
+                                        "units": "CM"
+                                    },
+                                    {
+                                        "length": 11,
+                                        "width": 16,
+                                        "height": 10,
+                                        "units": "IN"
+                                    }
+                                ]
+                            },
+                            "packageContent": []
+                        },
+                        "shipmentDetails": {
+                            "possessionStatus": false,
+                            "weight": [
+                                {
+                                    "value": "1.0",
+                                    "unit": "KG"
+                                },
+                                {
+                                    "value": "2.2",
+                                    "unit": "LB"
+                                }
+                            ]
+                        },
+                        "scanEvents": [
+                            {
+                                "date": "2025-12-22T00:45:20-06:00",
+                                "eventType": "OC",
+                                "eventDescription": "Shipment information sent to FedEx",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "residential": false
+                                },
+                                "locationType": "CUSTOMER",
+                                "derivedStatusCode": "IN",
+                                "derivedStatus": "Label created"
+                            }
+                        ],
+                        "availableNotifications": [
+                            "ON_DELIVERY",
+                            "ON_EXCEPTION",
+                            "ON_ESTIMATED_DELIVERY",
+                            "ON_TENDER"
+                        ],
+                        "deliveryDetails": {
+                            "deliveryAttempts": "0",
+                            "deliveryOptionEligibilityDetails": [
+                                {
+                                    "option": "INDIRECT_SIGNATURE_RELEASE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "REROUTE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "RESCHEDULE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "RETURN_TO_SHIPPER",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "DISPUTE_DELIVERY",
+                                    "eligibility": "POSSIBLY_ELIGIBLE"
+                                },
+                                {
+                                    "option": "SUPPLEMENT_ADDRESS",
+                                    "eligibility": "INELIGIBLE"
+                                }
+                            ],
+                            "destinationServiceArea": "OC"
+                        },
+                        "originLocation": {
+                            "locationContactAndAddress": {
+                                "address": {
+                                    "city": "QINGDAO",
+                                    "countryCode": "CN",
+                                    "residential": false,
+                                    "countryName": "China"
+                                }
+                            },
+                            "locationId": "TAOA"
+                        },
+                        "destinationLocation": {
+                            "locationContactAndAddress": {
+                                "address": {
+                                    "city": "NEW YORK",
+                                    "stateOrProvinceCode": "NY",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                }
+                            },
+                            "locationType": ""
+                        },
+                        "lastUpdatedDestinationAddress": {
+                            "city": "NEW YORK",
+                            "stateOrProvinceCode": "NY",
+                            "countryCode": "US",
+                            "residential": false,
+                            "countryName": "United States"
+                        },
+                        "serviceCommitMessage": {
+                            "message": "We'll add a delivery date as soon as we get your package.",
+                            "type": "SHIPMENT_LABEL_CREATED"
+                        },
+                        "serviceDetail": {
+                            "type": "FEDEX_INTERNATIONAL_PRIORITY",
+                            "description": "FedEx International Priority",
+                            "shortDescription": "IPED"
+                        },
+                        "standardTransitTimeWindow": {
+                            "window": []
+                        },
+                        "estimatedDeliveryTimeWindow": {
+                            "window": []
+                        },
+                        "goodsClassificationCode": "",
+                        "returnDetail": []
+                    },
+                    {
+                        "trackingNumberInfo": {
+                            "trackingNumber": "123456789012",
+                            "trackingNumberUniqueId": "2461103000~123456789012~FX",
+                            "carrierCode": "FDXE"
+                        },
+                        "additionalTrackingInfo": {
+                            "nickname": "",
+                            "hasAssociatedShipments": false
+                        },
+                        "shipperInformation": {
+                            "address": {
+                                "residential": false
+                            }
+                        },
+                        "recipientInformation": {
+                            "address": {
+                                "residential": false
+                            }
+                        },
+                        "latestStatusDetail": {
+                            "code": "IT",
+                            "derivedCode": "OW",
+                            "statusByLocale": "On the way",
+                            "description": "On the way",
+                            "scanLocation": {
+                                "city": "MISSISSAUGA",
+                                "stateOrProvinceCode": "ON",
+                                "countryCode": "CA",
+                                "residential": false,
+                                "countryName": "Canada"
+                            },
+                            "ancillaryDetails": [
+                                {
+                                    "reason": "77",
+                                    "reasonDescription": "",
+                                    "action": "",
+                                    "actionDescription": ""
+                                }
+                            ]
+                        },
+                        "dateAndTimes": [
+                            {
+                                "type": "ACTUAL_PICKUP",
+                                "dateTime": "2026-03-03T21:18:00+01:00"
+                            },
+                            {
+                                "type": "SHIP",
+                                "dateTime": "2026-03-03T00:00:00+00:00"
+                            },
+                            {
+                                "type": "ACTUAL_TENDER",
+                                "dateTime": "2026-03-03T21:18:00+01:00"
+                            }
+                        ],
+                        "availableImages": [],
+                        "packageDetails": {
+                            "packagingDescription": {
+                                "type": ""
+                            }
+                        },
+                        "shipmentDetails": {
+                            "possessionStatus": true
+                        },
+                        "scanEvents": [
+                            {
+                                "date": "2026-07-03T21:41:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-06-26T21:46:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-06-24T21:26:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-06-12T22:50:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-06-11T22:01:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-06-10T21:15:00-06:00",
+                                "eventType": "DE",
+                                "eventDescription": "Delivery exception",
+                                "exceptionCode": "17",
+                                "exceptionDescription": "A request was made to change this delivery date.",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ENGLEWOOD",
+                                    "stateOrProvinceCode": "CO",
+                                    "postalCode": "80112",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "ENGLG",
+                                "locationType": "DELIVERY_LOCATION",
+                                "derivedStatusCode": "DE",
+                                "derivedStatus": "Delivery exception"
+                            },
+                            {
+                                "date": "2026-06-10T21:34:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-06-10T15:33:00-06:00",
+                                "eventType": "AR",
+                                "eventDescription": "At local FedEx facility",
+                                "exceptionCode": "01",
+                                "exceptionDescription": "Package not delivered/not attempted",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ENGLEWOOD",
+                                    "stateOrProvinceCode": "CO",
+                                    "postalCode": "80112",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "ENGLG",
+                                "locationType": "DESTINATION_FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-06-08T21:47:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-06-04T21:38:00-04:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MISSISSAUGA",
+                                    "stateOrProvinceCode": "ON",
+                                    "postalCode": "L5S1Z7",
+                                    "countryCode": "CA",
+                                    "residential": false,
+                                    "countryName": "Canada"
+                                },
+                                "locationId": "YYZR",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-15T00:48:00+02:00",
+                                "eventType": "CC",
+                                "eventDescription": "International shipment release - Import",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ROISSY CHARLES DE GAULLE CEDEX",
+                                    "stateOrProvinceCode": "95",
+                                    "postalCode": "95702",
+                                    "countryCode": "FR",
+                                    "residential": false,
+                                    "countryName": "France"
+                                },
+                                "locationId": "CDGIP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-03-04T02:57:00-06:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "71",
+                                "exceptionDescription": "Package available for clearance",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38194",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMIP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-03-03T15:52:00-06:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMH",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-03-03T21:18:00+01:00",
+                                "eventType": "PU",
+                                "eventDescription": "Picked up",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ELST",
+                                    "stateOrProvinceCode": "GL",
+                                    "postalCode": "6662",
+                                    "countryCode": "NL",
+                                    "residential": false,
+                                    "countryName": "Netherlands (Holland)"
+                                },
+                                "locationId": "ENSA",
+                                "locationType": "PICKUP_LOCATION",
+                                "derivedStatusCode": "PU",
+                                "derivedStatus": "Picked up"
+                            }
+                        ],
+                        "availableNotifications": [
+                            "ON_DELIVERY",
+                            "ON_EXCEPTION",
+                            "ON_ESTIMATED_DELIVERY"
+                        ],
+                        "deliveryDetails": {
+                            "deliveryAttempts": "0",
+                            "deliveryOptionEligibilityDetails": [
+                                {
+                                    "option": "INDIRECT_SIGNATURE_RELEASE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "REROUTE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "RESCHEDULE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "RETURN_TO_SHIPPER",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "DISPUTE_DELIVERY",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "SUPPLEMENT_ADDRESS",
+                                    "eligibility": "INELIGIBLE"
+                                }
+                            ]
+                        },
+                        "originLocation": {
+                            "locationContactAndAddress": {
+                                "address": {
+                                    "city": "ELST",
+                                    "stateOrProvinceCode": "GL",
+                                    "countryCode": "NL",
+                                    "residential": false,
+                                    "countryName": "Netherlands (Holland)"
+                                }
+                            },
+                            "locationId": "ENSA"
+                        },
+                        "lastUpdatedDestinationAddress": {
+                            "stateOrProvinceCode": "NY",
+                            "countryCode": "US",
+                            "residential": false,
+                            "countryName": "United States"
+                        },
+                        "serviceDetail": {
+                            "type": "",
+                            "description": "",
+                            "shortDescription": ""
+                        },
+                        "standardTransitTimeWindow": {
+                            "window": []
+                        },
+                        "estimatedDeliveryTimeWindow": {
+                            "window": []
+                        },
+                        "goodsClassificationCode": "",
+                        "returnDetail": []
+                    },
+                    {
+                        "trackingNumberInfo": {
+                            "trackingNumber": "123456789012",
+                            "trackingNumberUniqueId": "2461124000~123456789012~FX",
+                            "carrierCode": "FDXE"
+                        },
+                        "additionalTrackingInfo": {
+                            "nickname": "",
+                            "hasAssociatedShipments": false
+                        },
+                        "shipperInformation": {
+                            "contact": [],
+                            "address": {
+                                "city": "HK CITY",
+                                "countryCode": "HK",
+                                "residential": false,
+                                "countryName": "Hong Kong SAR, China"
+                            }
+                        },
+                        "recipientInformation": {
+                            "contact": [],
+                            "address": {
+                                "city": "RECIPIENT CITY",
+                                "stateOrProvinceCode": "NY",
+                                "countryCode": "US",
+                                "residential": false,
+                                "countryName": "United States"
+                            }
+                        },
+                        "latestStatusDetail": {
+                            "code": "CA",
+                            "derivedCode": "CA",
+                            "statusByLocale": "Cancelled",
+                            "description": "Shipment cancelled by sender",
+                            "scanLocation": {
+                                "residential": false
+                            },
+                            "ancillaryDetails": [
+                                {
+                                    "reason": "IN002",
+                                    "reasonDescription": "FedEx notified to void this shipment",
+                                    "action": "",
+                                    "actionDescription": ""
+                                }
+                            ]
+                        },
+                        "dateAndTimes": [
+                            {
+                                "type": "ACTUAL_PICKUP",
+                                "dateTime": "2026-03-24T14:38:00-05:00"
+                            },
+                            {
+                                "type": "ACTUAL_TENDER",
+                                "dateTime": "2026-03-24T14:38:00-05:00"
+                            }
+                        ],
+                        "availableImages": [],
+                        "specialHandlings": [
+                            {
+                                "type": "DELIVER_WEEKDAY",
+                                "description": "Deliver Weekday",
+                                "paymentType": "OTHER"
+                            }
+                        ],
+                        "packageDetails": {
+                            "packagingDescription": {
+                                "type": "YOUR_PACKAGING",
+                                "description": "Your Packaging"
+                            },
+                            "sequenceNumber": "1",
+                            "count": "1",
+                            "weightAndDimensions": {
+                                "weight": [
+                                    {
+                                        "value": "1.0",
+                                        "unit": "KG"
+                                    },
+                                    {
+                                        "value": "2.2",
+                                        "unit": "LB"
+                                    }
+                                ]
+                            },
+                            "packageContent": []
+                        },
+                        "shipmentDetails": {
+                            "possessionStatus": false,
+                            "weight": [
+                                {
+                                    "value": "1.0",
+                                    "unit": "KG"
+                                },
+                                {
+                                    "value": "2.2",
+                                    "unit": "LB"
+                                }
+                            ]
+                        },
+                        "scanEvents": [
+                            {
+                                "date": "2026-03-23T22:39:47-05:00",
+                                "eventType": "CA",
+                                "eventDescription": "Shipment cancelled by sender",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "residential": false
+                                },
+                                "locationType": "CUSTOMER",
+                                "derivedStatusCode": "CA",
+                                "derivedStatus": "Cancelled"
+                            },
+                            {
+                                "date": "2026-03-23T22:02:15-05:00",
+                                "eventType": "OC",
+                                "eventDescription": "Shipment information sent to FedEx",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "residential": false
+                                },
+                                "locationType": "CUSTOMER",
+                                "derivedStatusCode": "IN",
+                                "derivedStatus": "Label created"
+                            }
+                        ],
+                        "availableNotifications": [
+                            "ON_DELIVERY",
+                            "ON_EXCEPTION"
+                        ],
+                        "deliveryDetails": {
+                            "deliveryAttempts": "0",
+                            "deliveryOptionEligibilityDetails": [
+                                {
+                                    "option": "INDIRECT_SIGNATURE_RELEASE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "REROUTE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "RESCHEDULE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "RETURN_TO_SHIPPER",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "DISPUTE_DELIVERY",
+                                    "eligibility": "POSSIBLY_ELIGIBLE"
+                                },
+                                {
+                                    "option": "SUPPLEMENT_ADDRESS",
+                                    "eligibility": "INELIGIBLE"
+                                }
+                            ],
+                            "destinationServiceArea": "CA"
+                        },
+                        "originLocation": {
+                            "locationContactAndAddress": {
+                                "address": {
+                                    "city": "TSUEN WAN",
+                                    "countryCode": "HK",
+                                    "residential": false,
+                                    "countryName": "Hong Kong SAR, China"
+                                }
+                            },
+                            "locationId": "HKGA"
+                        },
+                        "destinationLocation": {
+                            "locationContactAndAddress": {
+                                "address": {
+                                    "city": "RECIPIENT CITY",
+                                    "stateOrProvinceCode": "NY",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                }
+                            },
+                            "locationType": ""
+                        },
+                        "lastUpdatedDestinationAddress": {
+                            "city": "RECIPIENT CITY",
+                            "stateOrProvinceCode": "NY",
+                            "countryCode": "US",
+                            "residential": false,
+                            "countryName": "United States"
+                        },
+                        "serviceCommitMessage": {
+                            "message": "This package was cancelled by the shipper and won\u2019t show tracking information anymore.",
+                            "type": "CANCELLED_DESCRIPTION"
+                        },
+                        "serviceDetail": {
+                            "type": "FEDEX_INTERNATIONAL_PRIORITY",
+                            "description": "FedEx International Priority",
+                            "shortDescription": "IPED"
+                        },
+                        "standardTransitTimeWindow": {
+                            "window": []
+                        },
+                        "estimatedDeliveryTimeWindow": {
+                            "window": []
+                        },
+                        "goodsClassificationCode": "",
+                        "returnDetail": []
+                    },
+                    {
+                        "trackingNumberInfo": {
+                            "trackingNumber": "123456789012",
+                            "trackingNumberUniqueId": "2461133000~123456789012~FX",
+                            "carrierCode": "FDXE"
+                        },
+                        "additionalTrackingInfo": {
+                            "nickname": "",
+                            "hasAssociatedShipments": false
+                        },
+                        "shipperInformation": {
+                            "contact": [],
+                            "address": {
+                                "city": "PHOENIX",
+                                "stateOrProvinceCode": "AZ",
+                                "countryCode": "US",
+                                "residential": false,
+                                "countryName": "United States"
+                            }
+                        },
+                        "recipientInformation": {
+                            "contact": [],
+                            "address": {
+                                "city": "EDISON",
+                                "stateOrProvinceCode": "NJ",
+                                "countryCode": "US",
+                                "residential": false,
+                                "countryName": "United States"
+                            }
+                        },
+                        "latestStatusDetail": {
+                            "code": "DL",
+                            "derivedCode": "DL",
+                            "statusByLocale": "Delivered",
+                            "description": "Delivered",
+                            "scanLocation": {
+                                "city": "EDISON",
+                                "stateOrProvinceCode": "NJ",
+                                "countryCode": "US",
+                                "residential": false,
+                                "countryName": "United States"
+                            }
+                        },
+                        "dateAndTimes": [
+                            {
+                                "type": "ACTUAL_DELIVERY",
+                                "dateTime": "2026-04-14T10:57:00-04:00"
+                            },
+                            {
+                                "type": "ACTUAL_PICKUP",
+                                "dateTime": "2026-04-02T11:50:00-07:00"
+                            },
+                            {
+                                "type": "SHIP",
+                                "dateTime": "2026-04-02T00:00:00+00:00"
+                            },
+                            {
+                                "type": "ACTUAL_TENDER",
+                                "dateTime": "2026-04-02T11:50:00-07:00"
+                            }
+                        ],
+                        "availableImages": [
+                            {
+                                "type": "SIGNATURE_PROOF_OF_DELIVERY"
+                            }
+                        ],
+                        "specialHandlings": [
+                            {
+                                "type": "DELIVER_WEEKDAY",
+                                "description": "Deliver Weekday",
+                                "paymentType": "OTHER"
+                            },
+                            {
+                                "type": "DO_NOT_STACK_PALLETS",
+                                "description": "Non-Stackable",
+                                "paymentType": "OTHER"
+                            }
+                        ],
+                        "packageDetails": {
+                            "packagingDescription": {
+                                "type": "YOUR_PACKAGING",
+                                "description": "Your Packaging"
+                            },
+                            "count": "1",
+                            "weightAndDimensions": {
+                                "weight": [
+                                    {
+                                        "value": "203.0",
+                                        "unit": "LB"
+                                    },
+                                    {
+                                        "value": "92.08",
+                                        "unit": "KG"
+                                    }
+                                ],
+                                "dimensions": [
+                                    {
+                                        "length": 48,
+                                        "width": 40,
+                                        "height": 22,
+                                        "units": "IN"
+                                    },
+                                    {
+                                        "length": 121,
+                                        "width": 101,
+                                        "height": 55,
+                                        "units": "CM"
+                                    }
+                                ]
+                            },
+                            "packageContent": []
+                        },
+                        "shipmentDetails": {
+                            "possessionStatus": true,
+                            "weight": [
+                                {
+                                    "value": "203.0",
+                                    "unit": "LB"
+                                },
+                                {
+                                    "value": "92.08",
+                                    "unit": "KG"
+                                }
+                            ]
+                        },
+                        "scanEvents": [
+                            {
+                                "date": "2026-04-14T10:57:00-04:00",
+                                "eventType": "DL",
+                                "eventDescription": "Delivered",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "EDISON",
+                                    "stateOrProvinceCode": "NJ",
+                                    "postalCode": "08837",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "EWRRT",
+                                "locationType": "DELIVERY_LOCATION",
+                                "derivedStatusCode": "DL",
+                                "derivedStatus": "Delivered"
+                            },
+                            {
+                                "date": "2026-04-14T08:43:00-04:00",
+                                "eventType": "OD",
+                                "eventDescription": "On FedEx vehicle for delivery",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ELIZABETH",
+                                    "stateOrProvinceCode": "NJ",
+                                    "postalCode": "07201",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "EWRRT",
+                                "locationType": "VEHICLE",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-12T17:48:00-04:00",
+                                "eventType": "AR",
+                                "eventDescription": "At destination sort facility",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "ELIZABETH",
+                                    "stateOrProvinceCode": "NJ",
+                                    "postalCode": "07201",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "EWRRT",
+                                "locationType": "SORT_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-11T15:59:00-05:00",
+                                "eventType": "DP",
+                                "eventDescription": "Departed FedEx hub",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMH",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-11T03:04:00-05:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMH",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-10T07:38:00-05:00",
+                                "eventType": "AR",
+                                "eventDescription": "Arrived at FedEx hub",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMH",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-10T07:28:00-05:00",
+                                "eventType": "DP",
+                                "eventDescription": "Departed FedEx hub",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMSW",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-10T00:16:00-05:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMSW",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-09T21:39:00-05:00",
+                                "eventType": "AR",
+                                "eventDescription": "Arrived at FedEx hub",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMHU",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-09T21:29:00-05:00",
+                                "eventType": "DP",
+                                "eventDescription": "Departed FedEx hub",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMSW",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-07T03:06:00-05:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMH",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-05T11:09:00-05:00",
+                                "eventType": "AR",
+                                "eventDescription": "Arrived at FedEx hub",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "MEMPHIS",
+                                    "stateOrProvinceCode": "TN",
+                                    "postalCode": "38118",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "MEMH",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-04T18:28:00-07:00",
+                                "eventType": "AF",
+                                "eventDescription": "At local FedEx facility",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "PHOENIX",
+                                    "stateOrProvinceCode": "AZ",
+                                    "postalCode": "85034",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "PHXRP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-02T22:05:00-07:00",
+                                "eventType": "AF",
+                                "eventDescription": "At local FedEx facility",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "PHOENIX",
+                                    "stateOrProvinceCode": "AZ",
+                                    "postalCode": "85034",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "PHXRP",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            },
+                            {
+                                "date": "2026-04-02T11:50:00-07:00",
+                                "eventType": "PU",
+                                "eventDescription": "Picked up",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "PHOENIX",
+                                    "stateOrProvinceCode": "AZ",
+                                    "postalCode": "85034",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "PHXRA",
+                                "locationType": "PICKUP_LOCATION",
+                                "derivedStatusCode": "PU",
+                                "derivedStatus": "Picked up"
+                            },
+                            {
+                                "date": "2026-02-10T07:01:00-05:00",
+                                "eventType": "IT",
+                                "eventDescription": "On the way",
+                                "exceptionCode": "",
+                                "exceptionDescription": "",
+                                "scanLocation": {
+                                    "streetLines": [
+                                        ""
+                                    ],
+                                    "city": "CINCINNATI",
+                                    "stateOrProvinceCode": "OH",
+                                    "postalCode": "45246",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                },
+                                "locationId": "CINCG",
+                                "locationType": "FEDEX_FACILITY",
+                                "derivedStatusCode": "IT",
+                                "derivedStatus": "In transit"
+                            }
+                        ],
+                        "availableNotifications": [
+                            "ON_DELIVERY"
+                        ],
+                        "deliveryDetails": {
+                            "actualDeliveryAddress": {
+                                "city": "EDISON",
+                                "stateOrProvinceCode": "NJ",
+                                "countryCode": "US",
+                                "residential": false,
+                                "countryName": "United States"
+                            },
+                            "locationType": "SHIPPING_RECEIVING",
+                            "locationDescription": "Shipping/Receiving",
+                            "deliveryAttempts": "0",
+                            "receivedByName": "J.REYES",
+                            "deliveryOptionEligibilityDetails": [
+                                {
+                                    "option": "INDIRECT_SIGNATURE_RELEASE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "REROUTE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "RESCHEDULE",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "RETURN_TO_SHIPPER",
+                                    "eligibility": "INELIGIBLE"
+                                },
+                                {
+                                    "option": "DISPUTE_DELIVERY",
+                                    "eligibility": "POSSIBLY_ELIGIBLE"
+                                },
+                                {
+                                    "option": "SUPPLEMENT_ADDRESS",
+                                    "eligibility": "INELIGIBLE"
+                                }
+                            ]
+                        },
+                        "originLocation": {
+                            "locationContactAndAddress": {
+                                "address": {
+                                    "city": "PHOENIX",
+                                    "stateOrProvinceCode": "AZ",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                }
+                            },
+                            "locationId": "PHXRA"
+                        },
+                        "destinationLocation": {
+                            "locationContactAndAddress": {
+                                "address": {
+                                    "city": "EDISON",
+                                    "stateOrProvinceCode": "NJ",
+                                    "countryCode": "US",
+                                    "residential": false,
+                                    "countryName": "United States"
+                                }
+                            },
+                            "locationType": ""
+                        },
+                        "lastUpdatedDestinationAddress": {
+                            "city": "EDISON",
+                            "stateOrProvinceCode": "NJ",
+                            "countryCode": "US",
+                            "residential": false,
+                            "countryName": "United States"
+                        },
+                        "serviceDetail": {
+                            "type": "FEDEX_2_DAY_FREIGHT",
+                            "description": "FedEx 2Day Freight",
+                            "shortDescription": "F-2"
+                        },
+                        "standardTransitTimeWindow": {
+                            "window": {
+                                "ends": "2026-04-06T12:00:00-04:00"
+                            }
+                        },
+                        "estimatedDeliveryTimeWindow": {
+                            "window": []
+                        },
+                        "goodsClassificationCode": "",
+                        "returnDetail": []
+                    }
+                ]
+            }
+        ]
+    }
+}

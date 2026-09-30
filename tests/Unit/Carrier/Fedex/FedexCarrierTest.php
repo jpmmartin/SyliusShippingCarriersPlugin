@@ -35,7 +35,8 @@ use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\InMemoryStore;
 
 /**
- * Against the fixtures in `fixtures/`, written from the SDK's schemas and not checked against FedEx yet.
+ * Against the fixtures in `fixtures/`, whose README says which were recorded from FedEx and which were written
+ * from the SDK's schemas.
  * Each FedexCarrier built here stands for a process; the cache pool and the lock store are what processes
  * share.
  */
@@ -302,6 +303,24 @@ final class FedexCarrierTest extends TestCase
         self::assertSame('Seattle, WA, US', $tracking->events[0]->location);
         self::assertSame('2026-09-17 10:15:00', $tracking->events[0]->occurredAt?->format('Y-m-d H:i:s'));
         self::assertSame('Shipment information sent to FedEx', $tracking->events[1]->description);
+    }
+
+    /**
+     * FedEx reuses its tracking numbers and answers with every shipment that has had one. Recorded from its sandbox,
+     * which gave five for this number, the oldest first: the buyer's is the one that moved last.
+     */
+    public function testOfTheShipmentsSharingATrackingNumberTheOneThatMovedLastIsShown(): void
+    {
+        $this->mockTracking(new MockResponse($this->fixture('track-sandbox.json'), 200, ['Content-Type' => 'application/json']));
+
+        $tracking = $this->process()->track('123456789012');
+
+        self::assertSame('On the way', $tracking->status);
+        self::assertCount(14, $tracking->events, 'Only the scans of that shipment, none of the other four.');
+        self::assertSame('2026-07-03T21:41:00-04:00', $tracking->events[0]->occurredAt?->format('c'));
+        self::assertSame('MISSISSAUGA, ON, CA', $tracking->events[0]->location);
+        self::assertSame('Picked up', $tracking->events[13]->description);
+        self::assertSame('2026-03-03T21:18:00+01:00', $tracking->events[13]->occurredAt?->format('c'));
     }
 
     public function testTheTrackingNumberIsSentToFedex(): void

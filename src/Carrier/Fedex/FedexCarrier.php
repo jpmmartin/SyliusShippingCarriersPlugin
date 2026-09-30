@@ -124,11 +124,12 @@ final class FedexCarrier implements CarrierInterface
     }
 
     /**
-     * FedEx answers with one result per tracking number, and the newest scan is the last of the list.
+     * FedEx answers with one result per shipment that has had the tracking number, since it reuses them, and lists
+     * the scans of each newest first.
      */
     private function readTracking(string $trackingNumber, TrkcResponseVoTrackingNumber $tracking): TrackingInfo
     {
-        $result = ($tracking->output?->completeTrackResults[0] ?? null)?->trackResults[0] ?? null;
+        $result = $this->shipmentThatMovedLast(($tracking->output?->completeTrackResults[0] ?? null)?->trackResults ?? []);
         if (!$result instanceof TrackResult) {
             throw new UnexpectedCarrierResponseException(sprintf('FedEx knows no shipment for the tracking number "%s".', $trackingNumber));
         }
@@ -150,6 +151,42 @@ final class FedexCarrier implements CarrierInterface
         $status = $result->latestStatusDetail?->statusByLocale ?? $result->latestStatusDetail?->description;
 
         return new TrackingInfo($trackingNumber, '' === $status ? null : $status, $events);
+    }
+
+    /**
+     * Of the shipments that share a tracking number, the one with the newest dated scan. A shipment without one
+     * never takes the place of another, and on a tie the one FedEx lists first stays.
+     *
+     * @param array<array-key, mixed> $results
+     */
+    private function shipmentThatMovedLast(array $results): ?TrackResult
+    {
+        $chosen = null;
+        $chosenAt = null;
+        foreach ($results as $result) {
+            if (!$result instanceof TrackResult) {
+                continue;
+            }
+
+            $movedAt = null;
+            foreach ($result->scanEvents ?? [] as $scan) {
+                if (!$scan instanceof ScanEvent) {
+                    continue;
+                }
+
+                $scannedAt = $this->scannedAt($scan);
+                if (null !== $scannedAt && (null === $movedAt || $scannedAt > $movedAt)) {
+                    $movedAt = $scannedAt;
+                }
+            }
+
+            if (null === $chosen || (null !== $movedAt && (null === $chosenAt || $movedAt > $chosenAt))) {
+                $chosen = $result;
+                $chosenAt = $movedAt;
+            }
+        }
+
+        return $chosen;
     }
 
     private function scannedAt(ScanEvent $scan): ?\DateTimeImmutable

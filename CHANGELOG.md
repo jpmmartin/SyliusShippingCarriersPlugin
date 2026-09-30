@@ -16,6 +16,12 @@ here, and what counts as a breaking change, are written down in [RELEASING.md](R
   purpose: generating the key and running the migrations. The README now starts the installation
   with it and keeps the edits by hand for a store without Flex or without the recipe.
 
+### Fixed
+
+- **FedEx tracking shows the buyer's shipment when FedEx has reused its number.** FedEx answers a
+  tracking number with every shipment that has had it, and the plugin showed the first it listed,
+  the oldest. It now shows the one that moved last.
+
 ## [1.1.0] - 2026-09-25
 
 ### Added

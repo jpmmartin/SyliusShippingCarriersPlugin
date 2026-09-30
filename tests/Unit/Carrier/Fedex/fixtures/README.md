@@ -1,9 +1,20 @@
-# FedEx fixtures — not checked against FedEx
+# FedEx fixtures
+
+Two kinds, and a test that passes with one of them proves different things.
+
+## Recorded from FedEx's sandbox
+
+Copied as FedEx sent them. A test that passes with these reads what FedEx actually sends.
+
+- `track-sandbox.json`: the answer of 2026-09-28 for the sandbox's tracking number `123456789012`, which
+  FedEx has given to five shipments. It sends all five, the oldest first, each with its scans newest first.
+
+## Written from the SDK's schemas, not checked against FedEx
 
 These responses were written from `resources/models/rates-transit-times/v1.json` of
 `shipstream/fedex-rest-sdk` v1.6.0 (`RatcResponseVO` and `ErrorResponseVO`) and from the OAuth token fields
-Saloon reads, not recorded from FedEx. Until they are checked against the sandbox, a test that passes with
-them proves the mapping follows the documented schema, not that it reads what FedEx actually sends.
+Saloon reads, not recorded from FedEx. A test that passes with them proves the mapping follows the documented
+schema, not that it reads what FedEx actually sends.
 
 - `rate-quote.json`: a quote with two services, one with an account rate and a list rate, and one with only
   a list rate.
