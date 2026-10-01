@@ -112,6 +112,27 @@ final class FedexCarrierTest extends TestCase
         self::assertSame(9635, $rates->get('PRIORITY_OVERNIGHT')?->amount, 'Only a list rate, 96.35.');
     }
 
+    /**
+     * Recorded from FedEx's sandbox for this same request: every service it sells on the route, each with the
+     * account rate the plugin asks for. The net charge is the base charge plus the fuel surcharge, 225.47 + 11.27
+     * for the first one, which is what FedEx bills.
+     */
+    public function testARateAnswerAsFedexSendsItIsRead(): void
+    {
+        $this->mockFedex(new MockResponse($this->fixture('rate-quote-sandbox.json'), 200, ['Content-Type' => 'application/json']));
+
+        $rates = $this->process()->rate($this->request());
+
+        self::assertEquals([
+            new Rate('FIRST_OVERNIGHT', 23674, 'USD'),
+            new Rate('PRIORITY_OVERNIGHT', 20419, 'USD'),
+            new Rate('STANDARD_OVERNIGHT', 19326, 'USD'),
+            new Rate('FEDEX_2_DAY_AM', 15043, 'USD'),
+            new Rate('FEDEX_2_DAY', 13378, 'USD'),
+            new Rate('FEDEX_EXPRESS_SAVER', 10071, 'USD'),
+        ], $rates->all());
+    }
+
     public function testTheRequestAsksForTheAccountRatesOfTheAddressesAndPackages(): void
     {
         $this->process()->rate($this->request());
