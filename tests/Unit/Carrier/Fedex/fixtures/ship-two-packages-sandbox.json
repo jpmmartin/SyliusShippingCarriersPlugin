@@ -1,0 +1,368 @@
+{
+    "transactionId": "72dcb118-3b30-4228-aaf5-37cff29e3b40",
+    "output": {
+        "transactionShipments": [
+            {
+                "masterTrackingNumber": "794877547188",
+                "serviceType": "FEDEX_2_DAY",
+                "shipDatestamp": "2026-10-01",
+                "serviceName": "FedEx 2Day\u00ae",
+                "pieceResponses": [
+                    {
+                        "masterTrackingNumber": "794877547188",
+                        "deliveryDatestamp": "2026-10-05",
+                        "packageSequenceNumber": 1,
+                        "trackingNumber": "794877547188",
+                        "additionalChargesDiscount": 0,
+                        "netRateAmount": 0,
+                        "netChargeAmount": 0,
+                        "netDiscountAmount": 0,
+                        "packageDocuments": [
+                            {
+                                "contentType": "LABEL",
+                                "copiesToPrint": 1,
+                                "encodedLabel": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMyAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL091dGxpbmVzCi9Db3VudCAwCj4+CmVuZG9iagozIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovQ291bnQgMQovS2lkcyBbMTggMCBSXQo+PgplbmRvYmoKNCAwIG9iagpbL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSV0KZW5kb2JqCjUgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCi9FbmNvZGluZyAvTWFjUm9tYW5FbmNvZGluZwo+PgplbmRvYmoKNiAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9IZWx2ZXRpY2EtQm9sZAovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjcgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhLU9ibGlxdWUKL0VuY29kaW5nIC9NYWNSb21hbkVuY29kaW5nCj4+CmVuZG9iago4IDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0hlbHZldGljYS1Cb2xkT2JsaXF1ZQovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjkgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvQ291cmllcgovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjEwIDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0NvdXJpZXItQm9sZAovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjExIDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0NvdXJpZXItT2JsaXF1ZQovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjEyIDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0NvdXJpZXItQm9sZE9ibGlxdWUKL0VuY29kaW5nIC9NYWNSb21hbkVuY29kaW5nCj4+CmVuZG9iagoxMyAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9UaW1lcy1Sb21hbgovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjE0IDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL1RpbWVzLUJvbGQKL0VuY29kaW5nIC9NYWNSb21hbkVuY29kaW5nCj4+CmVuZG9iagoxNSAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9UaW1lcy1JdGFsaWMKL0VuY29kaW5nIC9NYWNSb21hbkVuY29kaW5nCj4+CmVuZG9iagoxNiAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9UaW1lcy1Cb2xkSXRhbGljCi9FbmNvZGluZyAvTWFjUm9tYW5FbmNvZGluZwo+PgplbmRvYmoKMTcgMCBvYmogCjw8Ci9DcmVhdGlvbkRhdGUgKEQ6MjAwMykKL1Byb2R1Y2VyIChGZWRFeCBTZXJ2aWNlcykKL1RpdGxlIChGZWRFeCBTaGlwcGluZyBMYWJlbCkNL0NyZWF0b3IgKEZlZEV4IEN1c3RvbWVyIEF1dG9tYXRpb24pDS9BdXRob3IgKENMUyBWZXJzaW9uIDUxMjAxMzUpCj4+CmVuZG9iagoxOCAwIG9iago8PAovVHlwZSAvUGFnZQ0vUGFyZW50IDMgMCBSCi9SZXNvdXJjZXMgPDwgL1Byb2NTZXQgNCAwIFIgCiAvRm9udCA8PCAvRjEgNSAwIFIgCi9GMiA2IDAgUiAKL0YzIDcgMCBSIAovRjQgOCAwIFIgCi9GNSA5IDAgUiAKL0Y2IDEwIDAgUiAKL0Y3IDExIDAgUiAKL0Y4IDEyIDAgUiAKL0Y5IDEzIDAgUiAKL0YxMCAxNCAwIFIgCi9GMTEgMTUgMCBSIAovRjEyIDE2IDAgUiAKID4+Ci9YT2JqZWN0IDw8IC9GZWRFeEV4cHJlc3MgMjAgMCBSCi9FeHByZXNzRSAyMSAwIFIKL2JhcmNvZGUwIDIyIDAgUgo+Pgo+PgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovVHJpbUJveFswIDAgNjEyIDc5Ml0KL0NvbnRlbnRzIDE5IDAgUgovUm90YXRlIDA+PgplbmRvYmoKMTkgMCBvYmoKPDwgL0xlbmd0aCAzNDgxCi9GaWx0ZXIgWy9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZV0gCj4+CnN0cmVhbQpHYXQ9LzlsaDtgJlxXK0pycl05Q1l1VDBXJUE8NmJnUUdmNUNKdUtHWTNlaUgwOFY4JjtLNF8lLnU+YWo0cUdHSlxLIjpJQ3NHPkRMTiEiaQpOVycmRysiJEctKl9JK2txLnU0UlA7T3U\/QTJAUUhQVUo2aUErQS5KcDJQL15uXFs7SlctcVVBS081OTNbT0ckOHExcVkzQ3FyT3FxU15MZgohMmJdXj0lSi07Z3Q\/LS1xUTJSLCouSGBpMk1fPEwkbFBgLURtNChMW1lqJiUqU3MwaTIyPk5zazAoWzAyX1ZtK3ItYm41Z2whPFAxYDs6YwphYSE+YUhbIix1XitgPW9QayVkX2VOaktdJDpiY1g7JUIiJElsP15vI2Qka0M9az8uV1pWTlQ3YlFiKV1RWkRoTElxKCs+TFlXblpsMig+OQppcSJGTUUlYzNYSWVgb3VpSmxmUVhncFFAU2lCZz5gRWhncGdxPkgnNTdyO25BcTBKVT88V0ldK2E4MlQoJ2kkP18qaUtIZ1s0RnIpdFM9dQpfLCU8ZitrRF1Jbi5GZiwqN09vUF1CQD1VcEctV2hULUFsLVF1dGRBRUB1Pl9pYVIrUT06LzFnQmZFVExiVkAhZUhuZzI1KDJdVj09Yj1dbApnPmIxXlFaQF0+RjdoTFNqWWkrYjhoO1xQVD1YOl4mXWBTYGFxO1VoTV1nMG0uMmRURiMqWGA9aTxdRXJpXFlZNStkZDUrNSxNOSVeVjhPPQpnTCRCSWBMSEpucXM+J0g4N1xXI29uXipsNEBHYzVxcigxRG1ZQHRTMVZaNz1aVk9cZ0VIITojRkttXWlmQUdzSlwqKEE5TT1PL2g1SjVtQQpdPk89L29BaSJuLCsvc0drai5bKzQ\/NXA0SUZkVCJwUmJzI2NGPDhGcygoaGktSkVeTz9DZWBwJ1VsW1FZUCpiLSJmP3RqR1w9YihIWD1AMgo7InNlWiFobHRjWU1YNTlwPE1AaEgoZ2gtayteRT03TiVDR1lybmhRbFVAdUcuaFo2Sll0PCQsNGlXNGJgSCFmNkdJT2Ulb0RcVUtBcD0sRwpARy5lOFRnRCIsL2c9TThEWUAvREtmKDtpblNwNjk\/WGh0KGsmUGdXXS82XzhgTzM3ZjUrJWVqP0c6ZmFFLjpqQWgvN1IhPmpmaTE+Pm06PwphazVCIiVzKl0vPU9cXUdnI24sRFNXMFgnWiJAaGBoSmZwPF1KT2lFWCxIIzxOY2U4S25UL2olXW4yYi5KQyYmMmJWNz0\/OmtlW0U7Zz1oTApsRjNzcyY1UV8sWXFnW2MpRTRAUEUhdXVBXlxLcShHNWdqcEZpYE5YWiF0QCQrSSRBUTROUitDR3EnazxpWVxOV2JnI1tNPWRrZ25cXTRbSgpAYCo4VEpAT04wKj50JCdWM1paVitVJkhKYTYmXmdUUWFyUnI1VFZDXS5aKExLWHNiam0\/SD0\/Vzg6W0wvLjVFLTVgczQ4PWUvZW0rWC9HNQo3YD8mNio5bnJpOXNWXG9pJ2E7Xm91NT9wO2lBNiNqOGU\/VUxeJ0FJSC0mal05YltVMm9nPiUyQnVGX0JZZy4qXWZ1RygpL19lbTYjK1NTNgpSQVNiLz11Jy4yJ2RqUVAzJVwib1lNbyU0OzM3KVdKOCZgP29aLlk2U2NQYDcuX2BrVVwzOl5MUFFbUVktSU9Hc0FTTmhzRWMzLU5IQ01dJgpcXjYuMjo1OUJhSThiTyUwJlZRZmRnQW9jZ0xSaTYvSlZKZEs0aTxnPGUvPHU3KCxlJyVLVjdvcSVANTgsdTFMKSxhTD1naz5HXWZoN2daXQohbkM3QDNjMXIhZSldTDZSb2ZdKzxza2UwRGhJLydGdEpYL1ppXGFbUFhDWWsjK0hUcld1XDMuMiN0I2siTUBrayMvSUdtLm9RbUJYVEgyLgpXOmFsTyUhdFRFUXJqQignbzlIOVI0cCtbaSkxMmlAX2NeLkxFPDwlXyMmV2wqaTU3QjFdbDMsVGonMlI2amJRKVA4XSFlV11bWm1vSiokKgojdTM9NyZaRE84WEU+IUY1I1ZjTVVEUExOVFtzKiU6OEpFLkQscT8oO1trdUQoJGBiTV84NF5OTVMzXWcsPl8qZ2VXMCQ2WjUrSVxCUnFDKQo5cE1VKmhZTkJrQF5dcyQsPmFga25OWWlfbGg3PyQ7NFEqY2UhYVgkSTElUlQlMSVVdE9fQlUjJnRycShIUUMpM01mTTZAaTcoL2dbcGEodAotdTlUcTFdbDMsXE1dSHNKTl9WZSZXKDAlZSdccl5baVpKYi1EOGQiJ0NRMys7b05YNzgzPjRyLCJAQGhWXjAtZ0lGIig\/OiRAVSo9Jz5YKQpXSS1YMV1TbiIoWiwwYEhXaToidD9NbEUjMm9uWmNTPGV0OWhgP15cOSInR01wcHBOKztmVDlRMV9aOkYtLSUkRz1zPm50Oi1uWCo7KFNHNQpOJ0s3I1FxZl9gWithSERXaThuKmhoXytPM2NRZmNgK2ImanAmMGhPZlhdNDhGaCVRUTtvUWwvIlxAXyQrLyhKLFc8VCNhV2NcLCxJSUMhaApPRCM9UTplTU9OaHBrNnU1QjotXGwpayQ6PDRUYj5rYEA\/OE9Xc1cvOmVTZFcvTj4lWGJNYVk2cT9VJiFFU29WRFxdIUY9PUM4MzJbOFxPbgpnRDEkQS0vMEQtPjlAZyEsMlhzaDc8Y1tzWis9MEBXaT1HPVBbMiE4Vl51P0RtPXMzYUFdLUQuSkxrIV4jaDUtRSVUUiJTcUptYm9HK2peWwo5OlUvdFcjRkVuRUEiWTxvV2dpRDVqXj08aGNtZ0hTZjxhN1spPUQ\/R2FEKFwyX0ttZiVZXlpLWyk\/W0RMVSsyN3BCQWBAW28rS0chTi9xJwppSTo8aUtOcSJpPjUzVV1NOyE1SzFlOTBRVC9UbSlgczpYMFZTdSssKDFmW2swZCFSJWJVWzJWPmI8KjNJVWhjaWtvI09LQWl1WzxSZXU6MAo5Qi5ZNUlrZCFbcUYkYjg2dW5uQCc6JS45WlFGa09rQjsnWU87UVJwX1ZZLDs7ZTFxPyUiXEVKLiMxYT0zMW1MWU0vKTEwYFwvUj88cUUhRQozTWNKInFzKXF0T09DLyExZihEJnIpaTk1YXNYKlRPM2NGKj5XSC5BXjM7TXIvS0Q2aiRwRUJQXSVfXERcX0pkNEtXIVhXVShdITxtLVZdZQpNZ29TO2gwIUY9ZXInVEdpKlFrcWpxb0pLcDQtVmYzV3MqZWoiRmc\/cHNcWlttYUZDTXF0VSdXazJQIjtUO3NOaFpgTmw8MG9kKEJDQCwmaApAQCxeX25SJjQkKm5rL0xAV2s3JWM2QGIoUDomO2daIVI6ckMjVUppZiw6R05RaVUhMlpLUUo0YnIyOEZxcy8vYnJxYik2Z1Aqb1tqN1FuWwo0N3RaamA5OD9PQSFrO0hjKihEcCgwTlFHcWA9Y1ZjYEIoak5ISypsOm9qbVNlYl8pLFFMc0pRLmY6LWBNYCpmbmxLXDlsTjY7amJJR1szbQosJi9zJ1xJUF49Zl01JSMvNSk0ZixnXnBrTUQ+T0ZMa04xWTE7WTwqb21nMmldMDQyXTgqX3U2OVZQWnEodD1xMkNGSkwiIiYoWUFINyxcUwoxU2FBKjJvK2BBLmxjKCRpM0QpPywlbl1eP2lfS0czTHIuTU9pLywrTy1PQV9SKk8tKV4xaUdQYUAvTVxGY2xvITd0SjF0Mk81cEU0SG90RwowXWl0RTtjaklhOGRSKFFZKz4yR2I3XlhUcVxrQ0khQG9JJzA7anN1MTtLK20vK1dlQjk6aE5BNm8yVyMpRk89K2crW3JYcj51PVhGK2dONwpRR1c0SGF1W11HZSQ1XyorQ0xlJFlkQiNSTyJfU0lsLmIvMmxVRHFBRitJblFXRUFfMWtlNStvX0s8dG5cXnEpNTI2JnRuLSgsQEJVcmk1RQowVyNYTDhObnJJPCZ1TmQoTjhuJjZAaV4ka3VgPiorcHArP2w6S0BUSkM4Xm1NMSkvO2VVcnRBLSYzQEg4dCswZSdPN1R1RWZgQ3FLXiEvSAohOzYpSFg2NmAoPGI7TjVaYTRzWlVpITpbNzNzXGYlay0hKVBEdCErY0RBSFk6bFwxIiImPm8pZ3BfJyklUGNMcjhqaWJWMl4rbnUqQDVcagojOjotdC5sY1hEQmA9Yiw\/aU41M1VGMjFbIytUXiNaIkdSX1tINj9pOjIlRWxHdEthJjQ6RE5aKUctNUtpY0k7I2hHKmFZU3BocmElVT9oIQpHc1x1Qip0W0liYUtlJls\/Lj5eQlo5NEoiJDc8JjBAN2phRkY4KEE4K3BMR11NLlIoQ0MhPTI8K1FdcUBiYSp0QkdtMStxKUIuclhKcGpWYgorZXRCNV8yKSVUYzArbTZoTTFCNF1VK0VZUzw+O1E\/QThWTShEYDQhaWA6IyUsM2xgTTwjYUY\/ImU+W2taXDEkKTJac1BUOmwlW0kycl4mYQpcWC1kIXJZXEkjcyFtT0kzMk9VIWxjajRZN3VJIi9iV1s3SFxOViFGTlBwTGpNKjxjVUZJTTcjLEQzNjo9MGJlWCRvIVAicysvOVc1Nn4+CmVuZHN0cmVhbQplbmRvYmoKMjAgMCBvYmoKPDwgL1R5cGUgL1hPYmplY3QKL1N1YnR5cGUgL0ltYWdlCi9XaWR0aCAxMTgKL0hlaWdodCA0OQovQ29sb3JTcGFjZSAvRGV2aWNlR3JheQovQml0c1BlckNvbXBvbmVudCA4Ci9MZW5ndGggNDYxCi9GaWx0ZXIgWy9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZV0KPj5zdHJlYW0KR2IiL2VKSV1SPyNYblhrVDZBPlhLbkRiV0IiTVpFYWpQcGQ0XScoXkBSbHQia0IiUzAkZiU\/PW09NEM7Oy4kTihqUmNZUiVzZCZsOSRPdF4KKSY3PUwoNy1lcXFlQC4oL1NDOTg0LWZMWGVMWjVxY1o1bEFFQjU1PjNAMD1rIjtSaDJoQmNRTDMmSj81b1tjSDBiU0ZOXjw7O0A0MVNZOW0KYyJaST1ZbCNjNClgXyJZbG1OMyUuQS5sTlNgVmUvWTwlPy43KCgpLy5kQls7ayFKWyUnJURKXEk\/K2E3OjVvTmtZXHFFUz4zPEk1YlptKEkKJWQ8QEIpOERidDNwS0djbGJRazEnaVpWczdOTTBcbyZSKnFVPmdIdS1GckNraDxrSEZHKlwkTT1fc1YvLSRcSkY6ZS8\/PmZYQStDQ21wRGUKZFNQNkdjdSxcWCdBTD1hNUpDWzQ2Ry5ocDI9VTRlXiRlb1xRI2IqbTdDOCQtSkEoY1o\/WWAnQzs2SnBIZVBsXCRIRUMhdV4qUWErNmdFTWsKW2ZFVipiLiM+cHI+LVdTZiM+aCZXP3Vra1RzaFlgPS9YLjY2QSo7YmlzL2RnQFFYWHNyOG07fj4KZW5kc3RyZWFtCmVuZG9iagoyMSAwIG9iago8PCAvVHlwZSAvWE9iamVjdAovU3VidHlwZSAvSW1hZ2UKL1dpZHRoIDU0Ci9IZWlnaHQgNTQKL0NvbG9yU3BhY2UgL0RldmljZUdyYXkKL0JpdHNQZXJDb21wb25lbnQgOAovTGVuZ3RoIDc3Ci9GaWx0ZXIgWy9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZV0KPj5zdHJlYW0KR2IiMEpkMFRkcSRqNG9GXlUsIkhUczlFSUU7MEFULF9FKkxaJW9AN0psNVY7SCdDcz1UcnFEYUguNEJmI2M0T1ZUOyhkI2Y8R0U5fj4KZW5kc3RyZWFtCmVuZG9iagoyMiAwIG9iago8PCAvVHlwZSAvWE9iamVjdAovU3VidHlwZSAvSW1hZ2UKL1dpZHRoIDI5NAovSGVpZ2h0IDYxCi9Db2xvclNwYWNlIC9EZXZpY2VHcmF5Ci9CaXRzUGVyQ29tcG9uZW50IDgKL0xlbmd0aCAxMjMyCi9GaWx0ZXIgWy9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZV0KPj5zdHJlYW0KR2IiL2M4VE5UTyRqPywjOlckVkcvI3RwMUtZbiU3L3RkJ2woRyg4bilWdDtYXCkzWl5TWmY0XUloMDJSYEhBLFNsXlsoXzxIVlFjPyFUWUgKOWgxcU0oYEQ3JWBqcUBtcEp1VU5PMyNKdGIkSUktT1QoJTolT3RbVDlCZ1hMQm9DLCdDL0s6X1dNVEwjRzI1WWksbnNGKk1FKjxQWE0lVCcKRj42QkcrTDAvOyYsJjhcMHVnRTk7SGNcMjtmVnJRaVdnWzZlLFxgaiolLSw6R0xWISo3Q3MwKyhrQF1RZnQ1KyJJaDZMbCgnMWJAKy9RSGkKPnRSY1NEK1tdVVBCX29KTENfUTVnO0w\/MUJEQksuQmFXZ0wuNDFXREZKc0JLK0NwJHRELy06dF0+PC8vQkJlbmw4a1xEUzhjVjFPMiVSQTQKU3RqKD9lWSo8XGgxbkZSVEhLcmleMjpaOE1RWk5oOnA6KVEhX2VqcjZmT29VUGE5YkBQY1FVOyFJOCw5SyNWOmIwUCxnS284VEVrVHQpbmEKM1NfWStFI1JtRHBkcys3UTQ8LmA4a1xDZlBrOGN0UzRkUFgnIUhibzMqZSYrVmlKKW5kSDBLZ05vMmFMRSc1W21oM140KT4pTlAqNFhCaTIKLjRxQj8uMmJqQEc6UUcyNVU6NTEibz1vZU9obzdoQz90KDNsU15CXjtIWUZoO2AhZlZWPWA4TyZaSzc4J2orKCRsITZuVWRdc15ya1lTSW8KO1FsYG1LbClNW1xZXU5SYGNNOGRFXDhcMWBIPTJKcU40K3AhU1NNKiJdVmxcVjU8Zj5WME0\/OC5pMGVGOD8\/WS8qUUEsUyxJXzhTIyohWlgKQHRpO2VBXi5hL1FyNylrLkVDcEssc1hoRy40cUMiOnQhTyhRW29FQVxqQi5BbzEsMTIkIUdwNzZOOClaUWAvISooYGxDbjhLMD1qVE5lMCkKbWRdNT9QYTlhdVBYbjNQY0JMSHRhbjgyPGI3LmY9TEJFRVZqTSRfUDdpWGtOalNXcV4lLT8nLEsuYSFzb0gjPCI\/dGYla19jW3RZLlNZdFIKZ0hrV1pEPjcrZCNaLUksMHBoMUxSI1soW1w\/aDQ4JUwsZDdvL2koPFFkU2UuJU9IdCtJLiIhaUlHaDE8ZSFAL3I6dHNLK09LMSxbSVA+WSMKJCFzU0wqQFhkTDFlTWpoajtBMUlhXGw7Nz9fR29FaVY+Rk1fUUlrImdlUik\/OmAuQGckUy9SW1pjZXMlZUlnJ2AuT2dkKy4oZHI9T05ENV4Kb01TamJtbyEmWC1xS2NkWzc9ODslLDVaPFhvaWBbLm9lUkg3JUYkP1BhXypkIT5lMD1dTmFQYyxSKCxLT3RXWi5vSyZocUckVTJ1XztWX2QKIm5KKlAqZkxNKitmYzAmI2VDc3UkOyJBdGdFdDkvYEQpRTdQaktWTm9lKik7b0tGUyZPXjY5ITsiPFRxZmEmW19IbTxkIUtxUTxDYSFtUSgKPT9ZVzxPR1plclcyaDtMTUwjOTdQYTliMFBhbV8hT3UlX18scExpaC5iRFImMFhRSDhadFBeJWdFZE8kQ2F0XWJKSGBFVFk6NzgvMysjOU4Ka3IxJ1lwW0BQXWhPWGxEfj4KZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgMjMKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDEwNCAwMDAwMCBuIAowMDAwMDAwMTYyIDAwMDAwIG4gCjAwMDAwMDAyMTQgMDAwMDAgbiAKMDAwMDAwMDMxMiAwMDAwMCBuIAowMDAwMDAwNDE1IDAwMDAwIG4gCjAwMDAwMDA1MjEgMDAwMDAgbiAKMDAwMDAwMDYzMSAwMDAwMCBuIAowMDAwMDAwNzI3IDAwMDAwIG4gCjAwMDAwMDA4MjkgMDAwMDAgbiAKMDAwMDAwMDkzNCAwMDAwMCBuIAowMDAwMDAxMDQzIDAwMDAwIG4gCjAwMDAwMDExNDQgMDAwMDAgbiAKMDAwMDAwMTI0NCAwMDAwMCBuIAowMDAwMDAxMzQ2IDAwMDAwIG4gCjAwMDAwMDE0NTIgMDAwMDAgbiAKMDAwMDAwMTYyMiAwMDAwMCBuIAowMDAwMDAyMDAxIDAwMDAwIG4gCjAwMDAwMDU1NzQgMDAwMDAgbiAKMDAwMDAwNjIyMSAwMDAwMCBuIAowMDAwMDA2NDgyIDAwMDAwIG4gCnRyYWlsZXIKPDwKL0luZm8gMTcgMCBSCi9TaXplIDIzCi9Sb290IDEgMCBSCj4+CnN0YXJ0eHJlZgo3OTAxCiUlRU9GCg==",
+                                "docType": "PDF"
+                            }
+                        ],
+                        "customerReferences": [],
+                        "codcollectionAmount": 0,
+                        "baseRateAmount": 0
+                    },
+                    {
+                        "masterTrackingNumber": "794877547188",
+                        "deliveryDatestamp": "2026-10-05",
+                        "packageSequenceNumber": 2,
+                        "trackingNumber": "794877547199",
+                        "additionalChargesDiscount": 0,
+                        "netRateAmount": 0,
+                        "netChargeAmount": 0,
+                        "netDiscountAmount": 0,
+                        "packageDocuments": [
+                            {
+                                "contentType": "LABEL",
+                                "copiesToPrint": 1,
+                                "encodedLabel": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMyAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL091dGxpbmVzCi9Db3VudCAwCj4+CmVuZG9iagozIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovQ291bnQgMQovS2lkcyBbMTggMCBSXQo+PgplbmRvYmoKNCAwIG9iagpbL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSV0KZW5kb2JqCjUgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCi9FbmNvZGluZyAvTWFjUm9tYW5FbmNvZGluZwo+PgplbmRvYmoKNiAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9IZWx2ZXRpY2EtQm9sZAovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjcgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhLU9ibGlxdWUKL0VuY29kaW5nIC9NYWNSb21hbkVuY29kaW5nCj4+CmVuZG9iago4IDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0hlbHZldGljYS1Cb2xkT2JsaXF1ZQovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjkgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvQ291cmllcgovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjEwIDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0NvdXJpZXItQm9sZAovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjExIDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0NvdXJpZXItT2JsaXF1ZQovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjEyIDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0NvdXJpZXItQm9sZE9ibGlxdWUKL0VuY29kaW5nIC9NYWNSb21hbkVuY29kaW5nCj4+CmVuZG9iagoxMyAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9UaW1lcy1Sb21hbgovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjE0IDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL1RpbWVzLUJvbGQKL0VuY29kaW5nIC9NYWNSb21hbkVuY29kaW5nCj4+CmVuZG9iagoxNSAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9UaW1lcy1JdGFsaWMKL0VuY29kaW5nIC9NYWNSb21hbkVuY29kaW5nCj4+CmVuZG9iagoxNiAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9UaW1lcy1Cb2xkSXRhbGljCi9FbmNvZGluZyAvTWFjUm9tYW5FbmNvZGluZwo+PgplbmRvYmoKMTcgMCBvYmogCjw8Ci9DcmVhdGlvbkRhdGUgKEQ6MjAwMykKL1Byb2R1Y2VyIChGZWRFeCBTZXJ2aWNlcykKL1RpdGxlIChGZWRFeCBTaGlwcGluZyBMYWJlbCkNL0NyZWF0b3IgKEZlZEV4IEN1c3RvbWVyIEF1dG9tYXRpb24pDS9BdXRob3IgKENMUyBWZXJzaW9uIDUxMjAxMzUpCj4+CmVuZG9iagoxOCAwIG9iago8PAovVHlwZSAvUGFnZQ0vUGFyZW50IDMgMCBSCi9SZXNvdXJjZXMgPDwgL1Byb2NTZXQgNCAwIFIgCiAvRm9udCA8PCAvRjEgNSAwIFIgCi9GMiA2IDAgUiAKL0YzIDcgMCBSIAovRjQgOCAwIFIgCi9GNSA5IDAgUiAKL0Y2IDEwIDAgUiAKL0Y3IDExIDAgUiAKL0Y4IDEyIDAgUiAKL0Y5IDEzIDAgUiAKL0YxMCAxNCAwIFIgCi9GMTEgMTUgMCBSIAovRjEyIDE2IDAgUiAKID4+Ci9YT2JqZWN0IDw8IC9GZWRFeEV4cHJlc3MgMjAgMCBSCi9FeHByZXNzRSAyMSAwIFIKL2JhcmNvZGUwIDIyIDAgUgo+Pgo+PgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovVHJpbUJveFswIDAgNjEyIDc5Ml0KL0NvbnRlbnRzIDE5IDAgUgovUm90YXRlIDA+PgplbmRvYmoKMTkgMCBvYmoKPDwgL0xlbmd0aCAzNTU5Ci9GaWx0ZXIgWy9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZV0gCj4+CnN0cmVhbQpHYXQ9Lzk1YmZcJlxcZTZzJDBzRj82YT9vODYxbCZEJ1ksLmZ1UCgjKVFzYWdRWG5dMyI+UUchR282QU0uP15nXFc2KT5GbEBXMG1xUlNrcgo9QVArTkBJaF83IXRnQCktUEooK2YhbCFMOiZOX2IjU0Ezc2JBWVhsJiQrMEVuJUtycXFHIVAqcnJWc10pWyJJNzghKWJBIitOYCIsPV8sJwoxRjwkQ0pIUyRsOkE6ZSowOmJbSHMpQWUkbS9PT00\/bDZsXyMkWmpuTVxsbFpuSmJyMkIpY1JWVCJfYkhxPEApQGhjPzZGWFUpLUFQPlRHawpOM0U5WG5ya047XiYtc24xMVFiLidtOFNmK1g8QmQlaklTP3I2YCNhK1ldRlVaYFhhclApaCZGS1NIbWAvKjVwZHA8Jm8vcFI7aCtAPF0vKApvSmhbTmdlKGhEbUdHVjJULD0qRlJaI1k4TTAmSm5oImdaZ2MldUskJUgoR0tnV1RLYmldblE8ZURwZVVOZkIhTCthNmM7cCNiQG1xNj8lPgotYFg1aDk4UFpSQFM4aEJCbV1bQUBxRS9TKS09RypMayQxT2gxMFI2MSl1MzNoZCNRODZBRihZLTVXW24tTUEiQzl1KUMkPj1YLi5pLUJlRQpuSktCZSdcTmVzMzFsYT5TT1JYZjEoaU5OYTdeU3VjK11NVC4qUEJnNVV1YmltJVBfbCxqYCxmcHMtZiRgZWlzXixYUnVxNzJCUypWSl1oNgozXmFIPyJqLF9VNE1uMW5uKy0yMEtbZTZQMSxkciUmbT1xYjMvM0UoNGEsWl8tRUxYP1ZcLiQsbCZqJFRZLihVQ1FZKFNuRXFYZ2tJWHE0bwpmU1JgajMmQ2xkLCovUzZKKk9rYHM0Sk9TRXQ3SS4hUzVtNm1PMz1NWUtiJlNmP007MkQiQiZQcm8hIztmLEplO2hkJkhBYzxVRE9vNEg4RApdJUs7Q2NHPF4sb2Y6c3RrSWFvMGxXOlxfUi1mU045KmBxcmFmQl1sYidTS0doL0NTYT1yZEVYYmhKVy1gVF1JLFQ8NkY4OV8yVGZpb1UjTwpsXlVbNihAI24+VHVmQFI7LFZMam5mXiFbR0RkSSojODVaKVgsbCJnYW4rLzA9SGo9I3AkLnR0YWg2Sjk\/Iz9fZC40ajAiJmg0JTJAMWVXIwpzNC1nYFpga2QxWExtdXBsa3FKM2hIWy1YMl0oVmUzVCQ3Smg7NEJEcnA4O19MJjZNVkREcGhacmFLQm9YXERSWytDZkshNEohZTpDcTJxcQpiLkAmNjNfUUosMHNcNUxEYEhRWj5hViMqam5XPWJxcEkzMHFHSEwlV3VyYnUrT25jL09HdSYvWS5qaFwnXmhtZW8nUSNtYCddbjkna1J0WQppWy9GZCo1VmBSNVEyOiYzLkg4TiwsQjFoPT46ZChMYiRuNypqMEVqb1QyNEtXQyltZ1FCbEU\/alZuMG5hVTc1JUx1WCoxQVJxPGkvXyYhOwpebzgtMyoxQllqVFFiWWZyOzJdLmMnJmtuVHJxNFNTUlIjbFdkISVHIj9gSXUhKEFBJT0jOGM0JSljOXQ8W3NXNGVJRSddW1NJTjdMRCxOYQpsRCotTEVtKFJYOjRccy8rUjNvPGpbRERRM2AtQTA+VzNzQ1I8a0JoTHRCMXQxak1cOlFkMC85ZURaWGw5LyoyJ2RbWVE5PyQ2OUhPNCtfPQpIZCsxOCtwO1Y6M2djJ1dnRjpYWGVwRmkuL0ItRyxWb0w1Zi4vTz1OSkRfWWwvTEYyamEsKjNCRSNHXGlqalo+KitFJksjPC0iXVNWam48cgpQVVguOFQ2UVZdQDBmTy9UVUg0V2ZnPWc6XnExanBoI09DTWledTNGI25AczxNTiFfQSVZLjEjIiY6SSskcCMxLDZKOyFtVyZnVD8uUTZtMAoxIz8+XlAjVnBAPXA4cldtLUElNkYvdGJCQUVYLGcxMSxSTCQwdHVvX20wVXA7S1k3LCFaPj1WNCEiQy0\/ITNTcSIpOFM3MzxJXTpOQVo\/WwopZG5OJiNBUCFwW0QrQF5pOURaIShlKExoRSpEcFMrJmBGJkk+QyguM0A2S1I1VylQVCg8Y2djSmtQKyFIRCRdVjltJEoiIlYsQ2NNKzVrcApbOGI0Xz8iMGEuTzk2WV9aKF9KPG0xM3BSRmctIyssKCNgWCIpPWdGQXVsYWZDYWxSN01sLD41ZVByNXJDVVJTY1xQIVloWVFxMi1pWTpdXwpUMlhhOi9RdU5tZUUpI1VUNFlyT0NZOmBda0xBSXRqcWsiNkB0aDJwXztSYSw+MmxuVz5XOStpTnBQLmomM1smMldKTnJXYFImWGYiZFsoVQpvZnRCN1dfRmIqXyZnZW5MZFxWI0JrYWtnPkhjK0YtPydEQy1KZmZCVlA3W19TOUR1bi80UEYqVl4xOD9nVit0JyluQTxLPyJqOjw7dSglOgpyL3NBalosUmFgZVByTGMwRTNZRUROTDlQMyVZYFBbWENbWDFZOkozYFJiLGU5bmdpPFxYYzlJLW9sMStkaDk0ZU9IK0owWzVWW0UsXlEsUAouU1JsZ1xRRTJLSjgyKzptJEc0Rys9SFU\/b0plRmJMVU8qSCk0YURLPGdOb11SWWlGbigqSjUjM0gwMHA7S1k1XjxHcU5Sb3RCQlgiQFQkSwpKUWYpM2dXaTdzciQpRTFQM3I9S1ZGcDYoajo5OTVBZ3NHYko2RkZVQiMtNDU7QFs\/ZWU5ZGpXJEw7Ul5hNjY0NUgqUCgnITQ+ZDIyVihTNApwNkIvZSY4Zit1V0pRIy8\/blQkSWhpJCVIITJ1Y2AlbihvT2UoPFdFQVNlcDw7NEc7PDBvXmZOJyE4PkJXaTtyYSpOLytMbC1Wcm1vZyNZVQpAVyYjXUBjJ1NaZFxeJCpkaDN0YUhHN1R0MmE9JjEzaDNMNEc6QyNHajMxcklhWkdrUTo6aiwnMnMwWnBGOEppLjtDJXRIVmNAJEJHM14\/LQo8KDgiIUdfWnJobENlVihjN0pqUi8kU2FIa3JAZz5FPyljUDE3dV5WMm5NYFNnZlFERlpiOHBYZW05QD1vSSs3dWlTYDtCNTBvZjxHSj0nXwpcVVdCXmIyY1NLW0hTaSJZKzdUTDoyInBVMmBELCQxbTVyUmVqXk1gNGY7Xihrak9TPDQkJzI1VywzZltSTzw8Lk0lYVlaJWxiT3VSV24pXApEak5oSzZUSy5YQTwtUnQuSlAmLCpHT0BwQUZoVztBQlZdcDJcKXRhXEsyOjtoO1oiS15VXnIuLz5SclNoJCZFVS5IXjlhaDlDay1ZIltNbApXRih0RyFiZzYkKDEpdGcnLEdyUUM7O2xqY0s7VDNibDZTcWMqdHMsSXNoKF1vckMrUV1fWVFoamAtU2RJbElUJWJmcz4pKkc8YHEzXnMkJApYLDAhSGIqcDpjJVdcKiQiSWJDQzwyRUpxJ2QiZyk7TE9zQSUpPVo8O2sjPkldPlxCX2QoZlNBYkFYIyZzJ1Y+Qz1eYTlSLyUmPGYrOV1iWwo2cS82W2lHQSolOCdaLkROVEoxKl5dL0ElQjtdbidWLywrKzReXW8hY1FmSm5eTUtVTCsxKDdSVllhXCpTQTBoZj9HYDAiZ1xYNnIpTzRuZQoiTnNZI0dZQTFeJnU\/ZlowT0dvU2AwRDNvNEQqaGQnJFdDRChBIl1UaVI2OERWTHFHc19oSSVuRilgIi1iZ089TFA6NzwzLlFKW2hJYllGawpRdExxSjludG0\/R2xWOF5cLl5FZExGSyxnRXVeJSgrRyxrbDNnZTRARTUjcixRJyE7T2NzcjRCODRQdG1HKlhfSEdbKGxDQCpDYy1WbSRmKgpSYEBqYDhoMyY6PWVcbDI\/WGUiPE9iRHJBYyExZk4zZ2BmVEdzNV9cZDAkLCxCS0RNVUBwRk5IM19aLzwhc2g2M2xzVkI3YE5bImUxMW9jWQozZ1NFQSUhZUVTR1xJP0VtcFM4Q1xbVmtvNCpmVk8kUzM7bGBLRklmJEE7cTEtZTA\/LEVZJFZOSiY1NS5ZY2JNZFpyMyhPQDdsdEZUKyg+YAphRmlQMDRcVl1ZJSExcXNoXiZ0PUhDMGAzW2pjPytgZUFeUTF0SkBCaE9nZTdQZGtgSCcibTlaNFxTRzJnUSRqblYtRkxuYTdNJislMlY6cwpddS9pVGtfNTk+aSxqLl5QXGtvQDtjRklrSXRwcSg1P01aSUYiVHE4YmlRQFFkYyVROjk1VkdwVipNO0U8JExVSFxkOERdbEdzUD5HQDNhVwoyU15haCJTNXRncSF0bTNNMGZrbFc1QyYzNm5NVmctblByNkVDKFtAYWNmcmZqazVhKjdnJGpHSENVIzljLmhMPlFmRixUZVVbZ21Pc2ApRQpvbXBWIyY2VGJzVjJNcTs7TzVALk5rbixMLHRyI2dEWFA2S000aFlIP0Q6VD5GO2oyUlwiNi5kQTxDTV82TGQxUi5DSTFfSGshblVRUSkoSgpWLSkrKVBeO3E4NSkkSGhxJUUtQlUoNChIJEZaNC4hT3JONC4mRkVTOi5rXmFwQW1uSFJcWlYqXy90dFNqb15DU0sqPG1HLF9QRSY4dE9PKQpZdShFOC1aVC85blQ2YWVgTSUobC5oZTlDN0VkcVk6OldQKkFyVFhKYSwqIjBqKWdhLVxLYlRvYnE6QkMjM2ZNLmJQcVRwLjxJcn4+CmVuZHN0cmVhbQplbmRvYmoKMjAgMCBvYmoKPDwgL1R5cGUgL1hPYmplY3QKL1N1YnR5cGUgL0ltYWdlCi9XaWR0aCAxMTgKL0hlaWdodCA0OQovQ29sb3JTcGFjZSAvRGV2aWNlR3JheQovQml0c1BlckNvbXBvbmVudCA4Ci9MZW5ndGggNDYxCi9GaWx0ZXIgWy9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZV0KPj5zdHJlYW0KR2IiL2VKSV1SPyNYblhrVDZBPlhLbkRiV0IiTVpFYWpQcGQ0XScoXkBSbHQia0IiUzAkZiU\/PW09NEM7Oy4kTihqUmNZUiVzZCZsOSRPdF4KKSY3PUwoNy1lcXFlQC4oL1NDOTg0LWZMWGVMWjVxY1o1bEFFQjU1PjNAMD1rIjtSaDJoQmNRTDMmSj81b1tjSDBiU0ZOXjw7O0A0MVNZOW0KYyJaST1ZbCNjNClgXyJZbG1OMyUuQS5sTlNgVmUvWTwlPy43KCgpLy5kQls7ayFKWyUnJURKXEk\/K2E3OjVvTmtZXHFFUz4zPEk1YlptKEkKJWQ8QEIpOERidDNwS0djbGJRazEnaVpWczdOTTBcbyZSKnFVPmdIdS1GckNraDxrSEZHKlwkTT1fc1YvLSRcSkY6ZS8\/PmZYQStDQ21wRGUKZFNQNkdjdSxcWCdBTD1hNUpDWzQ2Ry5ocDI9VTRlXiRlb1xRI2IqbTdDOCQtSkEoY1o\/WWAnQzs2SnBIZVBsXCRIRUMhdV4qUWErNmdFTWsKW2ZFVipiLiM+cHI+LVdTZiM+aCZXP3Vra1RzaFlgPS9YLjY2QSo7YmlzL2RnQFFYWHNyOG07fj4KZW5kc3RyZWFtCmVuZG9iagoyMSAwIG9iago8PCAvVHlwZSAvWE9iamVjdAovU3VidHlwZSAvSW1hZ2UKL1dpZHRoIDU0Ci9IZWlnaHQgNTQKL0NvbG9yU3BhY2UgL0RldmljZUdyYXkKL0JpdHNQZXJDb21wb25lbnQgOAovTGVuZ3RoIDc3Ci9GaWx0ZXIgWy9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZV0KPj5zdHJlYW0KR2IiMEpkMFRkcSRqNG9GXlUsIkhUczlFSUU7MEFULF9FKkxaJW9AN0psNVY7SCdDcz1UcnFEYUguNEJmI2M0T1ZUOyhkI2Y8R0U5fj4KZW5kc3RyZWFtCmVuZG9iagoyMiAwIG9iago8PCAvVHlwZSAvWE9iamVjdAovU3VidHlwZSAvSW1hZ2UKL1dpZHRoIDI5NAovSGVpZ2h0IDY0Ci9Db2xvclNwYWNlIC9EZXZpY2VHcmF5Ci9CaXRzUGVyQ29tcG9uZW50IDgKL0xlbmd0aCAxMzA1Ci9GaWx0ZXIgWy9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZV0KPj5zdHJlYW0KR2IiL2NkO0lgOSNYbkxnVDtIQE5rS01sP1cvQilMP1o9Y0xeJzgxL2AsdElVZjNWNlpGZnJJWHImc05ZJmApWD0oJjwhUisqRzlXSCteMlkKJHVuKW5XbnNYZU48M0hGYzxJLj9maFNhQzstQm5OcCQxJEplbUUwQks\/ZmUyO1lqWmstUD1Eb0QrJSVcalNPLGheLlU8YmIsbz4tamRgX3MKPEA6X15RbFxNJVMqSmhpWDZ0OFsuSTYsXmRTYkNXT3AxSW1MSDVRNk9xcFNpQlVuWVRiaWtCcmpONi1wSjw0J1VTJ25GaDkuR3NkbUBpQz0KaFxvWmo5QmdGZ0VkdEZKcU8xWFhcPmFsPTRlW1JdJiwkQzxhc25TKzluWSdTO2FtZCRIJ0U3XmJAVl8mX15aXFs5NSxoPDlGNCQzcTt0JV8KTjk7XFtLREpFIkxbSWYnUUNvQ3BqYUI0QHMmPDprTWtPTXJIV05aOT51Pio2U0NFblI7WWdxTm0\/RihtYmhVUz9mRkxZRSY5IzZaPCdJWkoKVk9HXUE8SXJVWTJvJ1hXTDlpVGhjW1JBcVYkQUk2WlpVPixVIk4oZG9jalZCJmpfM1BSKjc6YmdcWCdpMUU9T1gzLmFsXktOVj9OLSVfJ3MKUUAscCRRSTwrKFdwWTlINXRaNUdoKElaRWNLcVpDZjtVRlRTQGJYclFKIyEjK2ttPmwwUDJYXlNbK1ZeXCw2UmFWNTxmOFYrLmguYFtqMSsKWDA7LkctcmdqYE9iTUFGVExAbWIhYUJbdDJHKG1SRWJXY0NORzhOUlI+T1JbLjRxQlc6bDo7c0BbNXI0ZVNWXzY5O1tCRzptXFY2TChEZD8KVDFWci0zMldmXChYPXQwVmFDMSFcb0w9JztIY1snO1RlSThrVjBlc0l0VF9CPTE0RyJyOkpxJS5YK18rX2czSVNCQWk8PilULThpVSc\/Q10KSi10KVZAanMiK2EhYyk\/YElqZyxqZiE6IVhlUSJzSEpqbU5IMkAzPW0oVGFkTC0sRDE4RG5lNkBtNClGRGhCQUw2OykjQTRcX3A+NVlMJSoKb0RPXV1OXW5pOVdiPidYVGo4W1dEU29vOWtxVWBuVkdLOWlvTThGOV9eUE06XXNPI2lkZjYoUS9ENHJTWlNFXWloP15aLz07NkhyZCFDPkAKWERIIkdWQTpNUWZzVmluX2FsVCxAaF0sVj86MDJrL1lydFRsODRkMzwjMjAqNlNHQjFNWls8PyoiMFY9ZGgqMS8tKkpJUCppNzJCYWFqbzYKcCY2JzcvdT5FOjMka3RKXTheLFI8cD8oQXJcVldsbkNKXy5Nc1BLZWpPMG5dUlczXUdpTUtRRSJfZnJDL05XMGFhJjYpNSVvUEc9K1dHR2QKZyc7JWMnaFk7UVNUYy1SbDs\/JVM2OE5mL01YTCNUZTZLZU1VVjkpJy4lMUEwZ3RZZTI4cmxsPS1qbV5gVWs1Jmg\/OVZxM21qa2JLWFlwZV8KO1x0SU9bcDRWRXJKMmE1ZGlebFEkRE9JQjFlVk8zST5VcV1ITWhfc0ktYnRkUD8waXBLKCdKRWhmX0QrWGk2SFIpJDJoV100ciZIOyloOGsKOUFXPTFNWkdLLVY9WkdmKFdaZD9yR251a0EySjwwYyYsXWspSXM7Z2hQYlBWNF0+bkphTF4yP0RPZEA5Jks3KWw3LiRoWFBeXTdRP043Yj0KISJbKz9fI34+CmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDIzCjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMDQgMDAwMDAgbiAKMDAwMDAwMDE2MiAwMDAwMCBuIAowMDAwMDAwMjE0IDAwMDAwIG4gCjAwMDAwMDAzMTIgMDAwMDAgbiAKMDAwMDAwMDQxNSAwMDAwMCBuIAowMDAwMDAwNTIxIDAwMDAwIG4gCjAwMDAwMDA2MzEgMDAwMDAgbiAKMDAwMDAwMDcyNyAwMDAwMCBuIAowMDAwMDAwODI5IDAwMDAwIG4gCjAwMDAwMDA5MzQgMDAwMDAgbiAKMDAwMDAwMTA0MyAwMDAwMCBuIAowMDAwMDAxMTQ0IDAwMDAwIG4gCjAwMDAwMDEyNDQgMDAwMDAgbiAKMDAwMDAwMTM0NiAwMDAwMCBuIAowMDAwMDAxNDUyIDAwMDAwIG4gCjAwMDAwMDE2MjIgMDAwMDAgbiAKMDAwMDAwMjAwMSAwMDAwMCBuIAowMDAwMDA1NjUyIDAwMDAwIG4gCjAwMDAwMDYyOTkgMDAwMDAgbiAKMDAwMDAwNjU2MCAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9JbmZvIDE3IDAgUgovU2l6ZSAyMwovUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKODA1MgolJUVPRgo=",
+                                "docType": "PDF"
+                            }
+                        ],
+                        "customerReferences": [],
+                        "codcollectionAmount": 0,
+                        "baseRateAmount": 0
+                    }
+                ],
+                "shipmentAdvisoryDetails": [],
+                "completedShipmentDetail": {
+                    "usDomestic": true,
+                    "carrierCode": "FDXE",
+                    "masterTrackingId": {
+                        "trackingIdType": "FEDEX",
+                        "formId": "0201",
+                        "trackingNumber": "794877547188"
+                    },
+                    "serviceDescription": {
+                        "serviceId": "EP1000000003",
+                        "serviceType": "FEDEX_2_DAY",
+                        "code": "03",
+                        "names": [
+                            {
+                                "type": "long",
+                                "encoding": "utf-8",
+                                "value": "FedEx 2Day\u00ae"
+                            },
+                            {
+                                "type": "long",
+                                "encoding": "ascii",
+                                "value": "FedEx 2Day"
+                            },
+                            {
+                                "type": "medium",
+                                "encoding": "utf-8",
+                                "value": "FedEx 2Day\u00ae"
+                            },
+                            {
+                                "type": "medium",
+                                "encoding": "ascii",
+                                "value": "FedEx 2Day"
+                            },
+                            {
+                                "type": "short",
+                                "encoding": "utf-8",
+                                "value": "P-2"
+                            },
+                            {
+                                "type": "short",
+                                "encoding": "ascii",
+                                "value": "P-2"
+                            },
+                            {
+                                "type": "abbrv",
+                                "encoding": "ascii",
+                                "value": "ES"
+                            }
+                        ],
+                        "operatingOrgCodes": [
+                            "FXE"
+                        ],
+                        "serviceCategory": "parcel",
+                        "description": "2Day",
+                        "astraDescription": "E2"
+                    },
+                    "packagingDescription": "Customer Packaging",
+                    "operationalDetail": {
+                        "ursaPrefixCode": "SA",
+                        "ursaSuffixCode": "BFIA ",
+                        "originLocationId": "CHIA ",
+                        "originLocationNumber": 0,
+                        "originServiceArea": "A1",
+                        "destinationLocationId": "BFIA ",
+                        "destinationLocationNumber": 0,
+                        "destinationServiceArea": "A1",
+                        "destinationLocationStateOrProvinceCode": "WA",
+                        "deliveryDate": "2026-10-05",
+                        "deliveryDay": "MON",
+                        "commitDate": "2026-10-05",
+                        "commitDay": "MON",
+                        "ineligibleForMoneyBackGuarantee": false,
+                        "astraPlannedServiceLevel": "MON - 05 OCT 8:00P",
+                        "astraDescription": "** 2DAY **",
+                        "postalCode": "98101",
+                        "stateOrProvinceCode": "WA",
+                        "countryCode": "US",
+                        "airportId": "SEA",
+                        "serviceCode": "03",
+                        "packagingCode": "01",
+                        "publishedDeliveryTime": "8:00P",
+                        "scac": ""
+                    },
+                    "shipmentRating": {
+                        "actualRateType": "PAYOR_ACCOUNT_PACKAGE",
+                        "shipmentRateDetails": [
+                            {
+                                "rateType": "PAYOR_ACCOUNT_PACKAGE",
+                                "rateScale": "6090",
+                                "rateZone": "07",
+                                "pricingCode": "PACKAGE",
+                                "ratedWeightMethod": "DIM",
+                                "dimDivisor": 0,
+                                "fuelSurchargePercent": 5,
+                                "totalBillingWeight": {
+                                    "units": "LB",
+                                    "value": 20
+                                },
+                                "totalBaseCharge": 254.82,
+                                "totalFreightDiscounts": 0,
+                                "totalNetFreight": 254.82,
+                                "totalSurcharges": 27.34,
+                                "totalNetFedExCharge": 282.16,
+                                "totalTaxes": 0,
+                                "totalNetCharge": 282.16,
+                                "totalRebates": 0,
+                                "totalDutiesAndTaxes": 0,
+                                "totalAncillaryFeesAndTaxes": 0,
+                                "totalDutiesTaxesAndFees": 0,
+                                "totalNetChargeWithDutiesAndTaxes": 0,
+                                "surcharges": [
+                                    {
+                                        "surchargeType": "RESIDENTIAL_DELIVERY",
+                                        "description": "Residential delivery",
+                                        "amount": 13.9
+                                    },
+                                    {
+                                        "surchargeType": "FUEL",
+                                        "description": "Fuel",
+                                        "amount": 13.44
+                                    }
+                                ],
+                                "freightDiscounts": [],
+                                "taxes": [],
+                                "currency": "USD"
+                            }
+                        ]
+                    },
+                    "completedPackageDetails": [
+                        {
+                            "sequenceNumber": 1,
+                            "trackingIds": [
+                                {
+                                    "trackingIdType": "FEDEX",
+                                    "formId": "0201",
+                                    "trackingNumber": "794877547188"
+                                }
+                            ],
+                            "groupNumber": 0,
+                            "signatureOption": "SERVICE_DEFAULT",
+                            "operationalDetail": {
+                                "barcodes": {
+                                    "binaryBarcodes": [
+                                        {
+                                            "type": "COMMON_2D",
+                                            "value": "Wyk+HjAxHTAyOTgxMDEdODQwHTAzHTc5NDg3NzU0NzE4ODAyMDEdRkRFHTc0MDk4MDExNB0yNzQdHTEvMh01LjUwTEIdTh01MDAgUGluZSBTdB1TZWF0dGxlHVdBHUdyYWNlIEhvcHBlch4wNh0xMFpFRDAwOB0xMloyMDY1NTUwMTAwHTE1WjAyOTAxNTYdMjBaHB0zMVoxMDAxOTAxNzUwMTkwMDA5ODEwMTAwNzk0ODc3NTQ3MTg4HTMyWjAyMjgdMzRaMDEdMzlaQ0hJQR0eMDkdRkRYHXodOB0SAys7OTh\/QB4E"
+                                        }
+                                    ],
+                                    "stringBarcodes": [
+                                        {
+                                            "type": "FEDEX_1D",
+                                            "value": "1001901750190009810100794877547188"
+                                        }
+                                    ]
+                                },
+                                "astraHandlingText": "RES",
+                                "operationalInstructions": [
+                                    {
+                                        "number": 2,
+                                        "content": "TRK#"
+                                    },
+                                    {
+                                        "number": 3,
+                                        "content": "0201"
+                                    },
+                                    {
+                                        "number": 4,
+                                        "content": "## MASTER ## "
+                                    },
+                                    {
+                                        "number": 5,
+                                        "content": "SA BFIA "
+                                    },
+                                    {
+                                        "number": 7,
+                                        "content": "1001901750190009810100794877547188"
+                                    },
+                                    {
+                                        "number": 8,
+                                        "content": "58KJ7\/23BB\/484B"
+                                    },
+                                    {
+                                        "number": 9,
+                                        "content": "1 of 2"
+                                    },
+                                    {
+                                        "number": 10,
+                                        "content": "7948 7754 7188"
+                                    },
+                                    {
+                                        "number": 12,
+                                        "content": "MON - 05 OCT 8:00P"
+                                    },
+                                    {
+                                        "number": 13,
+                                        "content": "** 2DAY **"
+                                    },
+                                    {
+                                        "number": 14,
+                                        "content": "RES"
+                                    },
+                                    {
+                                        "number": 15,
+                                        "content": "98101"
+                                    },
+                                    {
+                                        "number": 16,
+                                        "content": "WA-US"
+                                    },
+                                    {
+                                        "number": 17,
+                                        "content": "SEA"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "sequenceNumber": 2,
+                            "trackingIds": [
+                                {
+                                    "trackingIdType": "FEDEX",
+                                    "formId": "0263",
+                                    "trackingNumber": "794877547199"
+                                }
+                            ],
+                            "groupNumber": 0,
+                            "signatureOption": "SERVICE_DEFAULT",
+                            "operationalDetail": {
+                                "barcodes": {
+                                    "binaryBarcodes": [
+                                        {
+                                            "type": "COMMON_2D",
+                                            "value": "Wyk+HjAxHTAyOTgxMDEdODQwHTAzHTc5NDg3NzU0NzE5OTAyNjMdRkRFHTc0MDk4MDExNB0yNzQdHTIvMh01LjUwTEIdTh01MDAgUGluZSBTdB1TZWF0dGxlHVdBHUdyYWNlIEhvcHBlch4wNh0xMFpFRDAwOB0xMloyMDY1NTUwMTAwHTE1WjAyOTAxNTYdMjBaHB0yOFo3OTQ4Nzc1NDcxODgwMjAxHTMxWjEwMDI4NDY4NTAxOTAwMDk4MTAxMDA3OTQ4Nzc1NDcxOTkdMzJaMDIyOB0zNFowMR0zOVpDSElBHR4wOR1GRFgdeh04HRIDKzs5OH9AHgQ="
+                                        }
+                                    ],
+                                    "stringBarcodes": [
+                                        {
+                                            "type": "FEDEX_1D",
+                                            "value": "1002846850190009810100794877547199"
+                                        }
+                                    ]
+                                },
+                                "astraHandlingText": "RES",
+                                "operationalInstructions": [
+                                    {
+                                        "number": 2,
+                                        "content": "MPS#"
+                                    },
+                                    {
+                                        "number": 3,
+                                        "content": "0263"
+                                    },
+                                    {
+                                        "number": 4,
+                                        "content": "Mstr# 7948 7754 7188"
+                                    },
+                                    {
+                                        "number": 5,
+                                        "content": "SA BFIA "
+                                    },
+                                    {
+                                        "number": 7,
+                                        "content": "1002846850190009810100794877547199"
+                                    },
+                                    {
+                                        "number": 8,
+                                        "content": "58KJ7\/23BB\/484B"
+                                    },
+                                    {
+                                        "number": 9,
+                                        "content": "2 of 2"
+                                    },
+                                    {
+                                        "number": 10,
+                                        "content": "7948 7754 7199"
+                                    },
+                                    {
+                                        "number": 11,
+                                        "content": "0201"
+                                    },
+                                    {
+                                        "number": 12,
+                                        "content": "MON - 05 OCT 8:00P"
+                                    },
+                                    {
+                                        "number": 13,
+                                        "content": "** 2DAY **"
+                                    },
+                                    {
+                                        "number": 14,
+                                        "content": "RES"
+                                    },
+                                    {
+                                        "number": 15,
+                                        "content": "98101"
+                                    },
+                                    {
+                                        "number": 16,
+                                        "content": "WA-US"
+                                    },
+                                    {
+                                        "number": 17,
+                                        "content": "SEA"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "serviceCategory": "EXPRESS"
+            }
+        ]
+    }
+}

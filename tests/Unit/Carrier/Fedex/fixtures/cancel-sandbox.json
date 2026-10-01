@@ -1,0 +1,8 @@
+{
+    "transactionId": "22688901-d94b-4b64-8496-69d0a71220af",
+    "output": {
+        "cancelledShipment": true,
+        "cancelledHistory": true,
+        "message": "Shipment is successfully cancelled"
+    }
+}

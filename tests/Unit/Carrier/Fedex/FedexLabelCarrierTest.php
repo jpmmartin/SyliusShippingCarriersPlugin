@@ -35,7 +35,8 @@ use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\InMemoryStore;
 
 /**
- * Against the fixtures in `fixtures/`, written from the SDK's schemas and not checked against FedEx yet.
+ * Against the fixtures in `fixtures/`, whose README says which were recorded from FedEx and which were written
+ * from the SDK's schemas.
  */
 final class FedexLabelCarrierTest extends TestCase
 {
@@ -83,6 +84,23 @@ final class FedexLabelCarrierTest extends TestCase
         // The bytes, decoded, not the base64 FedEx sends.
         self::assertSame('%PDF-1.4 a FedEx label', $result->labels[0]->contents);
         self::assertSame('PDF', $result->labels[0]->format);
+    }
+
+    /**
+     * Recorded from FedEx's sandbox: a shipment of two packages inside the United States, each with its own tracking
+     * number and a real PDF label, and the first package's number as the shipment's.
+     */
+    public function testAShipmentAnswerAsFedexSendsItIsRead(): void
+    {
+        $this->mockFedex($this->json($this->fixture('ship-two-packages-sandbox.json')));
+
+        $result = $this->carrier()->ship($this->request(packages: 2));
+
+        self::assertSame('794877547188', $result->carrierReference);
+        self::assertSame(['794877547188', '794877547199'], array_map(static fn ($label): string => $label->trackingNumber, $result->labels));
+        self::assertSame(['PDF', 'PDF'], array_map(static fn ($label): string => $label->format, $result->labels));
+        self::assertStringStartsWith('%PDF', $result->labels[0]->contents);
+        self::assertStringStartsWith('%PDF', $result->labels[1]->contents);
     }
 
     public function testTheShipmentIsSentWithBothEndsTheServiceAndTheAccountItIsBilledTo(): void
@@ -282,6 +300,30 @@ final class FedexLabelCarrierTest extends TestCase
 
         self::assertFalse($result->voided);
         self::assertStringContainsString('already been picked up', (string) $result->reason);
+    }
+
+    /**
+     * Recorded from FedEx's sandbox, a cancellation it accepted.
+     */
+    public function testACancellationAsFedexSendsItIsRead(): void
+    {
+        $this->mockFedex($this->json($this->fixture('cancel-sandbox.json')));
+
+        self::assertTrue($this->carrier()->void('794877547133')->voided);
+    }
+
+    /**
+     * Recorded from FedEx's sandbox, asked to cancel a shipment it had already cancelled: a 200 that says no, with a
+     * reason that does not say why. The refusal keeps it as FedEx gave it.
+     */
+    public function testARefusedCancellationAsFedexSendsItKeepsItsReason(): void
+    {
+        $this->mockFedex($this->json($this->fixture('cancel-refused-sandbox.json')));
+
+        $result = $this->carrier()->void('794877547133');
+
+        self::assertFalse($result->voided);
+        self::assertStringContainsString('We are unable to process this request', (string) $result->reason);
     }
 
     public function testACancellationFedexRejectsOutrightIsAlsoARefusal(): void
