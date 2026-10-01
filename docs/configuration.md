@@ -48,12 +48,14 @@ jpm_martin_sylius_shipping_carriers:
         ups:
             '02': 'UPS 2nd Day Air'
         fedex:
-            FEDEX_EXPRESS_SAVER: 'FedEx Express Saver'
+            FEDEX_EXPRESS_SAVER: 'Economy, 3 business days'
 ```
 
-The plugin ships with UPS `01` and `03`, and FedEx `FEDEX_GROUND`, `PRIORITY_OVERNIGHT` and
-`STANDARD_OVERNIGHT`. Carriers publish many more, and their codes differ by account, so add the ones
-your account sells.
+The plugin ships with UPS `01` and `03`, and FedEx `FIRST_OVERNIGHT`, `PRIORITY_OVERNIGHT`,
+`STANDARD_OVERNIGHT`, `FEDEX_2_DAY_AM`, `FEDEX_2_DAY`, `FEDEX_EXPRESS_SAVER` and `FEDEX_GROUND`. The
+FedEx ones are what FedEx's sandbox sells inside the United States, and Ground, which the sandbox does
+not quote. Carriers publish many more, and their codes differ by account, so add the ones your account
+sells.
 
 ## Settings from environment variables
 

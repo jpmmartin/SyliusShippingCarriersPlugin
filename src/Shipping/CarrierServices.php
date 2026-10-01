@@ -29,8 +29,10 @@ use Symfony\Contracts\Service\ResetInterface;
 final class CarrierServices implements ResetInterface
 {
     /**
-     * Only codes the carriers' own API schemas show in their examples. Any other service is one entry away in the
-     * application's configuration.
+     * For UPS, only codes its API schemas show in their examples. For FedEx, the services its sandbox sells on a
+     * route inside the United States, fastest first, and Ground: the sandbox quotes it on no route, which does not
+     * tell an account without it from a service that is gone, and it is the cheapest service in the United States.
+     * Any other service is one entry away in the application's configuration.
      */
     public const DEFAULTS = [
         'ups' => [
@@ -38,9 +40,13 @@ final class CarrierServices implements ResetInterface
             '03' => 'UPS Ground',
         ],
         'fedex' => [
-            'FEDEX_GROUND' => 'FedEx Ground',
+            'FIRST_OVERNIGHT' => 'FedEx First Overnight',
             'PRIORITY_OVERNIGHT' => 'FedEx Priority Overnight',
             'STANDARD_OVERNIGHT' => 'FedEx Standard Overnight',
+            'FEDEX_2_DAY_AM' => 'FedEx 2Day AM',
+            'FEDEX_2_DAY' => 'FedEx 2Day',
+            'FEDEX_EXPRESS_SAVER' => 'FedEx Express Saver',
+            'FEDEX_GROUND' => 'FedEx Ground',
         ],
     ];
 

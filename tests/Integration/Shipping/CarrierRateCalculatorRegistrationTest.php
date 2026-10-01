@@ -76,9 +76,13 @@ final class CarrierRateCalculatorRegistrationTest extends KernelTestCase
     {
         yield 'UPS' => [UpsRateConfigurationType::class, ['01' => 'UPS Next Day Air', '03' => 'UPS Ground']];
         yield 'FedEx' => [FedexRateConfigurationType::class, [
-            'FEDEX_GROUND' => 'FedEx Ground',
+            'FIRST_OVERNIGHT' => 'FedEx First Overnight',
             'PRIORITY_OVERNIGHT' => 'FedEx Priority Overnight',
             'STANDARD_OVERNIGHT' => 'FedEx Standard Overnight',
+            'FEDEX_2_DAY_AM' => 'FedEx 2Day AM',
+            'FEDEX_2_DAY' => 'FedEx 2Day',
+            'FEDEX_EXPRESS_SAVER' => 'FedEx Express Saver',
+            'FEDEX_GROUND' => 'FedEx Ground',
         ]];
     }
 

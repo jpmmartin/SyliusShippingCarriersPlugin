@@ -15,6 +15,10 @@ here, and what counts as a breaking change, are written down in [RELEASING.md](R
   rule for the encryption key and declares its path in `.env`. It prints the two steps it leaves on
   purpose: generating the key and running the migrations. The README now starts the installation
   with it and keeps the edits by hand for a store without Flex or without the recipe.
+- **FedEx's Express services inside the United States, among those a shipping method is chosen
+  from:** First Overnight, 2Day AM, 2Day and Express Saver, beside Priority Overnight, Standard
+  Overnight and Ground. They are what FedEx's sandbox sells on a domestic route. Ground stays although
+  the sandbox quotes it nowhere; whether an account sells it is for FedEx to say.
 
 ### Fixed
 
