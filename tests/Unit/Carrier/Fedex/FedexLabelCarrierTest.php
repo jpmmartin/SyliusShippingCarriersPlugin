@@ -140,6 +140,18 @@ final class FedexLabelCarrierTest extends TestCase
         self::assertSame('ZPLII', $this->sent('requestedShipment.labelSpecification.imageType'));
     }
 
+    /**
+     * FedEx's sandbox refuses ZPL on paper stock with INVALID.STOCK.TYPE, and issues it on a thermal roll: a
+     * thermal printer's format is asked for on the stock it prints on.
+     */
+    public function testAThermalPrinterFormatIsAskedForOnThermalStock(): void
+    {
+        $this->mockFedex($this->json($this->fixture('ship.json')));
+        $this->carrier()->ship($this->request(labelFormat: 'ZPLII'));
+
+        self::assertSame('STOCK_4X6', $this->sent('requestedShipment.labelSpecification.labelStockType'));
+    }
+
     public function testThePackagesAreSentLongestSideFirstAndRoundedUp(): void
     {
         $this->mockFedex($this->json($this->fixture('ship.json')));

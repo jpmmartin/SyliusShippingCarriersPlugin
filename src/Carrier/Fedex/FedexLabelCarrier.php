@@ -72,6 +72,12 @@ final readonly class FedexLabelCarrier implements LabelCarrierInterface
     /** Four by six inches on plain paper, which any printer takes. */
     private const LABEL_STOCK_PAPER = 'PAPER_4X6';
 
+    /** Four by six inches on a thermal printer's roll. */
+    private const LABEL_STOCK_THERMAL = 'STOCK_4X6';
+
+    /** Formats only a thermal printer prints, which FedEx refuses on paper stock with INVALID.STOCK.TYPE. */
+    private const THERMAL_FORMATS = ['ZPLII'];
+
     /** The shipment is billed to the merchant's own account, the one the labels are issued against. */
     private const PAYMENT_SENDER = 'SENDER';
 
@@ -145,7 +151,7 @@ final readonly class FedexLabelCarrier implements LabelCarrierInterface
                     packagingType: self::PACKAGING_TYPE_YOUR_PACKAGING,
                     shippingChargesPayment: new Payment(self::PAYMENT_SENDER),
                     labelSpecification: new LabelSpecification(
-                        labelStockType: self::LABEL_STOCK_PAPER,
+                        labelStockType: \in_array($request->labelFormat, self::THERMAL_FORMATS, true) ? self::LABEL_STOCK_THERMAL : self::LABEL_STOCK_PAPER,
                         imageType: $request->labelFormat,
                     ),
                     requestedPackageLineItems: array_map($this->package(...), $request->packages),

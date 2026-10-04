@@ -25,6 +25,9 @@ here, and what counts as a breaking change, are written down in [RELEASING.md](R
 - **FedEx tracking shows the buyer's shipment when FedEx has reused its number.** FedEx answers a
   tracking number with every shipment that has had it, and the plugin showed the first it listed,
   the oldest. It now shows the one that moved last.
+- **FedEx labels in ZPL are issued.** The plugin asked for every FedEx label on paper stock, and
+  FedEx refuses ZPL on paper with `INVALID.STOCK.TYPE`, so a store that set `label_formats.fedex` to
+  `ZPLII` could not issue a label. ZPL is now asked for on a thermal roll, four by six inches.
 
 ## [1.1.0] - 2026-09-25
 
