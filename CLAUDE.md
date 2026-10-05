@@ -338,12 +338,10 @@ Non-obvious wiring, none of which is discoverable from the commands themselves:
   no `ServiceContainer`, so it must not be listed under `extensions:`. Its `SymfonyPage` is simply
   extended by the page objects.
 
-Behat JS scenarios additionally need headless Chrome on port 9222 and a running server:
-
-```bash
-APP_ENV=test symfony server:start --port=8080 --daemon
-vendor/bin/behat --strict --tags="@javascript"
-```
+No scenario needs a browser, so `behat.yml.dist` declares no JavaScript session. A scenario tagged
+`@javascript` would need one back, `DMore\ChromeExtension` with a `chromedriver` session on headless Chrome at
+port 9222, and Chrome running wherever Behat runs, the CI included: from its 1.5.0 the extension asks Chrome
+for its version as soon as Behat starts, whether any scenario needs it or not.
 
 ### Known gaps in the inherited scaffolding
 
