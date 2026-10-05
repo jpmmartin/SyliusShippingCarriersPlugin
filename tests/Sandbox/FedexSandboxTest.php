@@ -6,6 +6,7 @@ namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Sandbox;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Address;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\AddressFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexCarrier;
@@ -17,18 +18,30 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
+use JpmMartin\SyliusShippingCarriersPlugin\Customs\CustomsDataProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Customs\DeclaredValueCalculator;
+use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationType;
+use JpmMartin\SyliusShippingCarriersPlugin\Destination\DestinationTypeResolverInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Encrypter;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCustomsData;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCustomsDataInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBox;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackage;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackaging;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackagingInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Label\ShipmentRequestFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\BoxSelector;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\DefaultPackagingStrategy;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\FallbackPackager;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
 use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierPackageBoxRepositoryInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Shipping\Calculator\CarrierRateCalculator;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\CarrierServices;
 use ParagonIE\Halite\KeyFactory;
 use PHPUnit\Framework\MockObject\Stub;
@@ -36,13 +49,24 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Saloon\Http\PendingRequest;
 use Saloon\Http\Response;
+use Sylius\Component\Core\Model\Address as SyliusAddress;
+use Sylius\Component\Core\Model\Channel;
+use Sylius\Component\Core\Model\Order;
+use Sylius\Component\Core\Model\OrderItem;
+use Sylius\Component\Core\Model\OrderItemUnit;
+use Sylius\Component\Core\Model\Product;
 use Sylius\Component\Core\Model\ProductVariant;
+use Sylius\Component\Core\Model\ProductVariantInterface;
+use Sylius\Component\Core\Model\Shipment;
+use Sylius\Component\Core\Model\ShippingMethod;
 use Sylius\Component\Shipping\Model\ShipmentInterface;
 use Sylius\Component\Shipping\Model\ShipmentUnitInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\InMemoryStore;
+use Tests\JpmMartin\SyliusShippingCarriersPlugin\Settings\CarrierSettingsFactory;
 
 /**
  * Talks to the real FedEx sandbox. It is not part of any test suite of `phpunit.xml.dist`, so
@@ -327,6 +351,54 @@ final class FedexSandboxTest extends TestCase
         $carrier->void($result->carrierReference);
     }
 
+    /**
+     * The whole of what the plugin does with an international order, against FedEx: two stored packages, one with
+     * two mugs and one with a bag, become the request through the plugin's own factory, which reads each variant's
+     * customs data and weight and the price paid for each unit. FedEx issues a label per package and the invoice,
+     * and then cancels the shipment.
+     */
+    public function testAnInternationalOrderOfTwoPackagesIsIssuedFromWhatTheStoreKeepsAndCancelled(): void
+    {
+        $mug = self::variant('MUG', 'Enamel mug', 1.25);
+        $bag = self::variant('BAG', 'Leather bag', 2.2);
+        $customsData = ['MUG' => self::customsData('691200', 'PT'), 'BAG' => self::customsData('420222', 'CN')];
+
+        $packaging = new CarrierShipmentPackaging();
+        $packaging->addPackage(self::storedPackage(0, 13.0, 11.0, 9.0, 3.0, [[$mug, 1200], [$mug, 1200]]));
+        $packaging->addPackage(self::storedPackage(1, 16.0, 12.0, 6.0, 2.7, [[$bag, 3550]]));
+
+        $origin = new CarrierShippingOrigin();
+        $origin->setCompanyName('The store');
+        $origin->setContactName('Ada Lovelace');
+        $origin->setPhone('3125550100');
+        $origin->setStreet('1 Main St');
+        $origin->setCity('Chicago');
+        $origin->setPostcode('60601');
+        $origin->setCountryCode('US');
+        $origin->setProvinceCode('IL');
+
+        $request = $this->requestFactory($origin, $packaging, $customsData)->create($this->londonShipment(), 'fedex', 'sandbox-' . bin2hex(random_bytes(4)));
+
+        self::assertCount(2, $request->packages);
+        self::assertNotNull($request->customsInvoice);
+        self::assertSame(
+            [['MUG', 2, 2.5, 'lb'], ['BAG', 1, 2.2, 'lb']],
+            array_map(static fn (CustomsItem $line): array => [$line->code, $line->quantity, $line->weight, $line->weightUnit], $request->customsInvoice->lines),
+        );
+
+        $carrier = $this->labelCarrier();
+        $result = $carrier->ship($request);
+
+        self::assertCount(2, $result->labels, 'One label per package.');
+        self::assertNotSame($result->labels[0]->trackingNumber, $result->labels[1]->trackingNumber);
+        self::assertStringStartsWith('%PDF', $result->labels[1]->contents);
+        self::assertNotNull($result->customsDocument, 'FedEx issued the labels without the commercial invoice.');
+        self::assertStringStartsWith('%PDF', $result->customsDocument->contents);
+
+        $cancelled = $carrier->void($result->carrierReference);
+        self::assertTrue($cancelled->voided, (string) $cancelled->reason);
+    }
+
     private function carrier(): FedexCarrier
     {
         return new FedexCarrier($this->credentialsProvider(), $this->connectorFactory());
@@ -430,6 +502,121 @@ final class FedexSandboxTest extends TestCase
         }
 
         file_put_contents($directory . '/' . $name, json_encode($contents, \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * @param array<string, CarrierCustomsDataInterface> $customsData By variant code
+     */
+    private function requestFactory(CarrierShippingOriginInterface $origin, CarrierShipmentPackagingInterface $packaging, array $customsData): ShipmentRequestFactory
+    {
+        /** @var RepositoryInterface<CarrierShippingOriginInterface>&Stub $origins */
+        $origins = $this->createStub(RepositoryInterface::class);
+        $origins->method('findOneBy')->willReturn($origin);
+        /** @var RepositoryInterface<CarrierShipmentPackagingInterface>&Stub $packagings */
+        $packagings = $this->createStub(RepositoryInterface::class);
+        $packagings->method('findOneBy')->willReturn($packaging);
+        /** @var RepositoryInterface<CarrierCustomsDataInterface>&Stub $customsDataRepository */
+        $customsDataRepository = $this->createStub(RepositoryInterface::class);
+        $customsDataRepository->method('findOneBy')->willReturnCallback(static function (array $criteria) use ($customsData): ?CarrierCustomsDataInterface {
+            $variant = $criteria['variant'] ?? null;
+
+            return $variant instanceof ProductVariantInterface ? ($customsData[(string) $variant->getCode()] ?? null) : null;
+        });
+        $destinationType = $this->createStub(DestinationTypeResolverInterface::class);
+        $destinationType->method('resolve')->willReturn(DestinationType::COMMERCIAL);
+
+        return new ShipmentRequestFactory(
+            $origins,
+            $packagings,
+            $destinationType,
+            new AddressFactory(),
+            CarrierSettingsFactory::provider(originRepository: $origins),
+            new CustomsDataProvider($customsDataRepository),
+            new DeclaredValueCalculator(),
+            new MockClock(),
+        );
+    }
+
+    private function londonShipment(): Shipment
+    {
+        $channel = new Channel();
+        $channel->setCode('WEB');
+
+        $method = new ShippingMethod();
+        $method->setCalculator('fedex_rate');
+        $method->setConfiguration([CarrierRateCalculator::SERVICE => self::INTERNATIONAL_SERVICE]);
+
+        $address = new SyliusAddress();
+        $address->setStreet('10 Downing St');
+        $address->setCity('London');
+        $address->setPostcode('SW1A 1AA');
+        $address->setCountryCode('GB');
+        $address->setFirstName('Grace');
+        $address->setLastName('Hopper');
+        $address->setPhoneNumber('442079460000');
+
+        $order = new Order();
+        $order->setNumber('000000042');
+        $order->setChannel($channel);
+        $order->setCurrencyCode('USD');
+        $order->setShippingAddress($address);
+
+        $shipment = new Shipment();
+        $shipment->setMethod($method);
+        $order->addShipment($shipment);
+
+        return $shipment;
+    }
+
+    /**
+     * @param list<array{ProductVariantInterface, int}> $units Each unit's variant and what was paid for it
+     */
+    private static function storedPackage(int $position, float $length, float $width, float $height, float $weight, array $units): CarrierShipmentPackage
+    {
+        $package = new CarrierShipmentPackage();
+        $package->setPosition($position);
+        $package->setLength($length);
+        $package->setWidth($width);
+        $package->setHeight($height);
+        $package->setDimensionUnit('in');
+        $package->setWeight($weight);
+        $package->setWeightUnit('lb');
+        foreach ($units as [$variant, $price]) {
+            $item = new OrderItem();
+            $item->setVariant($variant);
+            $item->setUnitPrice($price);
+            $package->addUnit(new OrderItemUnit($item));
+        }
+
+        return $package;
+    }
+
+    private static function variant(string $code, string $name, float $weight): ProductVariant
+    {
+        $product = new Product();
+        $product->setCurrentLocale('en_US');
+        $product->setFallbackLocale('en_US');
+        $product->setCode($code . '_PRODUCT');
+        $product->setName($name);
+
+        $variant = new ProductVariant();
+        $variant->setCurrentLocale('en_US');
+        $variant->setFallbackLocale('en_US');
+        $variant->setCode($code);
+        $variant->setName($name);
+        $variant->setProduct($product);
+        $variant->setWeight($weight);
+
+        return $variant;
+    }
+
+    private static function customsData(string $hsCode, string $countryOfOrigin): CarrierCustomsData
+    {
+        $customsData = new CarrierCustomsData();
+        $customsData->setHsCode($hsCode);
+        $customsData->setCountryOfOrigin($countryOfOrigin);
+
+        return $customsData;
     }
 
     /**
