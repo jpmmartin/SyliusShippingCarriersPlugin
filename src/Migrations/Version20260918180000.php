@@ -30,11 +30,11 @@ final class Version20260918180000 extends AbstractMigration
         $export->addColumn('state', 'string', ['length' => 16, 'notnull' => true]);
         $export->addColumn('carrier', 'string', ['length' => 16, 'notnull' => false]);
         $export->addColumn('environment', 'string', ['length' => 16, 'notnull' => false]);
-        $export->addColumn('carrier_reference', 'string', ['notnull' => false]);
+        $export->addColumn('carrier_reference', 'string', ['notnull' => false, 'length' => 255]);
         $export->addColumn('issued_at', 'datetime_immutable', ['notnull' => false]);
-        $export->addColumn('issued_by', 'string', ['notnull' => false]);
+        $export->addColumn('issued_by', 'string', ['notnull' => false, 'length' => 255]);
         $export->addColumn('voided_at', 'datetime_immutable', ['notnull' => false]);
-        $export->addColumn('voided_by', 'string', ['notnull' => false]);
+        $export->addColumn('voided_by', 'string', ['notnull' => false, 'length' => 255]);
         $export->addColumn('failure_reason', 'text', ['notnull' => false]);
         $export->setPrimaryKey(['id']);
         // A shipment is exported once.
@@ -45,9 +45,9 @@ final class Version20260918180000 extends AbstractMigration
         $label->addColumn('id', 'integer', ['autoincrement' => true]);
         $label->addColumn('export_id', 'integer', ['notnull' => true]);
         $label->addColumn('position', 'integer', ['notnull' => true]);
-        $label->addColumn('path', 'string', ['notnull' => false]);
+        $label->addColumn('path', 'string', ['notnull' => false, 'length' => 255]);
         $label->addColumn('format', 'string', ['length' => 16, 'notnull' => false]);
-        $label->addColumn('tracking_number', 'string', ['notnull' => false]);
+        $label->addColumn('tracking_number', 'string', ['notnull' => false, 'length' => 255]);
         $label->addColumn('declared_value', 'integer', ['notnull' => false]);
         $label->addColumn('declared_value_currency', 'string', ['length' => 3, 'notnull' => false]);
         $label->addColumn('purged_at', 'datetime_immutable', ['notnull' => false]);

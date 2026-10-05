@@ -34,6 +34,11 @@ here, and what counts as a breaking change, are written down in [RELEASING.md](R
   lines carry no weight, and the plugin sent none, so no international shipment went out with FedEx.
   Each line now weighs its variant times its units, in the unit the shipping origin weighs in, and
   `CustomsItem` carries that weight for any label carrier that wants it.
+- **The migrations run on MySQL with Doctrine DBAL 4**, which a store on Sylius 2.3 installs. Seven
+  text columns of the plugin's tables were created without a length: DBAL 3 gave them 255 and DBAL 4
+  gives them none, so on MySQL the migrations stopped with «requires the length of a VARCHAR
+  column», and on PostgreSQL the columns were left without the limit the mapping describes. They are
+  now created with 255. A store that ran them with DBAL 3 already has 255 and has nothing to do.
 
 ## [1.1.0] - 2026-09-25
 

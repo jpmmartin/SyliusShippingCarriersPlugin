@@ -26,8 +26,8 @@ final class Version20260918220000 extends AbstractMigration
     public function up(Schema $schema): void
     {
         $table = $schema->getTable(self::TABLE);
-        $table->addColumn('company_name', 'string', ['notnull' => false]);
-        $table->addColumn('contact_name', 'string', ['notnull' => false]);
+        $table->addColumn('company_name', 'string', ['notnull' => false, 'length' => 255]);
+        $table->addColumn('contact_name', 'string', ['notnull' => false, 'length' => 255]);
         $table->addColumn('phone', 'string', ['length' => 32, 'notnull' => false]);
     }
 
