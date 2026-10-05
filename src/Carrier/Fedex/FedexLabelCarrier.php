@@ -269,6 +269,11 @@ final readonly class FedexLabelCarrier implements LabelCarrierInterface
             customsValue: new CustomsMoney(self::amount($line->quantity * $line->unitValue), $line->currencyCode),
             countryOfManufacture: $line->countryOfOrigin,
             harmonizedCode: $line->hsCode,
+            // Required: FedEx refuses a line without it. Rounded up as the packages are.
+            weight: null === $line->weight ? null : new Weight(
+                units: CarrierShippingOriginInterface::WEIGHT_UNIT_KG === $line->weightUnit ? 'KG' : 'LB',
+                value: ceil(round($line->weight * 10, 6)) / 10,
+            ),
             partNumber: $line->code,
         );
     }

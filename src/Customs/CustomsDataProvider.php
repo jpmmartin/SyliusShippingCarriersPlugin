@@ -69,6 +69,9 @@ final readonly class CustomsDataProvider
         $items = [];
         foreach ($lines as [$variant, $unitValue, $quantity]) {
             $customsData = $this->customsDataOf($variant);
+            // The weight the package was packed by, in the unit it was weighed in; a variant without one is never
+            // packed at all.
+            $weight = $variant->getShippingWeight();
 
             $items[] = new CustomsItem(
                 (string) $customsData->getHsCode(),
@@ -78,6 +81,8 @@ final readonly class CustomsDataProvider
                 $unitValue,
                 $currencyCode,
                 (string) $variant->getCode(),
+                null === $weight ? null : $weight * $quantity,
+                $package->getWeightUnit(),
             );
         }
 

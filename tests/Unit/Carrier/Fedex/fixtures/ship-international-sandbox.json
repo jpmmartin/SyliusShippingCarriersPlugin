@@ -1,0 +1,309 @@
+{
+    "transactionId": "240fb86a-bda9-4814-beed-4ec7f29ac669",
+    "output": {
+        "transactionShipments": [
+            {
+                "masterTrackingNumber": "794878416837",
+                "serviceType": "FEDEX_INTERNATIONAL_PRIORITY",
+                "shipDatestamp": "2026-10-05",
+                "serviceName": "FedEx International Priority\u00ae",
+                "shipmentDocuments": [
+                    {
+                        "contentType": "COMMERCIAL_INVOICE",
+                        "copiesToPrint": 3,
+                        "encodedLabel": "JVBERi0xLjQKJeLjz9MKMTAwIDAgb2JqIDw8L1N1YnR5cGUvRm9ybS9GaWx0ZXIvRmxhdGVEZWNvZGUvVHlwZS9YT2JqZWN0L01hdHJpeFsxIDAgMCAxIDAgMF0vRm9ybVR5cGUgMS9SZXNvdXJjZXM8PC9Qcm9jU2V0Wy9QREYvVGV4dC9JbWFnZUIvSW1hZ2VDL0ltYWdlSV0vRm9udDw8L0hlbHYgNjIgMCBSPj4+Pi9CQm94WzAgMCAyNTYuMzcgOS4yNV0vTGVuZ3RoIDEwNz4+c3RyZWFtCnicbYy7CoNAFAV/ZUptVndFxVYRbCyEC/mC1RB84Bokn5+rtUx35jA79iZMpIrLC5OVVMblBM/IQCI/6r5hfzq8WFXUooXLWhzOWIssJJ2fT0pkVDERydtzfLfgY/ncSytaH2i1/Qfnxx9UCmVuZHN0cmVhbQplbmRvYmoKMTI0IDAgb2JqIDw8L1N1YnR5cGUvRm9ybS9GaWx0ZXIvRmxhdGVEZWNvZGUvVHlwZS9YT2JqZWN0L01hdHJpeFsxIDAgMCAxIDAgMF0vRm9ybVR5cGUgMS9SZXNvdXJjZXM8PC9Qcm9jU2V0Wy9QREYvVGV4dC9JbWFnZUIvSW1hZ2VDL0ltYWdlSV0vRm9udDw8L0hlbHYgNjIgMCBSPj4+Pi9CQm94WzAgMCAyMTIuNDYgMTAuMzddL0xlbmd0aCAxMTI+PnN0cmVhbQp4nCtUMATDonQFAyA0MjTSMzFTMDTQMzZXKEpVSFMIVNAPqVBw8nVWKMSqIlwhDyjjFAI0AyRtqGCkYKRnZq4Qkqug75GaU6YAZKYBJdIVNBxTEhV88stScxKTUzVDssCCriFAGwIVXIHmAwB2tSCICmVuZHN0cmVhbQplbmRvYmoKOTIgMCBvYmogPDwvU3VidHlwZS9Gb3JtL0ZpbHRlci9GbGF0ZURlY29kZS9UeXBlL1hPYmplY3QvTWF0cml4WzEgMCAwIDEgMCAwXS9Gb3JtVHlwZSAx",
+                        "trackingNumber": "794878416837",
+                        "docType": "PDF"
+                    }
+                ],
+                "pieceResponses": [
+                    {
+                        "masterTrackingNumber": "794878416837",
+                        "trackingNumber": "794878416837",
+                        "additionalChargesDiscount": 0,
+                        "netRateAmount": 358.15,
+                        "netChargeAmount": 0,
+                        "netDiscountAmount": 0,
+                        "packageDocuments": [
+                            {
+                                "contentType": "LABEL",
+                                "copiesToPrint": 1,
+                                "encodedLabel": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMyAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL091dGxpbmVzCi9Db3VudCAwCj4+CmVuZG9iagozIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovQ291bnQgNAovS2lkcyBbMTggMCBSIDE5IDAgUiAyMCAwIFIgMjEgMCBSXQo+PgplbmRvYmoKNCAwIG9iagpbL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSV0KZW5kb2JqCjUgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCi9FbmNvZGluZyAvTWFjUm9tYW5FbmNvZGluZwo+PgplbmRvYmoKNiAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9IZWx2ZXRpY2EtQm9sZAovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjcgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhLU9ibGlxdWUKL0VuY29kaW5nIC9NYWNSb21hbkVuY29kaW5nCj4+CmVuZG9iago4IDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0hlbHZldGljYS1Cb2xkT2JsaXF1ZQovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjkgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvQ291cmllcgovRW5jb2RpbmcgL01hY1JvbWFuRW5jb2RpbmcKPj4KZW5kb2JqCjEwIDAgb2JqCjw8Ci9UeXBlIC9G",
+                                "docType": "PDF"
+                            }
+                        ],
+                        "currency": "EUR",
+                        "customerReferences": [],
+                        "baseRateAmount": 281.54,
+                        "codcollectionAmount": 0
+                    }
+                ],
+                "shipmentAdvisoryDetails": [],
+                "completedShipmentDetail": {
+                    "usDomestic": false,
+                    "carrierCode": "FDXE",
+                    "masterTrackingId": {
+                        "trackingIdType": "FEDEX",
+                        "formId": "0430",
+                        "trackingNumber": "794878416837"
+                    },
+                    "serviceDescription": {
+                        "serviceId": "EP1000000300",
+                        "serviceType": "FEDEX_INTERNATIONAL_PRIORITY",
+                        "code": "2P",
+                        "names": [
+                            {
+                                "type": "long",
+                                "encoding": "utf-8",
+                                "value": "FedEx International Priority\u00ae"
+                            },
+                            {
+                                "type": "long",
+                                "encoding": "ascii",
+                                "value": "FedEx International Priority"
+                            },
+                            {
+                                "type": "medium",
+                                "encoding": "utf-8",
+                                "value": "FedEx International Priority"
+                            },
+                            {
+                                "type": "medium",
+                                "encoding": "ascii",
+                                "value": "FedEx International Priority"
+                            },
+                            {
+                                "type": "short",
+                                "encoding": "utf-8",
+                                "value": "IPED"
+                            },
+                            {
+                                "type": "short",
+                                "encoding": "ascii",
+                                "value": "IPED"
+                            },
+                            {
+                                "type": "abbrv",
+                                "encoding": "ascii",
+                                "value": "OA"
+                            }
+                        ],
+                        "operatingOrgCodes": [
+                            "FXE"
+                        ],
+                        "serviceCategory": "parcel",
+                        "description": "International Priority EOD (IP EOD)",
+                        "astraDescription": "IP EOD"
+                    },
+                    "packagingDescription": "Customer Packaging",
+                    "operationalDetail": {
+                        "ursaPrefixCode": "XQ",
+                        "ursaSuffixCode": "LCYT8",
+                        "originLocationId": "CHIA ",
+                        "originLocationNumber": 0,
+                        "originServiceArea": "A1",
+                        "destinationLocationId": "LCYT8",
+                        "destinationLocationNumber": 0,
+                        "destinationServiceArea": "A1",
+                        "destinationLocationStateOrProvinceCode": "LO",
+                        "deliveryDate": "",
+                        "deliveryDay": "",
+                        "commitDate": "",
+                        "commitDay": "",
+                        "ineligibleForMoneyBackGuarantee": false,
+                        "astraPlannedServiceLevel": "A1",
+                        "astraDescription": "IP EOD",
+                        "postalCode": "SW1A1AA",
+                        "stateOrProvinceCode": "LO",
+                        "countryCode": "GB",
+                        "airportId": "STN",
+                        "serviceCode": "2P",
+                        "packagingCode": "01",
+                        "publishedDeliveryTime": "",
+                        "scac": ""
+                    },
+                    "shipmentRating": {
+                        "actualRateType": "PAYOR_ACCOUNT_SHIPMENT",
+                        "shipmentRateDetails": [
+                            {
+                                "rateType": "PAYOR_ACCOUNT_SHIPMENT",
+                                "rateScale": "US001OFD_2P_YOUR_PACKAGING",
+                                "rateZone": "D",
+                                "pricingCode": "",
+                                "ratedWeightMethod": "DIM",
+                                "currencyExchangeRate": {
+                                    "fromCurrency": "USD",
+                                    "intoCurrency": "EUR",
+                                    "rate": 0.9
+                                },
+                                "dimDivisor": 139,
+                                "fuelSurchargePercent": 5,
+                                "totalBillingWeight": {
+                                    "units": "LB",
+                                    "value": 9.3
+                                },
+                                "totalBaseCharge": 281.54,
+                                "totalFreightDiscounts": 0,
+                                "totalNetFreight": 281.54,
+                                "totalSurcharges": 16.92,
+                                "totalNetFedExCharge": 298.46,
+                                "totalTaxes": 59.69,
+                                "totalNetCharge": 358.15,
+                                "totalRebates": 0,
+                                "totalDutiesAndTaxes": 0,
+                                "totalAncillaryFeesAndTaxes": 0,
+                                "totalDutiesTaxesAndFees": 0,
+                                "totalNetChargeWithDutiesAndTaxes": 358.15,
+                                "surcharges": [
+                                    {
+                                        "surchargeType": "DEMAND",
+                                        "level": "SHIPMENT",
+                                        "description": "Demand Surcharge",
+                                        "amount": 2.71
+                                    },
+                                    {
+                                        "surchargeType": "FUEL",
+                                        "level": "SHIPMENT",
+                                        "description": "Fuel",
+                                        "amount": 14.21
+                                    }
+                                ],
+                                "freightDiscounts": [],
+                                "taxes": [
+                                    {
+                                        "type": "VAT",
+                                        "description": "Austria value-added",
+                                        "amount": 59.69
+                                    }
+                                ],
+                                "currency": "EUR"
+                            }
+                        ]
+                    },
+                    "completedPackageDetails": [
+                        {
+                            "sequenceNumber": 1,
+                            "trackingIds": [
+                                {
+                                    "trackingIdType": "FEDEX",
+                                    "formId": "0430",
+                                    "trackingNumber": "794878416837"
+                                }
+                            ],
+                            "groupNumber": 0,
+                            "signatureOption": "SERVICE_DEFAULT",
+                            "operationalDetail": {
+                                "barcodes": {
+                                    "binaryBarcodes": [
+                                        {
+                                            "type": "COMMON_2D",
+                                            "value": "Wyk+HjAxHTAyU1cxQTFBQR04MjYdMlAdNzk0ODc4NDE2ODM3MDQzMB1GREUdNzQwOTgwMTE0HTI3OB0dMS8xHTUuNTBMQh1OHTEwIERvd25pbmcgU3QdTG9uZG9uHUxPHUdyYWNlIEhvcHBlch4wNh0xMFpFSU8wNx0xMlo0NDIwNzk0NjAwMDAdMTVaMDI5MDE1Nh0zMVoxMjIxNTcyODUwNzcwOTc5NjQ4MjAwNzk0ODc4NDE2ODM3HTMyWjAyHTM5WkNISUEdOTlaRUkwMDA3HFVTHDU5HFVTRBxFbmFtZWwgbXVnHE5PIEVFSSAzMC4zNyhhKRwcHR4wOR1GRFgdeh04HRsFIDM7Nn9AHgQ="
+                                        }
+                                    ],
+                                    "stringBarcodes": [
+                                        {
+                                            "type": "FEDEX_1D",
+                                            "value": "1221572850770979648200794878416837"
+                                        }
+                                    ]
+                                },
+                                "astraHandlingText": "",
+                                "operationalInstructions": [
+                                    {
+                                        "number": 2,
+                                        "content": "TRK#"
+                                    },
+                                    {
+                                        "number": 3,
+                                        "content": "0430"
+                                    },
+                                    {
+                                        "number": 5,
+                                        "content": "XQ LCYT8"
+                                    },
+                                    {
+                                        "number": 7,
+                                        "content": "1221572850770979648200794878416837"
+                                    },
+                                    {
+                                        "number": 8,
+                                        "content": "58KJ9/B503/484B"
+                                    },
+                                    {
+                                        "number": 10,
+                                        "content": "7948 7841 6837"
+                                    },
+                                    {
+                                        "number": 12,
+                                        "content": "A1"
+                                    },
+                                    {
+                                        "number": 13,
+                                        "content": "IP EOD"
+                                    },
+                                    {
+                                        "number": 15,
+                                        "content": "SW1A 1AA"
+                                    },
+                                    {
+                                        "number": 16,
+                                        "content": "LO-GB"
+                                    },
+                                    {
+                                        "number": 17,
+                                        "content": "STN"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "exportComplianceStatement": "NO EEI 30.37(a)",
+                    "documentRequirements": {
+                        "requiredDocuments": [
+                            "COMMERCIAL_OR_PRO_FORMA_INVOICE",
+                            "AIR_WAYBILL"
+                        ],
+                        "generationDetails": [
+                            {
+                                "type": "PRO_FORMA_INVOICE",
+                                "minimumCopiesRequired": 3,
+                                "letterhead": "OPTIONAL",
+                                "electronicSignature": "OPTIONAL"
+                            },
+                            {
+                                "type": "COMMERCIAL_INVOICE",
+                                "minimumCopiesRequired": 3,
+                                "letterhead": "OPTIONAL",
+                                "electronicSignature": "OPTIONAL"
+                            },
+                            {
+                                "type": "AIR_WAYBILL",
+                                "minimumCopiesRequired": 3
+                            }
+                        ],
+                        "prohibitedDocuments": [
+                            "USMCA_COMMERCIAL_INVOICE_CERTIFICATION_OF_ORIGIN",
+                            "USMCA_CERTIFICATION_OF_ORIGIN"
+                        ]
+                    },
+                    "shipmentDocuments": [
+                        {
+                            "type": "COMMERCIAL_INVOICE",
+                            "shippingDocumentDisposition": "RETURNED",
+                            "imageType": "PDF",
+                            "resolution": 200,
+                            "copiesToPrint": 3,
+                            "parts": [
+                                {
+                                    "documentPartSequenceNumber": 1,
+                                    "image": "JVBERi0xLjQKJeLjz9MKMTAwIDAgb2JqIDw8L1N1YnR5cGUvRm9ybS9GaWx0ZXIvRmxhdGVEZWNvZGUvVHlwZS9YT2JqZWN0L01hdHJpeFsxIDAgMCAxIDAgMF0vRm9ybVR5cGUgMS9SZXNvdXJjZXM8PC9Qcm9jU2V0Wy9QREYvVGV4dC9JbWFnZUIvSW1hZ2VDL0ltYWdlSV0vRm9udDw8L0hlbHYgNjIgMCBSPj4+Pi9CQm94WzAgMCAyNTYuMzcgOS4yNV0vTGVuZ3RoIDEwNz4+c3RyZWFtCnicbYy7CoNAFAV/ZUptVndFxVYRbCyEC/mC1RB84Bokn5+rtUx35jA79iZMpIrLC5OVVMblBM/IQCI/6r5hfzq8WFXUooXLWhzOWIssJJ2fT0pkVDERydtzfLfgY/ncSytaH2i1/Qfnxx9UCmVuZHN0cmVhbQplbmRvYmoKMTI0IDAgb2JqIDw8L1N1YnR5cGUvRm9ybS9GaWx0ZXIvRmxhdGVEZWNvZGUvVHlwZS9YT2JqZWN0L01hdHJpeFsxIDAgMCAxIDAgMF0vRm9ybVR5cGUgMS9SZXNvdXJjZXM8PC9Qcm9jU2V0Wy9QREYvVGV4dC9JbWFnZUIvSW1hZ2VDL0ltYWdlSV0vRm9udDw8L0hlbHYgNjIgMCBSPj4+Pi9CQm94WzAgMCAyMTIuNDYgMTAuMzddL0xlbmd0aCAxMTI+PnN0cmVhbQp4nCtUMATDonQFAyA0MjTSMzFTMDTQMzZXKEpVSFMIVNAPqVBw8nVWKMSqIlwhDyjjFAI0AyRtqGCkYKRnZq4Qkqug75GaU6YAZKYBJdIVNBxTEhV88stScxKTUzVDssCCriFAGwIVXIHmAwB2tSCICmVuZHN0cmVhbQplbmRvYmoKOTIgMCBvYmogPDwvU3VidHlwZS9Gb3JtL0ZpbHRlci9GbGF0ZURlY29kZS9UeXBlL1hPYmplY3QvTWF0cml4WzEgMCAwIDEgMCAwXS9Gb3JtVHlwZSAx"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "serviceCategory": "EXPRESS"
+            }
+        ]
+    }
+}

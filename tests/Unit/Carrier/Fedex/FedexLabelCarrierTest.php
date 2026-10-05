@@ -209,6 +209,40 @@ final class FedexLabelCarrierTest extends TestCase
         self::assertSame('en_US', $this->sent('requestedShipment.shippingDocumentSpecification.commercialInvoiceDetail.documentFormat.locale'));
     }
 
+    /**
+     * FedEx's sandbox refuses an international shipment whose lines carry no weight, with WEIGHT.NONNUMERIC.ERROR.
+     * Rounded up to a tenth, as the packages are, so a line is never declared lighter than it is.
+     */
+    public function testEachLineOfTheDeclarationCarriesItsWeight(): void
+    {
+        $this->mockFedex($this->json($this->fixture('ship-international.json')));
+
+        $this->carrier()->ship($this->internationalRequest());
+
+        $commodities = 'requestedShipment.customsClearanceDetail.commodities';
+        self::assertEquals(['units' => 'LB', 'value' => 2.5], $this->sent($commodities . '.0.weight'));
+        self::assertEquals(['units' => 'LB', 'value' => 2.3], $this->sent($commodities . '.1.weight'));
+    }
+
+    /**
+     * Recorded from FedEx's sandbox, a shipment to the United Kingdom with its invoice: the label, and the commercial
+     * invoice among the shipment's documents. FedEx sends the invoice a second time inside the completed shipment's
+     * detail, which is not read.
+     */
+    public function testAnInternationalAnswerAsFedexSendsItIsRead(): void
+    {
+        $this->mockFedex($this->json($this->fixture('ship-international-sandbox.json')));
+
+        $result = $this->carrier()->ship($this->internationalRequest());
+
+        self::assertSame('794878416837', $result->carrierReference);
+        self::assertCount(1, $result->labels);
+        self::assertStringStartsWith('%PDF', $result->labels[0]->contents);
+        self::assertNotNull($result->customsDocument);
+        self::assertSame('PDF', $result->customsDocument->format);
+        self::assertStringStartsWith('%PDF', $result->customsDocument->contents);
+    }
+
     public function testTheInvoiceComesBackWithTheLabels(): void
     {
         $this->mockFedex($this->json($this->fixture('ship-international.json')));
@@ -438,8 +472,8 @@ final class FedexLabelCarrierTest extends TestCase
         return $this->request(
             destination: new Address('GB', 'SW1A 1AA', 'London', '10 Downing St', null, false, null, 'Grace Hopper', '442079460000'),
             invoice: new CustomsInvoice('000000042', new \DateTimeImmutable('2026-09-21 10:00:00'), 'USD', [
-                new CustomsItem('691200', 'PT', 'Enamel mug', 2, 1200, 'USD', 'MUG'),
-                new CustomsItem('420222', 'CN', 'Leather bag', 1, 3550, 'USD', 'BAG'),
+                new CustomsItem('691200', 'PT', 'Enamel mug', 2, 1200, 'USD', 'MUG', 2.5, 'lb'),
+                new CustomsItem('420222', 'CN', 'Leather bag', 1, 3550, 'USD', 'BAG', 2.21, 'lb'),
             ]),
         );
     }

@@ -30,6 +30,10 @@ here, and what counts as a breaking change, are written down in [RELEASING.md](R
 - **FedEx labels in ZPL are issued.** The plugin asked for every FedEx label on paper stock, and
   FedEx refuses ZPL on paper with `INVALID.STOCK.TYPE`, so a store that set `label_formats.fedex` to
   `ZPLII` could not issue a label. ZPL is now asked for on a thermal roll, four by six inches.
+- **FedEx shipments that cross a border are issued.** FedEx refuses a customs declaration whose
+  lines carry no weight, and the plugin sent none, so no international shipment went out with FedEx.
+  Each line now weighs its variant times its units, in the unit the shipping origin weighs in, and
+  `CustomsItem` carries that weight for any label carrier that wants it.
 
 ## [1.1.0] - 2026-09-25
 

@@ -42,9 +42,8 @@ use Symfony\Component\Lock\Store\InMemoryStore;
  * the account actually sells, and whether FedEx takes the shipments the plugin asks for. It writes FedEx's answers
  * to var/sandbox/ as they came, to compare with the fixtures, and cancels every shipment it issues.
  *
- * The international shipment fails as of 2026-09-30: the sandbox answers every one with HTTP 500
- * SYSTEM.UNEXPECTED.ERROR, to the United Kingdom and to Canada alike, with or without each part of the customs
- * declaration, while the same account issues domestic ones. It stays here as what has to pass.
+ * The sandbox fails now and then with HTTP 500 or 503 on a request it takes the next time: a red run is run again
+ * before it is believed.
  */
 final class FedexSandboxTest extends TestCase
 {
@@ -207,8 +206,8 @@ final class FedexSandboxTest extends TestCase
 
     /**
      * To the United Kingdom, with an invoice of two lines and the recipient paying the duties. What the SDK does not
-     * say of customs is whether FedEx takes what the plugin sends: no payor when the recipient pays, `EA` as the
-     * unit, and no weight on a line.
+     * say of customs, FedEx answers here: it takes no payor when the recipient pays and `EA` as the unit, and it
+     * refuses a line without its weight.
      */
     public function testFedexIssuesAnInternationalShipmentWithItsInvoice(): void
     {
@@ -226,8 +225,8 @@ final class FedexSandboxTest extends TestCase
 
         $carrier = $this->labelCarrier();
         $result = $carrier->ship($this->shipment(self::INTERNATIONAL_SERVICE, 1, $london, new CustomsInvoice('000000042', new \DateTimeImmutable(), 'USD', [
-            new CustomsItem('691200', 'PT', 'Enamel mug', 2, 1200, 'USD', 'MUG'),
-            new CustomsItem('420222', 'CN', 'Leather bag', 1, 3550, 'USD', 'BAG'),
+            new CustomsItem('691200', 'PT', 'Enamel mug', 2, 1200, 'USD', 'MUG', 2.5, 'lb'),
+            new CustomsItem('420222', 'CN', 'Leather bag', 1, 3550, 'USD', 'BAG', 2.2, 'lb'),
         ])));
 
         self::assertCount(1, $result->labels);

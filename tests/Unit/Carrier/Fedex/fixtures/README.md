@@ -18,8 +18,11 @@ Copied as FedEx sent them. A test that passes with these reads what FedEx actual
 - `cancel-refused-sandbox.json`: the same cancellation asked again. FedEx answers 200 with
   `cancelledShipment: false` and a message that does not say why.
 
-No international shipment is recorded: as of 2026-09-30 the sandbox answers every one with HTTP 500 (see
-`tests/Sandbox/FedexSandboxTest.php`), so `ship-international.json` is still written from the schema.
+- `ship-international-sandbox.json`: the answer of 2026-10-05 to a shipment from Chicago to London with
+  `FEDEX_INTERNATIONAL_PRIORITY` and an invoice of two lines, each with its weight. One exception to «as FedEx
+  sent it»: every `encodedLabel` and `image` is cut to its first 1024 characters, which still decode to the
+  start of a PDF. FedEx sends the commercial invoice twice, among `shipmentDocuments` and again inside
+  `completedShipmentDetail`, and in full the answer weighs 433 KB.
 
 ## Written from the SDK's schemas, not checked against FedEx
 

@@ -9,6 +9,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Customs\Exception\MissingCustomsDataE
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCustomsData;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCustomsDataInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShipmentPackage;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOriginInterface;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Sylius\Component\Core\Model\Adjustment;
@@ -54,6 +55,22 @@ final class CustomsDataProviderTest extends TestCase
             $items[1]->hsCode, $items[1]->countryOfOrigin, $items[1]->description,
             $items[1]->quantity, $items[1]->unitValue, $items[1]->code,
         ]);
+    }
+
+    /**
+     * FedEx refuses a line without its weight: the variant's, times its units, in the unit the package was weighed in.
+     */
+    public function testEachLineWeighsItsVariantTimesItsUnitsInTheUnitOfThePackage(): void
+    {
+        $mug = $this->variant('MUG', 'Mug');
+        $mug->setWeight(1.5);
+        $this->declare('MUG', '691200', 'PT');
+        $package = $this->package([$this->unit($mug, 1200), $this->unit($mug, 1200)]);
+        $package->setWeightUnit(CarrierShippingOriginInterface::WEIGHT_UNIT_LB);
+
+        $items = $this->provider()->forPackage($package, 'USD');
+
+        self::assertSame([3.0, 'lb'], [$items[0]->weight, $items[0]->weightUnit]);
     }
 
     /**

@@ -124,7 +124,17 @@ final readonly class ShipmentRequestFactory
             foreach ($package->customsItems as $item) {
                 $key = sprintf('%s|%d', $item->code, $item->unitValue);
                 $lines[$key] = isset($lines[$key])
-                    ? new CustomsItem($item->hsCode, $item->countryOfOrigin, $item->description, $lines[$key]->quantity + $item->quantity, $item->unitValue, $item->currencyCode, $item->code)
+                    ? new CustomsItem(
+                        $item->hsCode,
+                        $item->countryOfOrigin,
+                        $item->description,
+                        $lines[$key]->quantity + $item->quantity,
+                        $item->unitValue,
+                        $item->currencyCode,
+                        $item->code,
+                        null === $lines[$key]->weight || null === $item->weight ? null : $lines[$key]->weight + $item->weight,
+                        $item->weightUnit,
+                    )
                     : $item;
             }
         }

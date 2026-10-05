@@ -661,6 +661,7 @@ final class LabelIssuerTest extends TestCase
             $invoice->lines[0]->code, $invoice->lines[0]->hsCode, $invoice->lines[0]->countryOfOrigin,
             $invoice->lines[0]->quantity, $invoice->lines[0]->unitValue,
         ]);
+        self::assertSame([2.5, 'lb'], [$invoice->lines[0]->weight, $invoice->lines[0]->weightUnit], 'Both packages\' mugs, 1.25 lb each.');
         self::assertSame(2400, $invoice->total());
     }
 
@@ -1145,6 +1146,7 @@ final class LabelIssuerTest extends TestCase
         $variant->setCode('MUG');
         $variant->setName('Mug');
         $variant->setProduct($product);
+        $variant->setWeight(1.25);
 
         return $variant;
     }
