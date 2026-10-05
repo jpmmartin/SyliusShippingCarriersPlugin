@@ -19,6 +19,8 @@ here, and what counts as a breaking change, are written down in [RELEASING.md](R
   from:** First Overnight, 2Day AM, 2Day and Express Saver, beside Priority Overnight, Standard
   Overnight and Ground. They are what FedEx's sandbox sells on a domestic route. Ground stays although
   the sandbox quotes it nowhere; whether an account sells it is for FedEx to say.
+- **PNG and EPL2 for FedEx labels**, beside PDF and ZPLII: the four FedEx's sandbox issues, PNG on
+  paper and EPL2 on a thermal roll. GIF, which FedEx refuses, is still refused before it is asked.
 
 ### Fixed
 

@@ -121,6 +121,19 @@ final class ConfigurationTest extends TestCase
     }
 
     /**
+     * The other two FedEx's sandbox issues: an image on paper, and the other thermal printers' language.
+     */
+    public function testFedexAlsoPrintsPngAndEpl2(): void
+    {
+        foreach (['PNG', 'EPL2'] as $format) {
+            $formats = $this->process([['label_formats' => ['fedex' => $format]]])['label_formats'];
+
+            self::assertIsArray($formats);
+            self::assertSame($format, $formats['fedex']);
+        }
+    }
+
+    /**
      * Refused here rather than at the carrier with a shipment half issued.
      */
     public function testAFormatTheCarrierDoesNotPrintIsRefused(): void

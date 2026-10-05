@@ -36,7 +36,7 @@ jpm_martin_sylius_shipping_carriers:
     temporary_documents_retention: 86400
 
     # What to ask each carrier to print its labels as. The two share no format.
-    # UPS: GIF, ZPL, EPL or SPL. FedEx: PDF or ZPLII.
+    # UPS: GIF, ZPL, EPL or SPL. FedEx: PDF, PNG, ZPLII or EPL2.
     label_formats:
         ups: 'GIF'
         fedex: 'PDF'

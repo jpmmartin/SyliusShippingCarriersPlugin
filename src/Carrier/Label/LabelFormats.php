@@ -27,12 +27,12 @@ final class LabelFormats
     /**
      * UPS's list is the one its SDK documents (`Model/LabelSpecificationLabelImageFormat.php`).
      *
-     * FedEx's SDK does not enumerate them: its `imageType` is a free string whose docblock names PDF and
-     * ZPLII. Until a real call confirms the rest, only those two are accepted, so a typo is refused here
-     * rather than at the carrier with a shipment half issued.
+     * FedEx's SDK does not enumerate them: its `imageType` is a free string. These are the ones its sandbox
+     * issues, PDF and PNG on paper and ZPLII and EPL2 on a thermal roll; it refuses GIF. Anything else is refused
+     * here, so a typo is caught before the carrier, with no shipment half issued.
      */
     public const SUPPORTED = [
         CarrierCredentialsInterface::CARRIER_UPS => ['GIF', 'ZPL', 'EPL', 'SPL'],
-        CarrierCredentialsInterface::CARRIER_FEDEX => ['PDF', 'ZPLII'],
+        CarrierCredentialsInterface::CARRIER_FEDEX => ['PDF', 'PNG', 'ZPLII', 'EPL2'],
     ];
 }

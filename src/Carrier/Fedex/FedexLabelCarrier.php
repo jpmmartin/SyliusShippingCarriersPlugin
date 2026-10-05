@@ -76,7 +76,7 @@ final readonly class FedexLabelCarrier implements LabelCarrierInterface
     private const LABEL_STOCK_THERMAL = 'STOCK_4X6';
 
     /** Formats only a thermal printer prints, which FedEx refuses on paper stock with INVALID.STOCK.TYPE. */
-    private const THERMAL_FORMATS = ['ZPLII'];
+    private const THERMAL_FORMATS = ['ZPLII', 'EPL2'];
 
     /** The shipment is billed to the merchant's own account, the one the labels are issued against. */
     private const PAYMENT_SENDER = 'SENDER';

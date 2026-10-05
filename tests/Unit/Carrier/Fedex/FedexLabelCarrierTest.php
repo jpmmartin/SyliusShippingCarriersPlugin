@@ -20,6 +20,7 @@ use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use ParagonIE\Halite\KeyFactory;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Saloon\Http\Faking\MockClient;
@@ -141,15 +142,29 @@ final class FedexLabelCarrierTest extends TestCase
     }
 
     /**
-     * FedEx's sandbox refuses ZPL on paper stock with INVALID.STOCK.TYPE, and issues it on a thermal roll: a
-     * thermal printer's format is asked for on the stock it prints on.
+     * FedEx's sandbox refuses ZPL on paper stock and PNG on a thermal roll, both with INVALID.STOCK.TYPE: each format
+     * is asked for on the stock it prints on.
      */
-    public function testAThermalPrinterFormatIsAskedForOnThermalStock(): void
+    #[DataProvider('labelFormatsAndTheirStock')]
+    public function testEachFormatIsAskedForOnTheStockItPrintsOn(string $format, string $stock): void
     {
         $this->mockFedex($this->json($this->fixture('ship.json')));
-        $this->carrier()->ship($this->request(labelFormat: 'ZPLII'));
+        $this->carrier()->ship($this->request(labelFormat: $format));
 
-        self::assertSame('STOCK_4X6', $this->sent('requestedShipment.labelSpecification.labelStockType'));
+        self::assertSame($stock, $this->sent('requestedShipment.labelSpecification.labelStockType'));
+    }
+
+    /**
+     * Each format FedEx's sandbox issues, on the stock it issued it on.
+     *
+     * @return iterable<string, array{string, string}>
+     */
+    public static function labelFormatsAndTheirStock(): iterable
+    {
+        yield 'PDF, on paper' => ['PDF', 'PAPER_4X6'];
+        yield 'PNG, on paper' => ['PNG', 'PAPER_4X6'];
+        yield 'ZPLII, on a thermal roll' => ['ZPLII', 'STOCK_4X6'];
+        yield 'EPL2, on a thermal roll' => ['EPL2', 'STOCK_4X6'];
     }
 
     public function testThePackagesAreSentLongestSideFirstAndRoundedUp(): void

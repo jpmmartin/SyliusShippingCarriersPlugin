@@ -6,11 +6,13 @@ namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Sandbox;
 
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Address;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexConnectorFactory;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Fedex\FedexLabelCarrier;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsInvoice;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\CustomsItem;
+use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\LabelFormats;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentPackage;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Label\ShipmentRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
@@ -185,6 +187,25 @@ final class FedexSandboxTest extends TestCase
     }
 
     /**
+     * Every label format the plugin accepts for FedEx is one FedEx issues, and one it does not accept, GIF, FedEx
+     * refuses as well.
+     */
+    public function testFedexIssuesEveryLabelFormatThePluginAcceptsAndRefusesAnother(): void
+    {
+        $carrier = $this->labelCarrier();
+        foreach (LabelFormats::SUPPORTED[CarrierCredentialsInterface::CARRIER_FEDEX] as $format) {
+            $result = $carrier->ship($this->shipment(self::DOMESTIC_SERVICE, 1, format: $format));
+
+            self::assertSame($format, $result->labels[0]->format, sprintf('FedEx issued %s as something else.', $format));
+            self::assertNotSame('', $result->labels[0]->contents);
+            $carrier->void($result->carrierReference);
+        }
+
+        $this->expectException(CarrierRejectedRequestException::class);
+        $carrier->ship($this->shipment(self::DOMESTIC_SERVICE, 1, format: 'GIF'));
+    }
+
+    /**
      * To the United Kingdom, with an invoice of two lines and the recipient paying the duties. What the SDK does not
      * say of customs is whether FedEx takes what the plugin sends: no payor when the recipient pays, `EA` as the
      * unit, and no weight on a line.
@@ -281,7 +302,7 @@ final class FedexSandboxTest extends TestCase
      *
      * @param int<1, max> $packages
      */
-    private function shipment(string $service, int $packages, ?Address $destination = null, ?CustomsInvoice $invoice = null): ShipmentRequest
+    private function shipment(string $service, int $packages, ?Address $destination = null, ?CustomsInvoice $invoice = null, string $format = 'PDF'): ShipmentRequest
     {
         $package = new ShipmentPackage(new Package('Medium', 13.0, 11.0, 9.0, 'in', 5.5, 'lb', []));
 
@@ -290,7 +311,7 @@ final class FedexSandboxTest extends TestCase
             $destination ?? new Address('US', '98101', 'Seattle', '500 Pine St', 'WA', true, null, 'Grace Hopper', '2065550100'),
             $service,
             array_merge([$package], array_fill(0, $packages - 1, $package)),
-            'PDF',
+            $format,
             'sandbox-' . bin2hex(random_bytes(4)),
             $invoice,
         );
