@@ -34,7 +34,8 @@ interface LabelCarrierInterface
      * shipment nobody got an answer for has no tracking number, which is the whole of the problem.
      *
      * Null is not a failure: it means this carrier cannot answer that question, or does not know the
-     * reference, so the ambiguity needs a person. UPS can answer it; FedEx has no equivalent operation.
+     * reference, so the ambiguity needs a person. UPS can answer it; FedEx cannot give back the labels of a
+     * shipment it has already issued, so its adapter always answers null.
      *
      * @throws CarrierException When the carrier could not be asked
      */

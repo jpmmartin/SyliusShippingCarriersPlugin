@@ -225,12 +225,14 @@ final readonly class FedexLabelCarrier implements LabelCarrierInterface
     }
 
     /**
-     * FedEx has no operation that answers «did you issue this?».
+     * FedEx cannot give back the labels of a shipment it has already issued, which is what recovering one means.
      *
-     * Its two enquiries are `getConfirmedShipmentAsyncResults`, which reads back an asynchronous job by its
-     * identifier, and `shipmentPackageValidate`, which checks a request before it is sent. Neither says
-     * whether a shipment exists, so the ambiguity of a shipment nobody got an answer for needs a person to
-     * look in FedEx's own portal. Null is how that is said.
+     * Its Ship API has no such operation: `getConfirmedShipmentAsyncResults` reads back an asynchronous job by its
+     * identifier, and `shipmentPackageValidate` checks a request before it is sent. Its Track API can look a
+     * shipment up by a customer reference, but at most it says the shipment exists and under which number, never
+     * its labels, and its sandbox answers that lookup with the same sample shipment whatever the reference. So
+     * the ambiguity of a shipment nobody got an answer for needs a person to look in FedEx's own portal. Null is
+     * how that is said.
      */
     public function recover(string $ownReference): ?ShipmentResult
     {

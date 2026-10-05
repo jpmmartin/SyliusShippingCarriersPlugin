@@ -183,7 +183,7 @@ final class NoSdkExceptionEscapesTest extends TestCase
         $connectorFactory = new FedexConnectorFactory(new ArrayAdapter(), new Encrypter($this->keyPath), new LockFactory(new InMemoryStore()), 10.0);
 
         $this->assertFailsWith($expected, new FedexCarrier($credentialsProvider, $connectorFactory));
-        // FedEx never asks anybody whether it issued a shipment: it has no operation that answers that.
+        // FedEx is never asked whether it issued a shipment: it cannot give back the labels of one it has.
         $this->assertLabelsFailWith($expected, new FedexLabelCarrier($credentialsProvider, $connectorFactory), recovers: false);
     }
 

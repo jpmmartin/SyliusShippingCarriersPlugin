@@ -398,8 +398,8 @@ final class FedexLabelCarrierTest extends TestCase
     }
 
     /**
-     * This is the asymmetry with UPS, and it is not a gap in the plugin: FedEx has no operation that answers
-     * «did you issue this?», so a shipment nobody got an answer for needs a person to look in its portal.
+     * This is the asymmetry with UPS, and it is not a gap in the plugin: FedEx cannot give back the labels of a
+     * shipment it has already issued, so a shipment nobody got an answer for needs a person to look in its portal.
      */
     public function testFedexCannotSayWhetherItIssuedAShipment(): void
     {
