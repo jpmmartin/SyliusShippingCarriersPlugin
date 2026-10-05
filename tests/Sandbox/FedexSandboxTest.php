@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\JpmMartin\SyliusShippingCarriersPlugin\Sandbox;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Address;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\CredentialsProvider;
 use JpmMartin\SyliusShippingCarriersPlugin\Carrier\Exception\CarrierRejectedRequestException;
@@ -19,13 +20,25 @@ use JpmMartin\SyliusShippingCarriersPlugin\Carrier\RateRequest;
 use JpmMartin\SyliusShippingCarriersPlugin\Encryption\Encrypter;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentials;
 use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierCredentialsInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBox;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierPackageBoxInterface;
+use JpmMartin\SyliusShippingCarriersPlugin\Entity\CarrierShippingOrigin;
+use JpmMartin\SyliusShippingCarriersPlugin\Packaging\BoxSelector;
+use JpmMartin\SyliusShippingCarriersPlugin\Packaging\DefaultPackagingStrategy;
+use JpmMartin\SyliusShippingCarriersPlugin\Packaging\FallbackPackager;
 use JpmMartin\SyliusShippingCarriersPlugin\Packaging\Package;
 use JpmMartin\SyliusShippingCarriersPlugin\Rate\Rate;
+use JpmMartin\SyliusShippingCarriersPlugin\Repository\CarrierPackageBoxRepositoryInterface;
 use JpmMartin\SyliusShippingCarriersPlugin\Shipping\CarrierServices;
 use ParagonIE\Halite\KeyFactory;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use Saloon\Http\PendingRequest;
 use Saloon\Http\Response;
+use Sylius\Component\Core\Model\ProductVariant;
+use Sylius\Component\Shipping\Model\ShipmentInterface;
+use Sylius\Component\Shipping\Model\ShipmentUnitInterface;
 use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Lock\LockFactory;
@@ -61,6 +74,12 @@ final class FedexSandboxTest extends TestCase
     private FedexConnectorFactory $connectorFactory;
 
     private int $answers = 0;
+
+    /** @var array<string, array<array-key, mixed>> The last request of each kind the plugin sent, never the token's */
+    private array $sent = [];
+
+    /** @var array<string, array<array-key, mixed>> FedEx's last answer to each kind of request */
+    private array $answered = [];
 
     protected function setUp(): void
     {
@@ -128,6 +147,78 @@ final class FedexSandboxTest extends TestCase
         // one. That does not tell a test account without Ground from a service that is gone, so Ground stays on
         // the list until FedEx says which; any other code the account does not sell still fails here.
         self::assertSame([], array_values(array_diff($shipped, $sold, ['FEDEX_GROUND'])), 'The plugin offers services this account does not sell.');
+    }
+
+    /**
+     * From the plugin's own packing to FedEx's quote: a light item that takes a box much bigger than its weight. FedEx
+     * charges the dimensional weight when it is the greater, so a quote without the box's measures would be cheaper
+     * than the invoice. The box the catalogue gives is the one FedEx is told about, and FedEx quotes it by the weight
+     * it is going to charge.
+     */
+    public function testAQuoteCarriesTheCatalogueBoxAndFedexRatesItByTheWeightItCharges(): void
+    {
+        $box = new CarrierPackageBox();
+        $box->setName('Medium');
+        $box->setInnerLength(12.0);
+        $box->setInnerWidth(10.0);
+        $box->setInnerHeight(8.0);
+        $box->setOuterLength(13.0);
+        $box->setOuterWidth(11.0);
+        $box->setOuterHeight(9.0);
+        $box->setEmptyWeight(0.5);
+        $box->setMaxWeight(50.0);
+        /** @var CarrierPackageBoxRepositoryInterface<CarrierPackageBoxInterface>&Stub $boxes */
+        $boxes = $this->createStub(CarrierPackageBoxRepositoryInterface::class);
+        $boxes->method('findApplicableToOrigin')->willReturn([$box]);
+
+        $pillow = new ProductVariant();
+        $pillow->setCode('PILLOW');
+        $pillow->setWeight(1.0);
+        $pillow->setWidth(8.0);
+        $pillow->setHeight(6.0);
+        $pillow->setDepth(10.0);
+        $unit = $this->createStub(ShipmentUnitInterface::class);
+        $unit->method('getShippable')->willReturn($pillow);
+        $shipment = $this->createStub(ShipmentInterface::class);
+        $shipment->method('getUnits')->willReturn(new ArrayCollection([$unit]));
+        $origin = new CarrierShippingOrigin();
+        $origin->setMaxPackageWeight(150.0);
+
+        $packages = (new DefaultPackagingStrategy($boxes, new BoxSelector(), new FallbackPackager(), new NullLogger()))->pack($shipment, $origin);
+
+        self::assertCount(1, $packages);
+        self::assertSame('Medium', $packages[0]->boxName);
+
+        $this->carrier()->rate(new RateRequest(
+            new Address('US', '60601', 'Chicago', '1 Main St', 'IL'),
+            new Address('US', '98101', 'Seattle', '500 Pine St', 'WA'),
+            $packages,
+        ));
+
+        $sent = $this->sent['RateAndTransitTimes'] ?? [];
+        $package = 'requestedShipment.requestedPackageLineItems.0';
+        self::assertSame(['length' => 13, 'width' => 11, 'height' => 9, 'units' => 'IN'], self::at($sent, $package . '.dimensions'), 'FedEx was not told the box.');
+        self::assertEquals(['units' => 'LB', 'value' => 1.5], self::at($sent, $package . '.weight'), 'The item and the empty box.');
+
+        $details = self::at($this->answered['RateAndTransitTimes'] ?? [], 'output.rateReplyDetails');
+        self::assertIsArray($details);
+        $rated = [];
+        foreach ($details as $detail) {
+            self::assertIsArray($detail);
+            $service = self::at($detail, 'serviceType');
+            self::assertIsString($service);
+            $rated[$service] = [
+                self::at($detail, 'ratedShipmentDetails.0.ratedWeightMethod'),
+                self::at($detail, 'ratedShipmentDetails.0.shipmentRateDetail.totalBillingWeight.value'),
+            ];
+        }
+        $this->record('fedex-billing-weight.json', $rated);
+
+        self::assertNotSame([], $rated, 'FedEx quoted nothing.');
+        foreach ($rated as $service => [$method, $billingWeight]) {
+            self::assertSame('DIM', $method, sprintf('%s was not rated by its dimensional weight.', $service));
+            self::assertGreaterThan(1.5, $billingWeight, sprintf('%s was rated by a weight no greater than the real one.', $service));
+        }
     }
 
     /**
@@ -283,14 +374,24 @@ final class FedexSandboxTest extends TestCase
         }
 
         $this->connectorFactory = new FedexConnectorFactory(new ArrayAdapter(), new Encrypter($this->keyPath), new LockFactory(new InMemoryStore()), 30.0);
-        $this->connectorFactory->create($this->credentials())->middleware()->onResponse(function (Response $response): void {
+        $middleware = $this->connectorFactory->create($this->credentials())->middleware();
+        $middleware->onRequest(function (PendingRequest $pendingRequest): void {
+            $request = (new \ReflectionClass($pendingRequest->getRequest()))->getShortName();
+            $body = $pendingRequest->body()?->all();
+            if (\in_array($request, self::RECORDED_ANSWERS, true) && \is_array($body)) {
+                $this->sent[$request] = $body;
+            }
+        });
+        $middleware->onResponse(function (Response $response): void {
             $request = (new \ReflectionClass($response->getRequest()))->getShortName();
             if (!\in_array($request, self::RECORDED_ANSWERS, true)) {
                 return;
             }
 
             $answer = json_decode($response->body(), true);
-            $this->record(sprintf('fedex-raw-%s-%02d-%s.json', $this->name(), ++$this->answers, $request), \is_array($answer) ? $answer : ['body' => $response->body()]);
+            $answer = \is_array($answer) ? $answer : ['body' => $response->body()];
+            $this->answered[$request] = $answer;
+            $this->record(sprintf('fedex-raw-%s-%02d-%s.json', $this->name(), ++$this->answers, $request), $answer);
         });
 
         return $this->connectorFactory;
@@ -329,6 +430,25 @@ final class FedexSandboxTest extends TestCase
         }
 
         file_put_contents($directory . '/' . $name, json_encode($contents, \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * A value inside a request or an answer, by its path: «output.rateReplyDetails.0.serviceType».
+     *
+     * @param array<array-key, mixed> $data
+     */
+    private static function at(array $data, string $path): mixed
+    {
+        $value = $data;
+        foreach (explode('.', $path) as $key) {
+            if (!\is_array($value) || !\array_key_exists($key, $value)) {
+                return null;
+            }
+
+            $value = $value[$key];
+        }
+
+        return $value;
     }
 
     private static function environmentVariable(string $name): string
