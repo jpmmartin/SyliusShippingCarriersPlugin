@@ -8,6 +8,8 @@ here, and what counts as a breaking change, are written down in [RELEASING.md](R
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-05
+
 ### Added
 
 - **A Symfony Flex recipe, in symfony/recipes-contrib.** On a store with Flex, `composer require`
@@ -138,6 +140,7 @@ Stated here as well as in the README, because they decide whether this release f
   before they pay; labels are handed over as files, not sent to a printer; one shipping origin per
   shipment.
 
-[Unreleased]: https://github.com/jpmmartin/SyliusShippingCarriersPlugin/compare/v1.1.0...main
+[Unreleased]: https://github.com/jpmmartin/SyliusShippingCarriersPlugin/compare/v1.2.0...main
+[1.2.0]: https://github.com/jpmmartin/SyliusShippingCarriersPlugin/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/jpmmartin/SyliusShippingCarriersPlugin/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/jpmmartin/SyliusShippingCarriersPlugin/releases/tag/v1.0.0
