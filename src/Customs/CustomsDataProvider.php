@@ -58,7 +58,7 @@ final readonly class CustomsDataProvider
                 continue;
             }
 
-            // What was actually paid for this unit, with its discounts already taken off (002 declares this).
+            // What was actually paid for this unit, with its discounts already taken off: what customs is told.
             $unitValue = $unit->getTotal();
             $key = sprintf('%s|%d', (string) $variant->getId(), $unitValue);
 
